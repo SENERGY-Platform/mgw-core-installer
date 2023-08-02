@@ -4,7 +4,6 @@ name: ${STACK_NAME}
 services:
   gateway:
     image: nginx:1.25.1-alpine
-    restart: unless-stopped
     environment:
       SUBNET_CORE: ${SUBNET_CORE}
       SUBNET_MODULE: ${SUBNET_MODULE}
@@ -26,7 +25,6 @@ services:
           - core-api
   db:
     image: mariadb:10.11.2
-    restart: unless-stopped
     environment:
       MARIADB_USER: core_user
       MARIADB_PASSWORD: ${CORE_DB_PW}
@@ -39,9 +37,8 @@ services:
         aliases:
           - core-db
   module-manager:
-    image: ghcr.io/senergy-platform/mgw-module-manager:v0.5.0
+    image: ghcr.io/senergy-platform/mgw-module-manager:v0.5.1
     build: ${MODULE_MANAGER_BUILD_CONTEXT}
-    restart: unless-stopped
     depends_on:
       - db
       - gateway
@@ -67,7 +64,6 @@ services:
       context: ${SECRET_MANAGER_BUILD_CONTEXT}
       dockerfile: ./build/Dockerfile
       target: prod
-    restart: unless-stopped
     depends_on:
       - db
     environment:
@@ -90,7 +86,6 @@ services:
     build:
       context: ${WEB_UI_BUILD_CONTEXT}
       dockerfile: ./build/Dockerfile
-    restart: unless-stopped
     depends_on:
       - gateway
       - module-manager
