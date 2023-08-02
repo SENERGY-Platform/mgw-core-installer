@@ -1,0 +1,3 @@
+GRANT ALTER, CREATE, DELETE, DROP, INDEX, INSERT, REFERENCES, SELECT, TRIGGER, UPDATE ON *.* TO 'core_user'@'%';
+CREATE DATABASE IF NOT EXISTS `module_manager` COLLATE 'utf8mb4_general_ci';
+CREATE DATABASE IF NOT EXISTS `secret_manager` COLLATE 'utf8mb4_general_ci';
