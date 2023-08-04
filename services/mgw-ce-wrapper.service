@@ -4,7 +4,7 @@ Wants=docker.service
 Before=docker.socket docker.service
 
 [Service]
-ExecStart=/opt/mgw/bin/ce-wrapper/wrapper -config=wrapper_conf.json
+ExecStart=/opt/mgw/bin/ce-wrapper/wrapper -config=conf.json
 Restart=always
 
 [Install]
