@@ -1,0 +1,9 @@
+[Unit]
+Before=mgw-ce-wrapper.service
+
+[Service]
+ExecStart=/opt/mgw/bin/host-manager/manager -config=manager_conf.json
+Restart=always
+
+[Install]
+WantedBy=default.target
