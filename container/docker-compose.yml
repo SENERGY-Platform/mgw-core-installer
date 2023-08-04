@@ -48,6 +48,7 @@ services:
       DB_PASSWD: ${CORE_DB_PW}
       DH_HOST_DEP_PATH: ${DEPLOYMENTS_PATH}
       DH_HOST_SEC_PATH: ${SECRETS_PATH}
+      DH_MODULE_NET: mgw-2-module-net
     volumes:
       - mm-modules:/opt/module-manager/modules
       - ${DEPLOYMENTS_PATH}:/opt/module-manager/deployments
