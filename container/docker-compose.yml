@@ -37,7 +37,7 @@ services:
         aliases:
           - core-db
   module-manager:
-    image: ghcr.io/senergy-platform/mgw-module-manager:v0.5.1
+    image: ghcr.io/senergy-platform/mgw-module-manager:v0.6.2
     build: ${MODULE_MANAGER_BUILD_CONTEXT}
     depends_on:
       - db
