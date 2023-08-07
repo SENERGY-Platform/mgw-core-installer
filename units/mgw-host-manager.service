@@ -2,7 +2,7 @@
 Before=mgw-ce-wrapper.service
 
 [Service]
-ExecStart=/opt/mgw/bin/host-manager/manager -config=conf.json
+ExecStart=/opt/mgw/bin/host-manager/manager -config=/opt/mgw/bin/host-manager/conf.json
 Restart=always
 
 [Install]
