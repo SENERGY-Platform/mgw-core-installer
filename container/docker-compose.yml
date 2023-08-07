@@ -64,7 +64,7 @@ services:
         aliases:
           - module-manager
   secret-manager:
-    image: ghcr.io/senergy-platform/mgw-secret-manager:v0.1.5
+    image: ghcr.io/senergy-platform/mgw-secret-manager:v0.1.7
     build:
       context: ${SECRET_MANAGER_BUILD_CONTEXT}
       dockerfile: ./build/Dockerfile
