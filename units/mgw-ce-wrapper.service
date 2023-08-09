@@ -3,7 +3,7 @@ PartOf=docker.service
 Before=docker.service
 
 [Service]
-ExecStart=/opt/mgw/bin/ce-wrapper/wrapper -config=/opt/mgw/bin/ce-wrapper/conf.json
+ExecStart=/opt/mgw/bin/SENERGY-Platform/mgw-container-engine-wrapper/bin -config=/opt/mgw/bin/SENERGY-Platform/mgw-container-engine-wrapper/conf.json
 Restart=always
 
 [Install]
