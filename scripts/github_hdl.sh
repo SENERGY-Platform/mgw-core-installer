@@ -2,7 +2,7 @@
 
 getGitHubRelease() {
   url="https://api.github.com/repos/$1/releases"
-  case $2 in
+  case "$2" in
   "")
     url="$url/latest"
     ;;
