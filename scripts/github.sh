@@ -9,7 +9,7 @@ getGitHubRelease() {
   *)
     url="$url/tags/$2"
   esac
-  if ! curl -L \
+  if ! curl -L -s \
       -H "Accept: application/vnd.github+json" \
       -H "X-GitHub-Api-Version: 2022-11-28" \
       "$url"
