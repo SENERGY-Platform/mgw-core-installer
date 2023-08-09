@@ -1,9 +1,9 @@
 #!/bin/sh
 
-. ./lib.sh
-. ./os.sh
-. ./package.sh
-. ./github.sh
+. ./assets/scripts/lib.sh
+. ./assets/scripts/os.sh
+. ./assets/scripts/package.sh
+. ./assets/scripts/github.sh
 
 require_pkg="systemd apt docker"
 install_pkg="curl tar gzip jq avahi-daemon"
