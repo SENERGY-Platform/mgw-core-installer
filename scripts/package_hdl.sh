@@ -56,7 +56,6 @@ handlePackages() {
         ;;
       *)
         echo "unknown option"
-        ;;
       esac
     done
   fi
