@@ -34,9 +34,9 @@ getArch() {
     x86_64)
       echo $arch_amd64
       ;;
-    i386)
-      echo $arch_386
-      ;;
+#    i386)
+#      echo $arch_386
+#      ;;
     aarch64)
       echo $arch_arm64
       ;;
