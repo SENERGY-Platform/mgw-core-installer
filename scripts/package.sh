@@ -24,10 +24,10 @@ getMissingCmd() {
 installPkg() {
   if ! apt-get update
   then
-    exit 1
+    return 1
   fi
   if ! apt-get install -y "$1"
   then
-    exit 1
+    return 1
   fi
 }

@@ -11,7 +11,7 @@ arch_arm64="arm64"
 getPlatform() {
   if ! plf="$(uname -s)"
   then
-      exit 1
+      return 1
   fi
   case "$plf" in
     Linux)
@@ -21,15 +21,14 @@ getPlatform() {
 #      echo $plf_darwin
 #      ;;
     *)
-      echo "platform not supported"
-      exit 1
+      return 1
   esac
 }
 
 getArch() {
   if ! plf="$(uname -m)"
   then
-    exit 1
+    return 1
   fi
   case "$plf" in
     x86_64)
@@ -48,15 +47,13 @@ getArch() {
       echo $arch_arm
       ;;
     *)
-      echo "architecture not supported"
-      exit 1
+      return 1
   esac
 }
 
 checkRoot() {
   if ! [ "$(id -u)" = "0" ]
   then
-     echo "root privileges required"
-     exit 1
+     return 1
   fi
 }
