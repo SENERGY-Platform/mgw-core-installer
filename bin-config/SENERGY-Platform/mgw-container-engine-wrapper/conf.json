@@ -1,0 +1,9 @@
+{
+  "socket": {
+    "path": "/opt/mgw/sockets",
+    "group_id": 101
+  },
+  "logger": {
+    "path": "/var/log"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "socket": {
+    "path": "/opt/mgw/sockets",
+    "group_id": 101
+  },
+  "logger": {
+    "path": "/var/log"
+  },
+  "applications_path": "/opt/mgw/bin/SENERGY-Platform/mgw-host-manager/applications.json"
+}
