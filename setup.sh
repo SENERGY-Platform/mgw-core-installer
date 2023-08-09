@@ -4,9 +4,10 @@
 . ./assets/scripts/os.sh
 . ./assets/scripts/package.sh
 . ./assets/scripts/github.sh
+. ./assets/scripts/docker.sh
 
-require_pkg="systemd apt docker"
-install_pkg="curl tar gzip jq avahi-daemon"
+require_pkg="systemd: apt:"
+install_pkg="curl: tar: gzip: jq: avahi-daemon: gettext-base:envsubst"
 binaries="SENERGY-Platform/mgw-container-engine-wrapper SENERGY-Platform/mgw-host-manager"
 base_path="/opt/mgw/"
 
@@ -22,13 +23,20 @@ then
 fi
 
 handlePackages() {
-  missing=$(getMissingCmd "$require_pkg")
+  missing=$(getMissingPkg "$require_pkg")
   if ! [ "$missing" = "" ]
   then
     printf "missing required packages: %s\n" "$missing"
     exit 1
   fi
-  missing=$(getMissingCmd "$install_pkg")
+  missing=$(getMissingDockerPkg)
+  if ! [ "$missing" = "" ]
+  then
+   printf "missing required packages: %s\n" "$missing"
+   echo "please follow instructions at 'https://docs.docker.com/engine/install' and run setup again"
+   exit 1
+ fi
+  missing=$(getMissingPkg "$install_pkg")
   if ! [ "$missing" = "" ]
   then
     printf "the following new packages will be installed: %s \n" "$missing"
