@@ -1,20 +1,21 @@
 #!/bin/sh
 
-isAvailable() {
-    command -v "$1" > /dev/null
-    return $?
-}
-
-getMissingCmd() {
+getMissingPkg() {
   missing=""
-  for cmd in ${1}
+  for item in ${1}
   do
-    if ! isAvailable "$cmd"
+    pkg="${item%%:*}"
+    cmd="${item##*:}"
+    if [ "$cmd" = "" ]
+    then
+      cmd="$pkg"
+    fi
+    if ! command -v "$cmd" > /dev/null 2>& 1
     then
       if [ "$missing" = "" ]; then
-        missing="${missing}$cmd"
+        missing="${missing}$pkg"
       else
-        missing="${missing} $cmd"
+        missing="${missing} $pkg"
       fi
     fi
   done
