@@ -18,6 +18,13 @@ getGitHubRelease() {
   fi
 }
 
+getGitHubReleaseVersion() {
+  if ! echo "$1" | jq -r '.tag_name'
+  then
+    exit 1
+  fi
+}
+
 getGitHubReleaseAssetUrl() {
   if ! echo "$1" | jq -r '.assets[] | select(.name | test("'"$2"'.tar.gz"; "x")) | .browser_download_url'
   then
