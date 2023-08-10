@@ -9,7 +9,7 @@
 require_pkg="systemd: apt:"
 install_pkg="curl: tar: gzip: jq: avahi-daemon: openssl: gettext-base:envsubst"
 binaries="SENERGY-Platform/mgw-container-engine-wrapper SENERGY-Platform/mgw-host-manager"
-systemd_units_path=/etc/systemd/system
+systemd_path=/etc/systemd/system
 mnt_path=/mnt/mgw
 base_path=/opt/mgw
 stack_name=mgw-core
@@ -18,6 +18,7 @@ core_db_root_pw=
 subnet_core=10.0.0.0
 subnet_module=10.1.0.0
 subnet_gateway=10.10.0.0
+units=""
 
 if ! platform="$(getPlatform)"
 then
@@ -141,6 +142,92 @@ handleBinConfigs() {
   done
 }
 
+handleUnits() {
+  if [ "$SYSTEMD_PATH" != "" ]; then
+      systemd_path="$SYSTEMD_PATH"
+  fi
+  printf "install systemd services? (y/n): "
+  while :
+  do
+    read -r choice
+    case "$choice" in
+    y)
+      files=$(ls ./assets/units/services)
+      for file in ${files}
+      do
+        if real_file="$(getTemplateBase "$file")"
+        then
+          if ! envsubst < ./assets/units/services/$file > $systemd_path/$real_file
+          then
+            exit 1
+          fi
+          file="$real_file"
+        else
+          if ! cp ./assets/units/services/$file $systemd_path/$file
+          then
+            exit 1
+          fi
+        fi
+        if [ "$units" = "" ]; then
+          units="${units}$file"
+        else
+          units="${units} $file"
+        fi
+      done
+      break
+      ;;
+    n)
+      break
+      ;;
+    *)
+      echo "unknown option"
+    esac
+  done
+  files=$(ls ./assets/units/mounts)
+  for file in ${files}
+  do
+    if real_file="$(getTemplateBase "$file")"
+    then
+      if ! envsubst < ./assets/units/mounts/$file > $systemd_path/$real_file
+      then
+        exit 1
+      fi
+      file="$real_file"
+    else
+      if ! cp ./assets/units/mounts/$file $systemd_path/$file
+      then
+        exit 1
+      fi
+    fi
+    if [ "$units" = "" ]; then
+      units="${units}$file"
+    else
+      units="${units} $file"
+    fi
+  done
+}
+
+handleSystemd() {
+  if [ "$units" != "" ]
+  then
+    if ! systemctl daemon-reload
+    then
+      exit 1
+    fi
+    for unit in ${units}
+    do
+      if ! systemctl enable "$unit"
+      then
+        exit 1
+      fi
+      if ! systemctl start "$unit"
+      then
+        exit 1
+      fi
+    done
+  fi
+}
+
 handleDefaultSettings() {
   printf "change default settings? (y/n): "
   while :
@@ -226,3 +313,5 @@ handlePackages
 prepareInstallDir
 handleBin
 handleBinConfigs
+handleUnits
+#handleSystemd
