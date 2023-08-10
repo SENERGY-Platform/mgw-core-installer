@@ -1,5 +1,11 @@
 #!/bin/sh
 
+setup_path=${0%/*}
+if ! cd $setup_path
+then
+  exit 1
+fi
+
 . ./assets/scripts/lib.sh
 . ./assets/scripts/os.sh
 . ./assets/scripts/package.sh
