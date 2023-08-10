@@ -12,6 +12,12 @@ binaries="SENERGY-Platform/mgw-container-engine-wrapper SENERGY-Platform/mgw-hos
 systemd_path=/etc/systemd/system
 mnt_path=/mnt/mgw
 base_path=/opt/mgw
+secrets_path=""
+deployments_path=""
+sockets_path=""
+bin_path=""
+container_path=""
+units_path=""
 stack_name=mgw-core
 core_db_pw=
 core_db_root_pw=
@@ -71,7 +77,7 @@ handlePackages() {
 }
 
 prepareInstallDir() {
-  mkdir -p $base_path/deployments $mnt_path/secrets $base_path/sockets $base_path/bin
+  mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $units_path
 }
 
 handleBin() {
@@ -104,13 +110,13 @@ handleBin() {
     then
       exit 1
     fi
-    target_path="$base_path/bin/$repo"
+    target_path="$bin_path/$repo"
     mkdir -p $target_path
     if ! cp -r $extract_path/$arch/* $target_path
     then
       exit 1
     fi
-    echo "$repo $version" >> $base_path/bin/versions
+    echo "$repo $version" >> $bin_path/versions
   done
   rm -r "$wrk_spc"
 }
@@ -126,12 +132,12 @@ handleBinConfigs() {
       do
         if real_file="$(getTemplateBase "$file")"
         then
-          if ! envsubst < ./assets/bin/$repo/$file > $base_path/bin/$repo/$real_file
+          if ! envsubst < ./assets/bin/$repo/$file > $bin_path/$repo/$real_file
           then
             exit 1
           fi
         else
-          if ! cp ./assets/bin/$repo/$file $base_path/bin/$repo/$file
+          if ! cp ./assets/bin/$repo/$file $bin_path/$repo/$file
           then
             exit 1
           fi
@@ -268,6 +274,12 @@ handleDefaultSettings() {
         echo "unknown option"
     esac
   done
+  secrets_path=$mnt_path/secrets
+  deployments_path=$base_path/deployments
+  sockets_path=$base_path/sockets
+  bin_path=$base_path/bin
+  container_path=$base_path/container
+  units_path=$base_path/units
   export BASE_PATH="$base_path" STACK_NAME="$stack_name" SUBNET_CORE="$subnet_core" SUBNET_MODULE="$subnet_module" SUBNET_GATEWAY="$subnet_gateway"
 }
 
