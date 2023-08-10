@@ -19,3 +19,11 @@ extractTar() {
   fi
   echo "$path"
 }
+
+getTemplateBase() {
+  if [ "${1##*.}" = "template" ]; then
+    echo "${1%%.template}"
+    return 0
+  fi
+  return 1
+}
