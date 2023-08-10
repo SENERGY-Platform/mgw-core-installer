@@ -248,32 +248,32 @@ handleDefaultSettings() {
         printf "stack name [%s]: " "$stack_name"
         read -r input
         if [ "$input" != "" ]; then
-            stack_name="$input"
+          stack_name="$input"
         fi
         printf "core database password [%s]: " "$core_db_pw"
         read -r input
         if [ "$input" != "" ]; then
-            core_db_pw="$input"
+          core_db_pw="$input"
         fi
         printf "core database root password [%s]: " "$core_db_root_pw"
         read -r input
         if [ "$input" != "" ]; then
-            core_db_root_pw="$input"
+          core_db_root_pw="$input"
         fi
         printf "core subnet [%s]: " "$subnet_core"
         read -r input
         if [ "$input" != "" ]; then
-            subnet_core="$input"
+          subnet_core="$input"
         fi
         printf "module subnet [%s]: " "$subnet_module"
         read -r input
         if [ "$input" != "" ]; then
-            subnet_module="$input"
+          subnet_module="$input"
         fi
         printf "gateway subnet [%s]: " "$subnet_gateway"
         read -r input
         if [ "$input" != "" ]; then
-            subnet_gateway="$input"
+          subnet_gateway="$input"
         fi
         break
         ;;
