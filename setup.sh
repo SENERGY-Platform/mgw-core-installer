@@ -9,6 +9,7 @@
 require_pkg="systemd: apt:"
 install_pkg="curl: tar: gzip: jq: avahi-daemon: openssl: gettext-base:envsubst"
 binaries="SENERGY-Platform/mgw-container-engine-wrapper SENERGY-Platform/mgw-host-manager"
+systemd_units_path=/etc/systemd/system
 mnt_path=/mnt/mgw
 base_path=/opt/mgw
 stack_name=mgw-core
