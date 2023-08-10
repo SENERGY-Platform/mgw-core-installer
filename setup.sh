@@ -149,9 +149,9 @@ handleBinConfigs() {
 }
 
 handleUnits() {
-  printf "install systemd services? (y/n): "
   while :
   do
+    printf "install systemd services? (y/n): "
     read -r choice
     case "$choice" in
     y)
@@ -227,9 +227,9 @@ handleSystemd() {
 }
 
 handleDefaultSettings() {
-  printf "change default settings? (y/n): "
   while :
   do
+    printf "change default settings? (y/n): "
     read -r choice
     case "$choice" in
       y)
