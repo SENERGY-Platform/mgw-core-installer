@@ -19,12 +19,12 @@ bin_path=""
 container_path=""
 units_path=""
 no_root=false
-stack_name=mgw-core
-core_db_pw=
-core_db_root_pw=
-subnet_core=10.0.0.0
-subnet_module=10.1.0.0
-subnet_gateway=10.10.0.0
+stack_name="mgw-core"
+core_db_pw=""
+core_db_root_pw=""
+subnet_core="10.0.0.0"
+subnet_module="10.1.0.0"
+subnet_gateway="10.10.0.0"
 
 if ! platform="$(getPlatform)"
 then
