@@ -50,7 +50,7 @@ handlePackages() {
    printf "missing required packages: %s\n" "$missing"
    echo "please follow instructions at 'https://docs.docker.com/engine/install' and run setup again"
    exit 1
- fi
+  fi
   missing=$(getMissingPkg "$install_pkg")
   if [ "$missing" != "" ]
   then
