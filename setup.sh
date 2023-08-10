@@ -49,7 +49,7 @@ handlePackages() {
     printf "the following new packages will be installed: %s \n" "$missing"
     while :
     do
-      printf "continue? [y/n] "
+      printf "continue? (y/n): "
       read -r choice
       case "$choice" in
       "y")
