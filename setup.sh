@@ -87,7 +87,7 @@ handleBin() {
     then
       exit 1
     fi
-    echo "downloading $version ..."
+    echo "downloading $repo $version ..."
     if ! asset_url="$(getGitHubReleaseAssetUrl "$release" "$platform")"
     then
       exit 1
@@ -98,7 +98,7 @@ handleBin() {
     then
       exit 1
     fi
-    echo "installing ..."
+    echo "extracting $file ..."
     if ! extract_path="$(extractTar "$file")"
     then
       exit 1
