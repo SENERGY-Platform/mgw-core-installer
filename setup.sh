@@ -105,7 +105,7 @@ handleBin() {
     then
       exit 1
     fi
-    echo "extracting $file ..."
+    echo "extracting ..."
     if ! extract_path="$(extractTar "$file")"
     then
       exit 1
