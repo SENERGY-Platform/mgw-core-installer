@@ -116,7 +116,6 @@ handleBin() {
 }
 
 handleBinConfigs() {
-  export BASE_PATH="$base_path"
   for repo in ${binaries}
   do
     if stat ./assets/bin/$repo > /dev/null 2>& 1
@@ -193,6 +192,7 @@ handleDefaultSettings() {
         echo "unknown option"
     esac
   done
+  export BASE_PATH="$base_path" STACK_NAME="$stack_name" SUBNET_CORE="$subnet_core" SUBNET_MODULE="$subnet_module" SUBNET_GATEWAY="$subnet_gateway"
 }
 
 handleDatabasePasswords() {
@@ -212,6 +212,7 @@ handleDatabasePasswords() {
     fi
     printf "generated core database root password: %s\n" "$core_db_root_pw"
   fi
+  export CORE_DB_PW="$core_db_pw" CORE_DB_ROOT_PW="$core_db_root_pw"
 }
 
 if ! isRoot
