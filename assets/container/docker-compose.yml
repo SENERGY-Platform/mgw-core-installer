@@ -52,6 +52,7 @@ services:
       DB_PASSWD: ${CORE_DB_PW}
       DH_HOST_DEP_PATH: /opt/mgw/deployments
       DH_HOST_SEC_PATH: /opt/mgw/secrets
+      DH_HOST_SEC_PATH: /mnt/mgw/secrets
       DH_MODULE_NET: mgw-2-module-net
     volumes:
       - mm-modules:/opt/module-manager/modules
@@ -82,7 +83,7 @@ services:
       LOGGER_LEVEL: ${LOG_LEVEL}
       LOGGER_TERMINAL: true
     volumes:
-      - /opt/mgw/secrets:/tmp
+      - /mnt/mgw/secrets:/tmp
       - sm-data:/opt/data
     networks:
       c_net:

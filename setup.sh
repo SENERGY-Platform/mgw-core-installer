@@ -9,7 +9,8 @@
 require_pkg="systemd: apt:"
 install_pkg="curl: tar: gzip: jq: avahi-daemon: gettext-base:envsubst"
 binaries="SENERGY-Platform/mgw-container-engine-wrapper SENERGY-Platform/mgw-host-manager"
-base_path="/opt/mgw/"
+base_path=/opt/mgw
+mnt_path=/mnt/mgw
 
 if ! platform="$(getPlatform)"
 then
@@ -63,7 +64,7 @@ handlePackages() {
 }
 
 prepareInstallDir() {
-  mkdir -p $base_path/deployments $base_path/secrets $base_path/sockets $base_path/bin
+  mkdir -p $base_path/deployments $mnt_path/secrets $base_path/sockets $base_path/bin
 }
 
 handleBin() {
