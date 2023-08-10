@@ -290,7 +290,16 @@ handleDefaultSettings() {
   bin_path=$base_path/bin
   container_path=$base_path/container
   units_path=$base_path/units
-  export BASE_PATH="$base_path" STACK_NAME="$stack_name" SUBNET_CORE="$subnet_core" SUBNET_MODULE="$subnet_module" SUBNET_GATEWAY="$subnet_gateway"
+  export \
+    SECRETS_PATH="$secrets_path" \
+    DEPLOYMENTS_PATH="$deployments_path" \
+    SOCKETS_PATH="$sockets_path" \
+    BIN_PATH="$bin_path" \
+    CONTAINER_PATH="$container_path" \
+    STACK_NAME="$stack_name" \
+    SUBNET_CORE="$subnet_core" \
+    SUBNET_MODULE="$subnet_module" \
+    SUBNET_GATEWAY="$subnet_gateway"
 }
 
 handleDatabasePasswords() {

@@ -1,6 +1,6 @@
 {
   "socket": {
-    "path": "${BASE_PATH}/sockets",
+    "path": "${SOCKETS_PATH}",
     "group_id": 101
   },
   "logger": {
