@@ -51,9 +51,10 @@ getArch() {
   esac
 }
 
-checkRoot() {
-  if ! [ "$(id -u)" = "0" ]
+isRoot() {
+  if [ "$(id -u)" = "0" ]
   then
-     return 1
+     return 0
   fi
+  return 1
 }
