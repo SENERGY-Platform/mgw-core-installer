@@ -1,6 +1,6 @@
 {
   "socket": {
-    "path": "/opt/mgw/sockets",
+    "path": "${BASE_PATH}/sockets",
     "group_id": 101
   },
   "logger": {
