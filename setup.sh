@@ -9,8 +9,14 @@
 require_pkg="systemd: apt:"
 install_pkg="curl: tar: gzip: jq: avahi-daemon: openssl: gettext-base:envsubst"
 binaries="SENERGY-Platform/mgw-container-engine-wrapper SENERGY-Platform/mgw-host-manager"
-base_path=/opt/mgw
 mnt_path=/mnt/mgw
+base_path=/opt/mgw
+stack_name=mgw-core
+core_db_pw=
+core_db_root_pw=
+subnet_core=10.0.0.0
+subnet_module=10.1.0.0
+subnet_gateway=10.10.0.0
 
 if ! platform="$(getPlatform)"
 then
