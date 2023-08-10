@@ -119,20 +119,20 @@ handleBinConfigs() {
   export BASE_PATH="$base_path"
   for repo in ${binaries}
   do
-    if stat assets/bin/$repo > /dev/null 2>& 1
+    if stat ./assets/bin/$repo > /dev/null 2>& 1
     then
       echo "adding $repo configs ..."
-      files=$(ls assets/bin/$repo)
+      files=$(ls ./assets/bin/$repo)
       for file in ${files}
       do
         if real_file="$(getTemplateBase "$file")"
         then
-          if ! envsubst < assets/bin/$repo/$file > $base_path/bin/$repo/$real_file
+          if ! envsubst < ./assets/bin/$repo/$file > $base_path/bin/$repo/$real_file
           then
             exit 1
           fi
         else
-          if ! cp assets/bin/$repo/$file $base_path/bin/$repo/$file
+          if ! cp ./assets/bin/$repo/$file $base_path/bin/$repo/$file
           then
             exit 1
           fi
