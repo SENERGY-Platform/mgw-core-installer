@@ -115,11 +115,12 @@ handleBin() {
     then
       exit 1
     fi
-    echo "extracting ..."
+    echo "extracting $repo ..."
     if ! extract_path="$(extractTar "$file")"
     then
       exit 1
     fi
+    echo "copying $repo ..."
     target_path="$bin_path/$repo"
     if ! mkdir -p $target_path
     then
@@ -139,7 +140,7 @@ handleBinConfigs() {
   do
     if stat ./assets/bin/$repo > /dev/null 2>& 1
     then
-      echo "adding $repo configs ..."
+      echo "copying $repo configs ..."
       files=$(ls ./assets/bin/$repo)
       for file in ${files}
       do
@@ -163,10 +164,11 @@ handleBinConfigs() {
 handleUnits() {
   while :
   do
-    printf "install systemd services? (y/n): "
+    printf "include systemd services? (y/n): "
     read -r choice
     case "$choice" in
     y)
+      echo "copying systemd services ..."
       files=$(ls ./assets/units/services)
       for file in ${files}
       do
@@ -193,6 +195,7 @@ handleUnits() {
       echo "unknown option"
     esac
   done
+  echo "copying systemd mounts ..."
   files=$(ls ./assets/units/mounts)
   for file in ${files}
   do
@@ -220,16 +223,19 @@ handleSystemd() {
     then
       exit 1
     fi
+    echo "reloading systemd ..."
     if ! systemctl daemon-reload
     then
       exit 1
     fi
     for unit in ${units}
     do
+      echo "enabling $unit ..."
       if ! systemctl enable "$unit"
       then
         exit 1
       fi
+      echo "starting $unit ..."
       if ! systemctl start "$unit"
       then
         exit 1
@@ -321,7 +327,6 @@ handleDatabasePasswords() {
     then
       exit 1
     fi
-    printf "generated core database password: %s\n" "$core_db_pw"
   fi
   if [ "$core_db_root_pw" = "" ]
   then
@@ -329,7 +334,6 @@ handleDatabasePasswords() {
     then
       exit 1
     fi
-    printf "generated core database root password: %s\n" "$core_db_root_pw"
   fi
   export CORE_DB_PW="$core_db_pw" CORE_DB_ROOT_PW="$core_db_root_pw"
 }
@@ -363,11 +367,45 @@ checkRoot() {
 
 handleOptions
 checkRoot
+while :
+do
+  printf "install multi-gateway core? (y/n): "
+  read -r choice
+  case $choice in
+  y)
+    break
+    ;;
+  n)
+    exit 0
+    ;;
+  *)
+    echo "unknown option"
+  esac
+done
+echo
+echo "setting-up installer ..."
 handleDefaultSettings
 handleDatabasePasswords
+echo "setting-up installer done"
+echo
+echo "setting-up required packages ..."
 handlePackages
+echo "setting-up required packages done"
+echo
+echo "setting-up install directory ..."
 prepareInstallDir
+echo "setting-up install done"
+echo
+echo "setting-up binaries ..."
 handleBin
 handleBinConfigs
+echo "setting-up binaries done"
+echo
+echo "setting-up systemd integration ..."
 handleUnits
 #handleSystemd
+echo "setting-up systemd integration done"
+echo
+echo "setting-up containers ..."
+handleContainer
+echo "setting-up containers done"
