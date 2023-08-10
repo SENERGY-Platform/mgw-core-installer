@@ -114,11 +114,113 @@ handleBin() {
   rm -r "$wrk_spc"
 }
 
-if ! checkRoot
+handleBinConfigs() {
+  export BASE_PATH="$base_path"
+  for repo in ${binaries}
+  do
+    if stat assets/bin/$repo > /dev/null 2>& 1
+    then
+      echo "adding $repo configs ..."
+      files=$(ls assets/bin/$repo)
+      for file in ${files}
+      do
+        if real_file="$(getTemplateBase "$file")"
+        then
+          if ! envsubst < assets/bin/$repo/$file > $base_path/bin/$repo/$real_file
+          then
+            exit 1
+          fi
+        else
+          if ! cp assets/bin/$repo/$file $base_path/bin/$repo/$file
+          then
+            exit 1
+          fi
+        fi
+      done
+    fi
+  done
+}
+
+handleDefaultSettings() {
+  printf "change default settings? (y/n): "
+  while :
+  do
+    read -r choice
+    case "$choice" in
+      y)
+        printf "install directory [%s]: " "$base_path"
+        read -r input
+        if ! [ "$input" = "" ]; then
+            base_path="$input"
+        fi
+        printf "stack name [%s]: " "$stack_name"
+        read -r input
+        if ! [ "$input" = "" ]; then
+            stack_name="$input"
+        fi
+        printf "core database password [%s]: " "$core_db_pw"
+        read -r input
+        if ! [ "$input" = "" ]; then
+            core_db_pw="$input"
+        fi
+        printf "core database root password [%s]: " "$core_db_root_pw"
+        read -r input
+        if ! [ "$input" = "" ]; then
+            core_db_root_pw="$input"
+        fi
+        printf "core subnet [%s]: " "$subnet_core"
+        read -r input
+        if ! [ "$input" = "" ]; then
+            subnet_core="$input"
+        fi
+        printf "module subnet [%s]: " "$subnet_module"
+        read -r input
+        if ! [ "$input" = "" ]; then
+            subnet_module="$input"
+        fi
+        printf "gateway subnet [%s]: " "$subnet_gateway"
+        read -r input
+        if ! [ "$input" = "" ]; then
+            subnet_gateway="$input"
+        fi
+        break
+      ;;
+      n)
+        break
+      ;;
+      *)
+        echo "unknown option"
+    esac
+  done
+}
+
+handleDatabasePasswords() {
+  if [ "$core_db_pw" = "" ]
+  then
+    if ! core_db_pw="$(openssl rand -hex 16)"
+    then
+      exit 1
+    fi
+    printf "generated core database password: %s\n" "$core_db_pw"
+  fi
+  if [ "$core_db_root_pw" = "" ]
+  then
+    if ! core_db_root_pw="$(openssl rand -hex 16)"
+    then
+      exit 1
+    fi
+    printf "generated core database root password: %s\n" "$core_db_root_pw"
+  fi
+}
+
+if ! isRoot
 then
   echo "root privileges required"
   exit 1
 fi
+handleDefaultSettings
+handleDatabasePasswords
 handlePackages
 prepareInstallDir
 handleBin
+handleBinConfigs
