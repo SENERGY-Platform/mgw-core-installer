@@ -78,12 +78,18 @@ handlePackages() {
 }
 
 prepareInstallDir() {
-  mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $units_path
+  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $units_path
+  then
+    exit 1
+  fi
 }
 
 handleBin() {
   wrk_spc="/tmp/mgw-install"
-  mkdir -p $wrk_spc
+  if ! mkdir -p $wrk_spc
+  then
+    exit 1
+  fi
   for repo in ${binaries}
   do
     echo "checking latest $repo release ..."
@@ -101,7 +107,10 @@ handleBin() {
       exit 1
     fi
     dl_pth="$wrk_spc/$repo"
-    mkdir -p $dl_pth
+    if ! mkdir -p $dl_pth
+    then
+      exit 1
+    fi
     if ! file="$(downloadFile "$asset_url" "$dl_pth")"
     then
       exit 1
@@ -112,7 +121,10 @@ handleBin() {
       exit 1
     fi
     target_path="$bin_path/$repo"
-    mkdir -p $target_path
+    if ! mkdir -p $target_path
+    then
+      exit 1
+    fi
     if ! cp -r $extract_path/$arch/* $target_path
     then
       exit 1
