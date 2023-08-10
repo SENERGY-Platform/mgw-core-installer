@@ -32,20 +32,20 @@ fi
 
 handlePackages() {
   missing=$(getMissingPkg "$require_pkg")
-  if ! [ "$missing" = "" ]
+  if [ "$missing" != "" ]
   then
     printf "missing required packages: %s\n" "$missing"
     exit 1
   fi
   missing=$(getMissingDockerPkg)
-  if ! [ "$missing" = "" ]
+  if [ "$missing" != "" ]
   then
    printf "missing required packages: %s\n" "$missing"
    echo "please follow instructions at 'https://docs.docker.com/engine/install' and run setup again"
    exit 1
  fi
   missing=$(getMissingPkg "$install_pkg")
-  if ! [ "$missing" = "" ]
+  if [ "$missing" != "" ]
   then
     printf "the following new packages will be installed: %s \n" "$missing"
     while :
@@ -151,44 +151,44 @@ handleDefaultSettings() {
       y)
         printf "install directory [%s]: " "$base_path"
         read -r input
-        if ! [ "$input" = "" ]; then
+        if [ "$input" != "" ]; then
             base_path="$input"
         fi
         printf "stack name [%s]: " "$stack_name"
         read -r input
-        if ! [ "$input" = "" ]; then
+        if [ "$input" != "" ]; then
             stack_name="$input"
         fi
         printf "core database password [%s]: " "$core_db_pw"
         read -r input
-        if ! [ "$input" = "" ]; then
+        if [ "$input" != "" ]; then
             core_db_pw="$input"
         fi
         printf "core database root password [%s]: " "$core_db_root_pw"
         read -r input
-        if ! [ "$input" = "" ]; then
+        if [ "$input" != "" ]; then
             core_db_root_pw="$input"
         fi
         printf "core subnet [%s]: " "$subnet_core"
         read -r input
-        if ! [ "$input" = "" ]; then
+        if [ "$input" != "" ]; then
             subnet_core="$input"
         fi
         printf "module subnet [%s]: " "$subnet_module"
         read -r input
-        if ! [ "$input" = "" ]; then
+        if [ "$input" != "" ]; then
             subnet_module="$input"
         fi
         printf "gateway subnet [%s]: " "$subnet_gateway"
         read -r input
-        if ! [ "$input" = "" ]; then
+        if [ "$input" != "" ]; then
             subnet_gateway="$input"
         fi
         break
-      ;;
+        ;;
       n)
         break
-      ;;
+        ;;
       *)
         echo "unknown option"
     esac
