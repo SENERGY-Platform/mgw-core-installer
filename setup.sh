@@ -7,7 +7,7 @@
 . ./assets/scripts/docker.sh
 
 require_pkg="systemd: apt:"
-install_pkg="curl: tar: gzip: jq: avahi-daemon: gettext-base:envsubst"
+install_pkg="curl: tar: gzip: jq: avahi-daemon: openssl: gettext-base:envsubst"
 binaries="SENERGY-Platform/mgw-container-engine-wrapper SENERGY-Platform/mgw-host-manager"
 base_path=/opt/mgw
 mnt_path=/mnt/mgw
