@@ -236,7 +236,14 @@ handleDefaultSettings() {
         printf "install directory [%s]: " "$base_path"
         read -r input
         if [ "$input" != "" ]; then
-            base_path="$input"
+          case $input in
+            /*)
+              ;;
+            *)
+              echo "must be absolute path"
+              exit 1
+          esac
+          base_path="$input"
         fi
         printf "stack name [%s]: " "$stack_name"
         read -r input
