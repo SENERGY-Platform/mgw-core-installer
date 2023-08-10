@@ -52,14 +52,14 @@ handlePackages() {
       printf "continue? (y/n): "
       read -r choice
       case "$choice" in
-      "y")
+      y)
         if ! installPkg "$missing"
         then
           exit 1
         fi
         break
         ;;
-      "n")
+      n)
         exit 0
         ;;
       *)
