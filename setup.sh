@@ -160,13 +160,13 @@ handleUnits() {
       do
         if real_file="$(getTemplateBase "$file")"
         then
-          if ! envsubst < ./assets/units/services/$file > $systemd_path/$real_file
+          if ! envsubst < ./assets/units/services/$file > $units_path/$real_file
           then
             exit 1
           fi
           file="$real_file"
         else
-          if ! cp ./assets/units/services/$file $systemd_path/$file
+          if ! cp ./assets/units/services/$file $units_path/$file
           then
             exit 1
           fi
@@ -186,13 +186,13 @@ handleUnits() {
   do
     if real_file="$(getTemplateBase "$file")"
     then
-      if ! envsubst < ./assets/units/mounts/$file > $systemd_path/$real_file
+      if ! envsubst < ./assets/units/mounts/$file > $units_path/$real_file
       then
         exit 1
       fi
       file="$real_file"
     else
-      if ! cp ./assets/units/mounts/$file $systemd_path/$file
+      if ! cp ./assets/units/mounts/$file $units_path/$file
       then
         exit 1
       fi
@@ -201,8 +201,13 @@ handleUnits() {
 }
 
 handleSystemd() {
+  units=$(ls $units_path)
   if [ "$units" != "" ]
   then
+    if ! cp $units_path/* $systemd_path
+    then
+      exit 1
+    fi
     if ! systemctl daemon-reload
     then
       exit 1
