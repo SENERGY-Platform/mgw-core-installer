@@ -18,7 +18,6 @@ core_db_root_pw=
 subnet_core=10.0.0.0
 subnet_module=10.1.0.0
 subnet_gateway=10.10.0.0
-units=""
 
 if ! platform="$(getPlatform)"
 then
@@ -168,11 +167,6 @@ handleUnits() {
             exit 1
           fi
         fi
-        if [ "$units" = "" ]; then
-          units="${units}$file"
-        else
-          units="${units} $file"
-        fi
       done
       break
       ;;
@@ -198,11 +192,6 @@ handleUnits() {
       then
         exit 1
       fi
-    fi
-    if [ "$units" = "" ]; then
-      units="${units}$file"
-    else
-      units="${units} $file"
     fi
   done
 }
