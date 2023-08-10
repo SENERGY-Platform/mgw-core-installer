@@ -18,6 +18,7 @@ sockets_path=""
 bin_path=""
 container_path=""
 units_path=""
+no_root=false
 stack_name=mgw-core
 core_db_pw=
 core_db_root_pw=
@@ -148,9 +149,6 @@ handleBinConfigs() {
 }
 
 handleUnits() {
-  if [ "$SYSTEMD_PATH" != "" ]; then
-      systemd_path="$SYSTEMD_PATH"
-  fi
   printf "install systemd services? (y/n): "
   while :
   do
@@ -303,11 +301,35 @@ handleDatabasePasswords() {
   export CORE_DB_PW="$core_db_pw" CORE_DB_ROOT_PW="$core_db_root_pw"
 }
 
-if ! isRoot
-then
-  echo "root privileges required"
-  exit 1
-fi
+handleOptions() {
+  if [ "$SYSTEMD_PATH" != "" ]; then
+    case $SYSTEMD_PATH in
+      /*)
+        ;;
+      *)
+        echo "systemd path must be absolute"
+        exit 1
+    esac
+    systemd_path="$SYSTEMD_PATH"
+  fi
+  if [ "$NO_ROOT" = "true" ]; then
+      no_root=true
+  fi
+}
+
+checkRoot() {
+  if [ "$no_root" = false ]
+  then
+    if ! isRoot
+    then
+      echo "root privileges required"
+      exit 1
+    fi
+  fi
+}
+
+handleOptions
+checkRoot
 handleDefaultSettings
 handleDatabasePasswords
 handlePackages
