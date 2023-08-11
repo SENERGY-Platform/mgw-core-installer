@@ -173,7 +173,6 @@ copyUnits() {
   files=$(ls $1)
   if [ "$files" != "" ]
   then
-    echo "copying systemd units ..."
     for file in ${files}
     do
       if real_file="$(getTemplateBase "$file")"
@@ -203,10 +202,12 @@ copyUnits() {
 handleSystemd() {
   touch $base_path/units
   units=""
+  echo "copying systemd mount units ..."
   if ! units=$(copyUnits ./assets/units/mounts "$units")
   then
     exit 1
   fi
+  echo "copying systemd service units ..."
   if ! units=$(copyUnits ./assets/units/services "$units")
   then
     exit 1
