@@ -407,29 +407,32 @@ do
   esac
 done
 echo
-echo "setting-up installer ..."
+echo "setting up installer ..."
 handleDefaultSettings
 handleDatabasePasswords
-echo "setting-up installer done"
+echo "setting up installer done"
 echo
-echo "setting-up required packages ..."
+echo "setting up required packages ..."
 handlePackages
-echo "setting-up required packages done"
+echo "setting up required packages done"
 echo
-echo "setting-up install directory ..."
+echo "setting up install directory ..."
 prepareInstallDir
-echo "setting-up install done"
+echo "setting up install done"
 echo
-echo "setting-up binaries ..."
+echo "setting up binaries ..."
 handleBin
 handleBinConfigs
-echo "setting-up binaries done"
+echo "setting up binaries done"
 echo
 echo "setting-up systemd integration ..."
 handleUnits
 #handleSystemd
 echo "setting-up systemd integration done"
 echo
-echo "setting-up containers ..."
+echo "setting up containers ..."
 handleContainer
-echo "setting-up containers done"
+echo "setting up containers done"
+echo
+echo "installation successful"
+echo
