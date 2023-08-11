@@ -1,6 +1,6 @@
 {
   "socket": {
-    "path": "${SOCKETS_PATH}",
+    "path": "${SOCKETS_PATH}/h_manager.sock",
     "group_id": 101
   },
   "logger": {

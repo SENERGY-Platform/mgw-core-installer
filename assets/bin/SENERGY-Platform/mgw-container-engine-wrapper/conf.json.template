@@ -1,6 +1,6 @@
 {
   "socket": {
-    "path": "${SOCKETS_PATH}",
+    "path": "${SOCKETS_PATH}/ce_wrapper.sock",
     "group_id": 101
   },
   "logger": {
