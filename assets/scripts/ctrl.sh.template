@@ -1,0 +1,58 @@
+#!/bin/sh
+
+start() {
+  pid=""
+  echo "mounting secrets tmpfs ..."
+  if ! mount -t tmpfs -o size=100M tmpfs /mnt/mgw/secrets
+  then
+    exit 1
+  fi
+  echo "starting ce-wrapper ..."
+  ${BIN_PATH}/SENERGY-Platform/mgw-container-engine-wrapper/bin -config=${BIN_PATH}/SENERGY-Platform/mgw-container-engine-wrapper/conf.json &
+  pid="${pid}$!"
+  echo "starting host-manager ..."
+  ${BIN_PATH}/SENERGY-Platform/mgw-host-manager/bin -config=${BIN_PATH}/SENERGY-Platform/mgw-host-manager/conf.json &
+  pid="${pid} $!"
+  echo "$pid" > ${BIN_PATH}/pid
+}
+
+stop() {
+  echo "stopping processes ..."
+  for pid in ${1}
+  do
+    if ! kill $pid
+    then
+      exit 1
+    fi
+  done
+  echo "unmounting secrets tmpfs ..."
+  if ! umount /mnt/mgw/secrets
+  then
+    exit 1
+  fi
+}
+
+if ! [ "$(id -u)" = "0" ]
+then
+  echo "root privileges required"
+  exit 1
+fi
+case $1 in
+start)
+  start
+  ;;
+stop)
+  if ! pid="$(cat ${BIN_PATH}/pid)"
+  then
+    exit 1
+  fi
+  if [ "$pid" != "" ]
+  then
+    stop "$pid"
+    rm ${BIN_PATH}/pid
+  fi
+  ;;
+*)
+  echo "unknown option"
+  exit 1
+esac
