@@ -23,7 +23,6 @@ deployments_path=""
 sockets_path=""
 bin_path=""
 container_path=""
-units_path=""
 no_root=false
 stack_name="mgw-core"
 core_db_pw=""
@@ -84,7 +83,7 @@ handlePackages() {
 }
 
 prepareInstallDir() {
-  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $units_path
+  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path
   then
     exit 1
   fi
@@ -96,6 +95,7 @@ handleBin() {
   then
     exit 1
   fi
+  touch $bin_path/versions
   for repo in ${binaries}
   do
     echo "checking latest $repo release ..."
@@ -167,68 +167,51 @@ handleBinConfigs() {
   done
 }
 
-handleUnits() {
-  while :
-  do
-    printf "include systemd services? (y/n): "
-    read -r choice
-    case "$choice" in
-    y)
-      echo "copying systemd services ..."
-      files=$(ls ./assets/units/services)
-      for file in ${files}
-      do
-        if real_file="$(getTemplateBase "$file")"
+copyUnits() {
+  units=$2
+  files=$(ls $1)
+  if [ "$files" != "" ]
+  then
+    echo "copying systemd units ..."
+    for file in ${files}
+    do
+      if real_file="$(getTemplateBase "$file")"
+      then
+        if ! envsubst < $1/$file > $systemd_path/$real_file
         then
-          if ! envsubst < ./assets/units/services/$file > $units_path/$real_file
-          then
-            exit 1
-          fi
-          file="$real_file"
-        else
-          if ! cp ./assets/units/services/$file $units_path/$file
-          then
-            exit 1
-          fi
+          return 1
         fi
-      done
-      break
-      ;;
-    n)
-      break
-      ;;
-    *)
-      echo "unknown option"
-    esac
-  done
-  echo "copying systemd mounts ..."
-  files=$(ls ./assets/units/mounts)
-  for file in ${files}
-  do
-    if real_file="$(getTemplateBase "$file")"
-    then
-      if ! envsubst < ./assets/units/mounts/$file > $units_path/$real_file
-      then
-        exit 1
+        file="$real_file"
+      else
+        if ! cp $1/$file $systemd_path/$file
+        then
+          return 1
+        fi
       fi
-      file="$real_file"
-    else
-      if ! cp ./assets/units/mounts/$file $units_path/$file
-      then
-        exit 1
+      if [ "$units" = "" ]; then
+        units="${units}$file"
+      else
+        units="${units} $file"
       fi
-    fi
-  done
+      echo "$file" >> $base_path/units
+    done
+  fi
+  echo "$units"
 }
 
 handleSystemd() {
-  units=$(ls $units_path)
+  touch $base_path/units
+  units=""
+  if ! units=$(copyUnits ./assets/units/mounts "$units")
+  then
+    exit 1
+  fi
+  if ! units=$(copyUnits ./assets/units/services "$units")
+  then
+    exit 1
+  fi
   if [ "$units" != "" ]
   then
-    if ! cp $units_path/* $systemd_path
-    then
-      exit 1
-    fi
     echo "reloading systemd ..."
     if ! systemctl daemon-reload
     then
@@ -313,7 +296,6 @@ handleDefaultSettings() {
   sockets_path=$base_path/sockets
   bin_path=$base_path/bin
   container_path=$base_path/container
-  units_path=$base_path/units
   export \
     SECRETS_PATH="$secrets_path" \
     DEPLOYMENTS_PATH="$deployments_path" \
@@ -342,6 +324,34 @@ handleDatabasePasswords() {
     fi
   fi
   export CORE_DB_PW="$core_db_pw" CORE_DB_ROOT_PW="$core_db_root_pw"
+}
+
+handleIntegration() {
+  if ! envsubst '$BIN_PATH' < ./assets/scripts/ctrl.sh.template > $base_path/ctrl.sh
+  then
+    return 1
+  fi
+  if ! chmod +x $base_path/ctrl.sh
+  then
+    exit 1
+  fi
+  while :
+  do
+    printf "use systemd? (y/n): "
+    read -r choice
+    case "$choice" in
+    y)
+      handleSystemd
+      break
+      ;;
+    n)
+      echo "please use 'ctrl.sh (start/stop)' for manual control"
+      break
+      ;;
+    *)
+      echo "unknown option"
+    esac
+  done
 }
 
 handleContainer() {
@@ -425,10 +435,9 @@ handleBin
 handleBinConfigs
 echo "setting up binaries done"
 echo
-echo "setting-up systemd integration ..."
-handleUnits
-#handleSystemd
-echo "setting-up systemd integration done"
+echo "setting up integration ..."
+handleIntegration
+echo "setting up integration done"
 echo
 echo "setting up containers ..."
 handleContainer
