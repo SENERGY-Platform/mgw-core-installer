@@ -27,7 +27,7 @@ installPkg() {
   then
     return 1
   fi
-  if ! apt-get install -y "$1"
+  if ! apt-get install -y $1
   then
     return 1
   fi
