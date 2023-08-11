@@ -299,16 +299,6 @@ handleDefaultSettings() {
   sockets_path=$base_path/sockets
   bin_path=$base_path/bin
   container_path=$base_path/container
-  export \
-    SECRETS_PATH="$secrets_path" \
-    DEPLOYMENTS_PATH="$deployments_path" \
-    SOCKETS_PATH="$sockets_path" \
-    BIN_PATH="$bin_path" \
-    CONTAINER_PATH="$container_path" \
-    STACK_NAME="$stack_name" \
-    SUBNET_CORE="$subnet_core" \
-    SUBNET_MODULE="$subnet_module" \
-    SUBNET_GATEWAY="$subnet_gateway"
 }
 
 handleDatabasePasswords() {
@@ -326,7 +316,39 @@ handleDatabasePasswords() {
       exit 1
     fi
   fi
-  export CORE_DB_PW="$core_db_pw" CORE_DB_ROOT_PW="$core_db_root_pw"
+}
+
+saveSettings() {
+  echo \
+"base_path=$base_path
+secrets_path=$secrets_path
+deployments_path=$deployments_path
+sockets_path=$sockets_path
+bin_path=$bin_path
+container_path=$container_path
+stack_name=$stack_name
+subnet_core=$subnet_core
+subnet_module=$subnet_module
+subnet_gateway=$subnet_gateway
+core_db_pw=$core_db_pw
+core_db_root_pw=$core_db_root_pw" \
+  > $base_path/.settings
+}
+
+handleEnvExport() {
+  export \
+    BASE_PATH="$base_path" \
+    SECRETS_PATH="$secrets_path" \
+    DEPLOYMENTS_PATH="$deployments_path" \
+    SOCKETS_PATH="$sockets_path" \
+    BIN_PATH="$bin_path" \
+    CONTAINER_PATH="$container_path" \
+    STACK_NAME="$stack_name" \
+    SUBNET_CORE="$subnet_core" \
+    SUBNET_MODULE="$subnet_module" \
+    SUBNET_GATEWAY="$subnet_gateway" \
+    CORE_DB_PW="$core_db_pw" \
+    CORE_DB_ROOT_PW="$core_db_root_pw"
 }
 
 handleIntegration() {
@@ -456,6 +478,7 @@ echo
 echo "setting up installer ..."
 handleDefaultSettings
 handleDatabasePasswords
+handleEnvExport
 echo "setting up installer done"
 echo
 echo "setting up required packages ..."
@@ -464,6 +487,7 @@ echo "setting up required packages done"
 echo
 echo "setting up install directory ..."
 prepareInstallDir
+saveSettings
 echo "setting up install done"
 echo
 echo "setting up binaries ..."
