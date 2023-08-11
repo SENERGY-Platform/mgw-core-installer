@@ -24,6 +24,7 @@ sockets_path=""
 bin_path=""
 container_path=""
 no_root=false
+bin_started=false
 stack_name="mgw-core"
 core_db_pw=""
 core_db_root_pw=""
@@ -230,6 +231,7 @@ handleSystemd() {
         exit 1
       fi
     done
+    bin_started=true
   fi
 }
 
@@ -372,6 +374,39 @@ handleContainer() {
   fi
 }
 
+handleDocker() {
+  echo "creating containers ..."
+  cd $container_path
+  if ! docker compose create
+  then
+    exit 1
+  fi
+  if [ "$bin_started" = "true" ]
+  then
+    while :
+    do
+      printf "start containers? (y/n): "
+      read -r choice
+      case $choice in
+      y)
+        if ! docker compose start
+        then
+          exit 1
+        fi
+        break
+        ;;
+      n)
+        echo "please use 'docker compose start' to manually start containers"
+        break
+        ;;
+      *)
+        echo "unknown option"
+      esac
+    done
+  fi
+  cd $setup_path
+}
+
 handleOptions() {
   if [ "$SYSTEMD_PATH" != "" ]; then
     case $SYSTEMD_PATH in
@@ -441,6 +476,7 @@ echo "setting up integration done"
 echo
 echo "setting up containers ..."
 handleContainer
+handleDocker
 echo "setting up containers done"
 echo
 echo "installation successful"
