@@ -4,7 +4,8 @@
     "group_id": 101
   },
   "logger": {
-    "path": "/var/log"
+    "path": "${LOG_PATH}",
+    "file_name": "h_manager"
   },
   "applications_path": "${BIN_PATH}/SENERGY-Platform/mgw-host-manager/applications.json"
 }
