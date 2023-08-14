@@ -68,7 +68,7 @@ handlePackages() {
       printf "continue? (y/n): "
       read -r choice
       case "$choice" in
-      y)
+      y|"")
         if ! installPkg "$missing"
         then
           exit 1
@@ -249,7 +249,7 @@ handleLogrotate() {
 handleDefaultSettings() {
   while :
   do
-    printf "change default settings? (y/n): "
+    printf "change default settings? (n/y): "
     read -r choice
     case "$choice" in
       y)
@@ -297,7 +297,7 @@ handleDefaultSettings() {
         fi
         break
         ;;
-      n)
+      n|"")
         break
         ;;
       *)
@@ -379,7 +379,7 @@ handleIntegration() {
     printf "use systemd? (y/n): "
     read -r choice
     case "$choice" in
-    y)
+    y|"")
       handleSystemd
       break
       ;;
@@ -396,7 +396,7 @@ handleIntegration() {
     printf "use logrotate? (y/n): "
     read -r choice
     case "$choice" in
-    y)
+    y|"")
       handleLogrotate
       break
       ;;
@@ -441,7 +441,7 @@ handleDocker() {
       printf "start containers? (y/n): "
       read -r choice
       case $choice in
-      y)
+      y|"")
         if ! docker compose start
         then
           exit 1
@@ -504,7 +504,7 @@ do
   printf "install multi-gateway core? (y/n): "
   read -r choice
   case $choice in
-  y)
+  y|"")
     break
     ;;
   n)
