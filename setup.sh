@@ -23,6 +23,7 @@ deployments_path=""
 sockets_path=""
 bin_path=""
 container_path=""
+log_path=""
 no_root=false
 bin_started=false
 stack_name="mgw-core"
@@ -84,7 +85,7 @@ handlePackages() {
 }
 
 prepareInstallDir() {
-  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path
+  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $log_path
   then
     exit 1
   fi
@@ -299,6 +300,7 @@ handleDefaultSettings() {
   sockets_path=$base_path/sockets
   bin_path=$base_path/bin
   container_path=$base_path/container
+  log_path=$base_path/log
 }
 
 handleDatabasePasswords() {
@@ -326,6 +328,7 @@ deployments_path=$deployments_path
 sockets_path=$sockets_path
 bin_path=$bin_path
 container_path=$container_path
+log_path=$log_path
 stack_name=$stack_name
 subnet_core=$subnet_core
 subnet_module=$subnet_module
@@ -344,6 +347,7 @@ handleEnvExport() {
     SOCKETS_PATH="$sockets_path" \
     BIN_PATH="$bin_path" \
     CONTAINER_PATH="$container_path" \
+    LOG_PATH="$log_path" \
     STACK_NAME="$stack_name" \
     SUBNET_CORE="$subnet_core" \
     SUBNET_MODULE="$subnet_module" \
