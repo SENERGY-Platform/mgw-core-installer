@@ -331,7 +331,8 @@ subnet_core=$subnet_core
 subnet_module=$subnet_module
 subnet_gateway=$subnet_gateway
 core_db_pw=$core_db_pw
-core_db_root_pw=$core_db_root_pw" \
+core_db_root_pw=$core_db_root_pw
+systemd_path=$systemd_path" \
   > $base_path/.settings
 }
 
