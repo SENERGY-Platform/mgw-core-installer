@@ -393,7 +393,7 @@ handleIntegration() {
   done
   while :
   do
-    printf "use logrotate? (y/n)"
+    printf "use logrotate? (y/n): "
     read -r choice
     case "$choice" in
     y)
