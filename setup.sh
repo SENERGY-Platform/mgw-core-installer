@@ -16,7 +16,7 @@ require_pkg="systemd: apt:"
 install_pkg="curl: tar: gzip: jq: avahi-daemon:/usr/sbin/avahi-daemon openssl: gettext-base:envsubst logrotate:/usr/sbin/logrotate"
 binaries="SENERGY-Platform/mgw-container-engine-wrapper SENERGY-Platform/mgw-host-manager"
 systemd_path=/etc/systemd/system
-logrotate_path=/etc/logrotate.d
+logrotated_path=/etc/logrotate.d
 mnt_path=/mnt/mgw
 base_path=/opt/mgw
 secrets_path=""
@@ -240,7 +240,7 @@ handleSystemd() {
 
 handleLogrotate() {
   echo "copying logrotate config ..."
-  if ! envsubst < ./assets/logrotate/mgw_core.template > $logrotate_path/mgw_core
+  if ! envsubst < ./assets/logrotate/mgw_core.template > $logrotated_path/mgw_core
   then
     exit 1
   fi
