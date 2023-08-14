@@ -391,6 +391,22 @@ handleIntegration() {
       echo "unknown option"
     esac
   done
+  while :
+  do
+    printf "use logrotate? (y/n)"
+    read -r choice
+    case "$choice" in
+    y)
+      handleLogrotate
+      break
+      ;;
+    n)
+      break
+      ;;
+    *)
+      echo "unknown option"
+    esac
+  done
 }
 
 handleContainer() {
@@ -521,7 +537,6 @@ echo "setting up binaries done"
 echo
 echo "setting up integration ..."
 handleIntegration
-handleLogrotate
 echo "setting up integration done"
 echo
 echo "setting up containers ..."
