@@ -137,7 +137,7 @@ handleBin() {
     then
       exit 1
     fi
-    echo "$repo $version" >> $bin_path/versions
+    echo "$repo:$version" >> $bin_path/versions
   done
   rm -r "$wrk_spc"
 }
