@@ -1,0 +1,17 @@
+${LOG_PATH}/ce_wrapper.log {
+  rotate 12
+  monthly
+  minsize 10M
+  compress
+  missingok
+  copytruncate
+}
+
+${LOG_PATH}/h_manager.log {
+  rotate 12
+  monthly
+  minsize 10M
+  compress
+  missingok
+  copytruncate
+}
