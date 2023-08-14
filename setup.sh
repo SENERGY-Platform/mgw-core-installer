@@ -515,34 +515,34 @@ do
   esac
 done
 echo
-printf "\e[95;1msetting up installer ...\e[0m\n"
+printf "\e[93;1msetting up installer ...\e[0m\n"
 handleDefaultSettings
 handleDatabasePasswords
 handleEnvExport
-printf "\e[95;1msetting up installer done\e[0m\n"
+printf "\e[93;1msetting up installer done\e[0m\n"
 echo
-printf "\e[95;1msetting up required packages ...\e[0m\n"
+printf "\e[93;1msetting up required packages ...\e[0m\n"
 handlePackages
-printf "\e[95;1msetting up required packages done\e[0m\n"
+printf "\e[93;1msetting up required packages done\e[0m\n"
 echo
-printf "\e[95;1msetting up install directory ...\e[0m\n"
+printf "\e[93;1msetting up install directory ...\e[0m\n"
 prepareInstallDir
 saveSettings
-printf "\e[95;1msetting up install done\e[0m\n"
+printf "\e[93;1msetting up install done\e[0m\n"
 echo
-printf "\e[95;1msetting up binaries ...\e[0m\n"
+printf "\e[93;1msetting up binaries ...\e[0m\n"
 handleBin
 handleBinConfigs
-printf "\e[95;1msetting up binaries done\e[0m\n"
+printf "\e[93;1msetting up binaries done\e[0m\n"
 echo
-printf "\e[95;1msetting up integration ...\e[0m\n"
+printf "\e[93;1msetting up integration ...\e[0m\n"
 handleIntegration
-printf "\e[95;1msetting up integration done\e[0m\n"
+printf "\e[93;1msetting up integration done\e[0m\n"
 echo
-printf "\e[95;1msetting up container environment ...\e[0m\n"
+printf "\e[93;1msetting up container environment ...\e[0m\n"
 handleContainer
 handleDocker
-printf "\e[95;1msetting up container environment done\e[0m\n"
+printf "\e[93;1msetting up container environment done\e[0m\n"
 echo
 printf "\e[92;1minstallation successful\e[0m\n"
 echo
