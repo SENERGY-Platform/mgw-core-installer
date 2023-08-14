@@ -455,6 +455,16 @@ handleOptions() {
     esac
     systemd_path="$SYSTEMD_PATH"
   fi
+  if [ "$LOGROTATED_PATH" != "" ]; then
+    case $LOGROTATED_PATH in
+      /*)
+        ;;
+      *)
+        echo "logrotate.d path must be absolute"
+        exit 1
+    esac
+    logrotated_path="$$LOGROTATED_PATH"
+  fi
   if [ "$NO_ROOT" = "true" ]; then
       no_root=true
   fi
