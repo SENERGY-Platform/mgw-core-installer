@@ -5,4 +5,5 @@ ${LOG_PATH}/*.log {
   compress
   missingok
   copytruncate
+  notifempty
 }
