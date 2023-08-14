@@ -62,10 +62,10 @@ handlePackages() {
   missing=$(getMissingPkg "$install_pkg")
   if [ "$missing" != "" ]
   then
-    printf "the following new packages will be installed: %s \n" "$missing"
+    printf "\e[96;1mthe following new packages will be installed:\e[0m %s \n" "$missing"
     while :
     do
-      printf "continue? (y/n): "
+      printf "\e[96;1mcontinue? (y/n):\e[0m "
       read -r choice
       case "$choice" in
       y|"")
@@ -249,7 +249,7 @@ handleLogrotate() {
 handleDefaultSettings() {
   while :
   do
-    printf "change default settings? (n/y): "
+    printf "\e[96;1mchange default settings? (n/y):\e[0m "
     read -r choice
     case "$choice" in
       y)
@@ -376,7 +376,7 @@ handleIntegration() {
   fi
   while :
   do
-    printf "use systemd? (y/n): "
+    printf "\e[96;1muse systemd? (y/n):\e[0m "
     read -r choice
     case "$choice" in
     y|"")
@@ -393,7 +393,7 @@ handleIntegration() {
   done
   while :
   do
-    printf "use logrotate? (y/n): "
+    printf "\e[96;1muse logrotate? (y/n):\e[0m "
     read -r choice
     case "$choice" in
     y|"")
@@ -438,7 +438,7 @@ handleDocker() {
   then
     while :
     do
-      printf "start containers? (y/n): "
+      printf "\e[96;1mstart containers? (y/n):\e[0m "
       read -r choice
       case $choice in
       y|"")
@@ -501,7 +501,7 @@ handleOptions
 checkRoot
 while :
 do
-  printf "install multi-gateway core? (y/n): "
+  printf "\e[96;1minstall multi-gateway core? (y/n):\e[0m "
   read -r choice
   case $choice in
   y|"")
@@ -515,34 +515,34 @@ do
   esac
 done
 echo
-echo "setting up installer ..."
+printf "\e[95;1msetting up installer ...\e[0m\n"
 handleDefaultSettings
 handleDatabasePasswords
 handleEnvExport
-echo "setting up installer done"
+printf "\e[95;1msetting up installer done\e[0m\n"
 echo
-echo "setting up required packages ..."
+printf "\e[95;1msetting up required packages ...\e[0m\n"
 handlePackages
-echo "setting up required packages done"
+printf "\e[95;1msetting up required packages done\e[0m\n"
 echo
-echo "setting up install directory ..."
+printf "\e[95;1msetting up install directory ...\e[0m\n"
 prepareInstallDir
 saveSettings
-echo "setting up install done"
+printf "\e[95;1msetting up install done\e[0m\n"
 echo
-echo "setting up binaries ..."
+printf "\e[95;1msetting up binaries ...\e[0m\n"
 handleBin
 handleBinConfigs
-echo "setting up binaries done"
+printf "\e[95;1msetting up binaries done\e[0m\n"
 echo
-echo "setting up integration ..."
+printf "\e[95;1msetting up integration ...\e[0m\n"
 handleIntegration
-echo "setting up integration done"
+printf "\e[95;1msetting up integration done\e[0m\n"
 echo
-echo "setting up containers ..."
+printf "\e[95;1msetting up container environment ...\e[0m\n"
 handleContainer
 handleDocker
-echo "setting up containers done"
+printf "\e[95;1msetting up container environment done\e[0m\n"
 echo
-echo "installation successful"
+printf "\e[92;1minstallation successful\e[0m\n"
 echo
