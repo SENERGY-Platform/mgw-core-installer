@@ -528,7 +528,7 @@ echo
 printf "\e[93;1msetting up install directory ...\e[0m\n"
 prepareInstallDir
 saveSettings
-printf "\e[93;1msetting up install done\e[0m\n"
+printf "\e[93;1msetting up install directory done\e[0m\n"
 echo
 printf "\e[93;1msetting up binaries ...\e[0m\n"
 handleBin
