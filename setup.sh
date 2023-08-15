@@ -464,7 +464,7 @@ echo
 printf "\e[93;1msetting up installer ...\e[0m\n"
 handleDefaultSettings
 handleDatabasePasswords
-handleEnvExport
+exportSettingsToEnv
 printf "\e[93;1msetting up installer done\e[0m\n"
 echo
 printf "\e[93;1msetting up required packages ...\e[0m\n"

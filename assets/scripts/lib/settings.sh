@@ -40,7 +40,7 @@ logrotated_path=$logrotated_path" \
   > $base_path/.settings
 }
 
-handleEnvExport() {
+exportSettingsToEnv() {
   export \
     BASE_PATH="$base_path" \
     SECRETS_PATH="$secrets_path" \
