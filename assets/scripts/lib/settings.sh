@@ -1,5 +1,6 @@
 #!/bin/sh
 
+binaries="SENERGY-Platform/mgw-container-engine-wrapper SENERGY-Platform/mgw-host-manager"
 systemd_path=/etc/systemd/system
 logrotated_path=/etc/logrotate.d
 mnt_path=/mnt/mgw
