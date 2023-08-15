@@ -344,7 +344,8 @@ subnet_module=$subnet_module
 subnet_gateway=$subnet_gateway
 core_db_pw=$core_db_pw
 core_db_root_pw=$core_db_root_pw
-systemd_path=$systemd_path" \
+systemd_path=$systemd_path
+logrotated_path=$logrotated_path" \
   > $base_path/.settings
 }
 
