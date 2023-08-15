@@ -6,11 +6,11 @@ then
   exit 1
 fi
 
-. ./assets/scripts/lib.sh
-. ./assets/scripts/os.sh
-. ./assets/scripts/package.sh
-. ./assets/scripts/github.sh
-. ./assets/scripts/docker.sh
+. ./assets/scripts/lib/util.sh
+. ./assets/scripts/lib/os.sh
+. ./assets/scripts/lib/package.sh
+. ./assets/scripts/lib/github.sh
+. ./assets/scripts/lib/docker.sh
 
 require_pkg="systemd: apt:"
 install_pkg="curl: tar: gzip: jq: avahi-daemon:/usr/sbin/avahi-daemon openssl: gettext-base:envsubst logrotate:/usr/sbin/logrotate"
