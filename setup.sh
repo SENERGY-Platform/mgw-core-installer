@@ -6,6 +6,7 @@ then
   exit 1
 fi
 
+. ./assets/scripts/lib/settings.sh
 . ./assets/scripts/lib/util.sh
 . ./assets/scripts/lib/os.sh
 . ./assets/scripts/lib/package.sh
@@ -15,24 +16,6 @@ fi
 require_pkg="systemd: apt:"
 install_pkg="curl: tar: gzip: jq: avahi-daemon:/usr/sbin/avahi-daemon openssl: gettext-base:envsubst logrotate:/usr/sbin/logrotate"
 binaries="SENERGY-Platform/mgw-container-engine-wrapper SENERGY-Platform/mgw-host-manager"
-systemd_path=/etc/systemd/system
-logrotated_path=/etc/logrotate.d
-mnt_path=/mnt/mgw
-base_path=/opt/mgw
-secrets_path=""
-deployments_path=""
-sockets_path=""
-bin_path=""
-container_path=""
-log_path=""
-no_root=false
-bin_started=false
-stack_name="mgw-core"
-core_db_pw=""
-core_db_root_pw=""
-subnet_core="10.0.0.0"
-subnet_module="10.1.0.0"
-subnet_gateway="10.10.0.0"
 
 if ! platform="$(getPlatform)"
 then
@@ -327,43 +310,6 @@ handleDatabasePasswords() {
       exit 1
     fi
   fi
-}
-
-saveSettings() {
-  echo \
-"base_path=$base_path
-secrets_path=$secrets_path
-deployments_path=$deployments_path
-sockets_path=$sockets_path
-bin_path=$bin_path
-container_path=$container_path
-log_path=$log_path
-stack_name=$stack_name
-subnet_core=$subnet_core
-subnet_module=$subnet_module
-subnet_gateway=$subnet_gateway
-core_db_pw=$core_db_pw
-core_db_root_pw=$core_db_root_pw
-systemd_path=$systemd_path
-logrotated_path=$logrotated_path" \
-  > $base_path/.settings
-}
-
-handleEnvExport() {
-  export \
-    BASE_PATH="$base_path" \
-    SECRETS_PATH="$secrets_path" \
-    DEPLOYMENTS_PATH="$deployments_path" \
-    SOCKETS_PATH="$sockets_path" \
-    BIN_PATH="$bin_path" \
-    CONTAINER_PATH="$container_path" \
-    LOG_PATH="$log_path" \
-    STACK_NAME="$stack_name" \
-    SUBNET_CORE="$subnet_core" \
-    SUBNET_MODULE="$subnet_module" \
-    SUBNET_GATEWAY="$subnet_gateway" \
-    CORE_DB_PW="$core_db_pw" \
-    CORE_DB_ROOT_PW="$core_db_root_pw"
 }
 
 handleIntegration() {
