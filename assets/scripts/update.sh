@@ -20,7 +20,22 @@ handleRelease() {
   fi
   if [ "$new_version" != "null" ] && [ "$version" != "$new_version" ]
   then
-    echo "new release: $new_version"
+    echo "new release available: $new_version"
+    while :
+    do
+      printf "\e[96;1update? (y/n):\e[0m "
+      read -r choice
+      case $choice in
+      y|"")
+        break
+        ;;
+      n)
+        exit 0
+        ;;
+      *)
+        echo "unknown option"
+      esac
+    done
     wrk_spc="/tmp/mgw-update"
     if ! mkdir -p $wrk_spc
     then
