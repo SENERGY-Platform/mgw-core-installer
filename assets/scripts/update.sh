@@ -84,9 +84,13 @@ then
   exit
 fi
 
-. ./lib/settings.sh
-. ./lib/util.sh
-. ./lib/os.sh
-. ./lib/github.sh
-. ./lib/docker.sh
+cd ../..
+
+. ./assets/scripts/lib/var
+. ./assets/scripts/lib/settings.sh
+. ./assets/scripts/lib/util.sh
+. ./assets/scripts/lib/os.sh
+. ./assets/scripts/lib/package.sh
+. ./assets/scripts/lib/github.sh
+. ./assets/scripts/lib/docker.sh
 . $1/.settings
