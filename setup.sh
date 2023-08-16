@@ -87,39 +87,47 @@ handleBin() {
     echo "checking latest $repo release ..."
     if ! release="$(getGitHubRelease "$repo")"
     then
+      rm -r "$wrk_spc"
       exit 1
     fi
     if ! version="$(getGitHubReleaseVersion "$release")"
     then
+      rm -r "$wrk_spc"
       exit 1
     fi
     echo "downloading $repo $version ..."
     if ! asset_url="$(getGitHubReleaseAssetUrl "$release" "$platform")"
     then
+      rm -r "$wrk_spc"
       exit 1
     fi
     dl_pth="$wrk_spc/$repo"
     if ! mkdir -p $dl_pth
     then
+      rm -r "$wrk_spc"
       exit 1
     fi
     if ! file="$(downloadFile "$asset_url" "$dl_pth")"
     then
+      rm -r "$wrk_spc"
       exit 1
     fi
     echo "extracting $repo ..."
     if ! extract_path="$(extractTar "$file")"
     then
+      rm -r "$wrk_spc"
       exit 1
     fi
     echo "copying $repo ..."
     target_path="$bin_path/$repo"
     if ! mkdir -p $target_path
     then
+      rm -r "$wrk_spc"
       exit 1
     fi
     if ! cp -r $extract_path/$arch/* $target_path
     then
+      rm -r "$wrk_spc"
       exit 1
     fi
     echo "$repo:$version" >> $bin_path/versions
