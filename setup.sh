@@ -69,7 +69,7 @@ handlePackages() {
 }
 
 prepareInstallDir() {
-  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $log_path
+  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $log_path $scripts_path
   then
     exit 1
   fi
