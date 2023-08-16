@@ -85,7 +85,15 @@ prepareInstallDir() {
   then
     exit 1
   fi
-  if ! cp -r ./assets/scripts/lib $base_path/scripts
+  if ! cp ./assets/scripts/lib/util.sh $base_path/scripts/util.sh
+  then
+    exit 1
+  fi
+  if ! cp ./assets/scripts/lib/github.sh $base_path/scripts/github.sh
+  then
+    exit 1
+  fi
+  if ! cp .version $base_path/.version
   then
     exit 1
   fi
