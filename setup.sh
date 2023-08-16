@@ -337,14 +337,6 @@ handleDatabasePasswords() {
 }
 
 handleIntegration() {
-  if ! envsubst '$BIN_PATH' < ./assets/scripts/ctrl.sh.template > $base_path/ctrl.sh
-  then
-    exit 1
-  fi
-  if ! chmod +x $base_path/ctrl.sh
-  then
-    exit 1
-  fi
   while :
   do
     printf "\e[96;1muse systemd? (y/n):\e[0m "
