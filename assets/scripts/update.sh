@@ -7,6 +7,7 @@ then
 fi
 
 repo="SENERGY-Platform/mgw-core-installer"
+install_path=""
 
 handleRelease() {
   echo "checking for new release ..."
@@ -86,6 +87,8 @@ fi
 
 cd ../..
 
+install_path=$1
+
 . ./assets/scripts/lib/var
 . ./assets/scripts/lib/settings.sh
 . ./assets/scripts/lib/util.sh
@@ -94,3 +97,5 @@ cd ../..
 . ./assets/scripts/lib/github.sh
 . ./assets/scripts/lib/docker.sh
 . $1/.settings
+. $install_path/.settings
+
