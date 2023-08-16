@@ -1,9 +1,7 @@
 #!/bin/sh
 
-binaries="SENERGY-Platform/mgw-container-engine-wrapper SENERGY-Platform/mgw-host-manager"
 systemd_path=/etc/systemd/system
 logrotated_path=/etc/logrotate.d
-mnt_path=/mnt/mgw
 base_path=/opt/mgw
 secrets_path=""
 deployments_path=""
@@ -12,8 +10,6 @@ bin_path=""
 container_path=""
 log_path=""
 scripts_path=""
-no_root=false
-bin_started=false
 stack_name="mgw-core"
 core_db_pw=""
 core_db_root_pw=""

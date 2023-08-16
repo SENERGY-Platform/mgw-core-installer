@@ -6,6 +6,7 @@ then
   exit 1
 fi
 
+. ./assets/scripts/lib/var
 . ./assets/scripts/lib/settings.sh
 . ./assets/scripts/lib/util.sh
 . ./assets/scripts/lib/os.sh
@@ -13,8 +14,6 @@ fi
 . ./assets/scripts/lib/github.sh
 . ./assets/scripts/lib/docker.sh
 
-require_pkg="systemd: apt:"
-install_pkg="curl: tar: gzip: jq: avahi-daemon:/usr/sbin/avahi-daemon openssl: gettext-base:envsubst logrotate:/usr/sbin/logrotate"
 version="$(cat .version)"
 
 if ! platform="$(getPlatform)"
