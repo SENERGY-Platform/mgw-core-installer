@@ -18,7 +18,7 @@ handleRelease() {
   then
     exit 1
   fi
-  if [ "$version" != "$new_version" ]
+  if [ "$new_version" != "null" ] && [ "$version" != "$new_version" ]
   then
     echo "new release: $new_version"
     wrk_spc="/tmp/mgw-update"
