@@ -10,7 +10,7 @@ repo="SENERGY-Platform/mgw-core-installer"
 install_path=""
 
 handleRelease() {
-  echo "checking for new release ..."
+  printf "\e[93;1mchecking for new release ...\e[0m\n"
   if ! release="$(getGitHubRelease "$repo")"
   then
     exit 1
@@ -37,6 +37,8 @@ handleRelease() {
         echo "unknown option"
       esac
     done
+    echo
+    printf "\e[93;1mgetting new release ...\e[0m\n"
     wrk_spc="/tmp/mgw-update"
     if ! mkdir -p $wrk_spc
     then
@@ -59,6 +61,8 @@ handleRelease() {
       rm -r "$wrk_spc"
       exit 1
     fi
+    printf "\e[93;1mgetting new release done\e[0m\n"
+    echo
     $extract_path/assets/update.sh "$base_path"
   else
     echo "latest release at $new_version, nothing to do"
@@ -123,6 +127,14 @@ install_path=$1
 . ./assets/scripts/lib/package.sh
 . ./assets/scripts/lib/github.sh
 . ./assets/scripts/lib/docker.sh
-. $1/.settings
 . $install_path/.settings
 
+checkRoot
+printf "\e[93;1msetting up updater ...\e[0m\n"
+exportSettingsToEnv
+#saveSettings
+printf "\e[93;1msetting up updater done\e[0m\n"
+echo
+printf "\e[93;1msetting up required packages ...\e[0m\n"
+handlePackages
+printf "\e[93;1msetting up required packages done\e[0m\n"
