@@ -58,10 +58,17 @@ handleRelease() {
       rm -r "$wrk_spc"
       exit 1
     fi
-    echo "starting update ..."
-    $extract_path/assets/update.sh "$base_path" &
+    $extract_path/assets/update.sh "$base_path"
   else
     echo "latest release at $new_version, nothing to do"
+  fi
+}
+
+checkRoot() {
+  if ! isRoot
+  then
+    echo "root privileges required"
+    exit 1
   fi
 }
 
@@ -70,6 +77,7 @@ then
   . ./scripts/util.sh
   . ./scripts/github.sh
   . ./.settings
+  checkRoot
   version="$(cat .version)"
   echo "installed release: $version"
   handleRelease
