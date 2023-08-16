@@ -325,6 +325,7 @@ handleDefaultSettings() {
   bin_path=$base_path/bin
   container_path=$base_path/container
   log_path=$base_path/log
+  scripts_path=$base_path/scripts
 }
 
 handleDatabasePasswords() {
