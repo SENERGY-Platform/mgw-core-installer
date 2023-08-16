@@ -15,6 +15,7 @@ fi
 
 require_pkg="systemd: apt:"
 install_pkg="curl: tar: gzip: jq: avahi-daemon:/usr/sbin/avahi-daemon openssl: gettext-base:envsubst logrotate:/usr/sbin/logrotate"
+version="$(cat .version)"
 
 if ! platform="$(getPlatform)"
 then
@@ -447,7 +448,7 @@ handleOptions
 checkRoot
 while :
 do
-  printf "\e[96;1minstall multi-gateway core? (y/n):\e[0m "
+  printf "\e[96;1minstall multi-gateway core %s? (y/n):\e[0m " "$version"
   read -r choice
   case $choice in
   y|"")
