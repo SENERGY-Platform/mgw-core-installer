@@ -73,6 +73,22 @@ prepareInstallDir() {
   then
     exit 1
   fi
+  if ! envsubst '$BIN_PATH' < ./assets/scripts/ctrl.sh.template > $base_path/ctrl.sh
+  then
+    exit 1
+  fi
+  if ! chmod +x $base_path/ctrl.sh
+  then
+    exit 1
+  fi
+  if ! cp ./assets/scripts/update.sh $base_path/update.sh
+  then
+    exit 1
+  fi
+  if ! cp -r ./assets/scripts/lib $base_path/scripts
+  then
+    exit 1
+  fi
 }
 
 handleBin() {
