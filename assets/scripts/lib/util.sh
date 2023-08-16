@@ -52,3 +52,16 @@ inArray() {
   done
   return 1
 }
+
+inMap() {
+  for item in ${1}
+  do
+    key="${item%%:*}"
+    if [ "$key" = "$2" ]
+    then
+      echo "${item##*:}"
+      return 0
+    fi
+  done
+  return 1
+}
