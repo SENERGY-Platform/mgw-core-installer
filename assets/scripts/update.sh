@@ -65,6 +65,33 @@ handleRelease() {
   fi
 }
 
+handlePackages() {
+  missing=$(getMissingPkg "$install_pkg")
+  if [ "$missing" != "" ]
+  then
+    printf "\e[96;1mthe following new packages will be installed:\e[0m %s \n" "$missing"
+    while :
+    do
+      printf "\e[96;1mcontinue? (y/n):\e[0m "
+      read -r choice
+      case "$choice" in
+      y|"")
+        if ! installPkg "$missing"
+        then
+          exit 1
+        fi
+        break
+        ;;
+      n)
+        exit 0
+        ;;
+      *)
+        echo "unknown option"
+      esac
+    done
+  fi
+}
+
 checkRoot() {
   if ! isRoot
   then
