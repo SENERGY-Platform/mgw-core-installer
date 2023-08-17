@@ -65,3 +65,33 @@ inMap() {
   done
   return 1
 }
+
+copyWithTemplates() {
+  items="$3"
+  files=$(ls $1)
+  if [ "$files" != "" ]
+  then
+    for file in ${files}
+    do
+      if real_file="$(getTemplateBase "$file")"
+      then
+        if ! envsubst < $1/$file > $2/$real_file
+        then
+          return 1
+        fi
+        file="$real_file"
+      else
+        if ! cp $1/$file $2/$file
+        then
+          return 1
+        fi
+      fi
+      if [ "$items" = "" ]; then
+        items="${items}$file"
+      else
+        items="${items} $file"
+      fi
+    done
+  fi
+  echo "$items"
+}

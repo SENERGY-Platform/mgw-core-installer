@@ -181,46 +181,15 @@ handleBinConfigs() {
   done
 }
 
-copyUnits() {
-  units=$2
-  files=$(ls $1)
-  if [ "$files" != "" ]
-  then
-    for file in ${files}
-    do
-      if real_file="$(getTemplateBase "$file")"
-      then
-        if ! envsubst < $1/$file > $systemd_path/$real_file
-        then
-          return 1
-        fi
-        file="$real_file"
-      else
-        if ! cp $1/$file $systemd_path/$file
-        then
-          return 1
-        fi
-      fi
-      if [ "$units" = "" ]; then
-        units="${units}$file"
-      else
-        units="${units} $file"
-      fi
-      echo "$file" >> $base_path/.units
-    done
-  fi
-  echo "$units"
-}
-
 handleSystemd() {
   units=""
   echo "copying systemd mount units ..."
-  if ! units=$(copyUnits ./assets/units/mounts "$units")
+  if ! units=$(copyWithTemplates ./assets/units/mounts $systemd_path "$units")
   then
     exit 1
   fi
   echo "copying systemd service units ..."
-  if ! units=$(copyUnits ./assets/units/services "$units")
+  if ! units=$(copyWithTemplates ./assets/units/services $systemd_path "$units")
   then
     exit 1
   fi
