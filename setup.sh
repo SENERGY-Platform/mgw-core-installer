@@ -15,6 +15,8 @@ fi
 . ./assets/scripts/lib/docker.sh
 
 version="$(cat .version)"
+bin_started=false
+no_root=false
 
 if ! platform="$(getPlatform)"
 then
