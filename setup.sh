@@ -16,7 +16,6 @@ fi
 
 version="$(cat .version)"
 bin_started=false
-no_root=false
 
 if ! platform="$(getPlatform)"
 then
@@ -419,19 +418,13 @@ handleOptions() {
     esac
     logrotated_path="$LOGROTATED_PATH"
   fi
-  if [ "$NO_ROOT" = "true" ]; then
-      no_root=true
-  fi
 }
 
 checkRoot() {
-  if [ "$no_root" = false ]
+  if ! isRoot
   then
-    if ! isRoot
-    then
-      echo "root privileges required"
-      exit 1
-    fi
+    echo "root privileges required"
+    exit 1
   fi
 }
 
