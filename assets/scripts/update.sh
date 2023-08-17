@@ -7,7 +7,9 @@ then
 fi
 
 repo="SENERGY-Platform/mgw-core-installer"
-install_path=""
+install_path=$1
+wrk_spc="/tmp/mgw-update"
+units=""
 
 handleRelease() {
   printf "\e[93;1mchecking for new release ...\e[0m\n"
