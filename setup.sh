@@ -465,7 +465,6 @@ printf "\e[93;1msetting up required packages done\e[0m\n"
 echo
 printf "\e[93;1msetting up install directory ...\e[0m\n"
 prepareInstallDir
-saveSettings
 printf "\e[93;1msetting up install directory done\e[0m\n"
 echo
 printf "\e[93;1msetting up binaries ...\e[0m\n"
@@ -482,5 +481,6 @@ handleContainer
 handleDocker
 printf "\e[93;1msetting up container environment done\e[0m\n"
 echo
+saveSettings
 printf "\e[92;1minstallation successful\e[0m\n"
 echo
