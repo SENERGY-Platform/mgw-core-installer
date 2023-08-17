@@ -213,7 +213,6 @@ copyUnits() {
 }
 
 handleSystemd() {
-  touch $base_path/.units
   units=""
   echo "copying systemd mount units ..."
   if ! units=$(copyUnits ./assets/units/mounts "$units")
