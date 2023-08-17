@@ -41,7 +41,6 @@ handleRelease() {
     done
     echo
     printf "\e[93;1mgetting new release ...\e[0m\n"
-    wrk_spc="/tmp/mgw-update"
     if ! mkdir -p $wrk_spc
     then
       exit 1
