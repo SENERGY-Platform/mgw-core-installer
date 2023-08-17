@@ -6,7 +6,7 @@ then
   exit 1
 fi
 
-. ./assets/scripts/lib/var
+. ./assets/options
 . ./assets/scripts/lib/settings.sh
 . ./assets/scripts/lib/util.sh
 . ./assets/scripts/lib/os.sh
@@ -105,20 +105,16 @@ handleBin() {
     exit 1
   fi
   touch $bin_path/versions
-  for repo in ${binaries}
+  for item in ${binaries}
   do
-    echo "checking latest $repo release ..."
-    if ! release="$(getGitHubRelease "$repo")"
+    repo="${item%%:*}"
+    version="${item##*:}"
+    echo "getting $repo release $version ..."
+    if ! release="$(getGitHubRelease "$repo" "$version")"
     then
       rm -r "$wrk_spc"
       exit 1
     fi
-    if ! version="$(getGitHubReleaseVersion "$release")"
-    then
-      rm -r "$wrk_spc"
-      exit 1
-    fi
-    echo "downloading $repo $version ..."
     if ! asset_url="$(getGitHubReleaseAssetUrl "$release" "$platform")"
     then
       rm -r "$wrk_spc"
@@ -130,18 +126,19 @@ handleBin() {
       rm -r "$wrk_spc"
       exit 1
     fi
+    echo "downloading ..."
     if ! file="$(downloadFile "$asset_url" "$dl_pth")"
     then
       rm -r "$wrk_spc"
       exit 1
     fi
-    echo "extracting $repo ..."
+    echo "extracting ..."
     if ! extract_path="$(extractTar "$file")"
     then
       rm -r "$wrk_spc"
       exit 1
     fi
-    echo "copying $repo ..."
+    echo "copying ..."
     target_path="$bin_path/$repo"
     if ! mkdir -p $target_path
     then
