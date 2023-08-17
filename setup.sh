@@ -149,7 +149,7 @@ handleBin() {
       rm -r "$wrk_spc"
       exit 1
     fi
-    echo "$repo:$version" >> $bin_path/versions
+    echo "$item" >> $base_path/.binaries
   done
   rm -r "$wrk_spc"
 }
