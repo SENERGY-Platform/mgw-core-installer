@@ -105,7 +105,7 @@ checkRoot() {
   fi
 }
 
-if [ "$1" = "" ]
+if [ "$install_path" = "" ]
 then
   . ./scripts/util.sh
   . ./scripts/github.sh
@@ -118,8 +118,6 @@ then
 fi
 
 cd ../..
-
-install_path=$1
 
 . ./assets/scripts/lib/var
 . ./assets/scripts/lib/settings.sh
