@@ -16,6 +16,8 @@ core_db_root_pw=""
 subnet_core="10.0.0.0"
 subnet_module="10.1.0.0"
 subnet_gateway="10.10.0.0"
+systemd=true
+logrotate=true
 
 saveSettings() {
   echo \
@@ -34,7 +36,9 @@ subnet_gateway=$subnet_gateway
 core_db_pw=$core_db_pw
 core_db_root_pw=$core_db_root_pw
 systemd_path=$systemd_path
-logrotated_path=$logrotated_path" \
+logrotated_path=$logrotated_path
+systemd=$systemd
+logrotate=$logrotate" \
   > $base_path/.settings
 }
 
