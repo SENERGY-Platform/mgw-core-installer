@@ -155,8 +155,9 @@ handleBin() {
 }
 
 handleBinConfigs() {
-  for repo in ${binaries}
+  for item in ${binaries}
   do
+    repo="${item%%:*}"
     if stat ./assets/bin/$repo > /dev/null 2>& 1
     then
       echo "copying $repo configs ..."
