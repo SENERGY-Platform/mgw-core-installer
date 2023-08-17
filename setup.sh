@@ -321,6 +321,7 @@ handleIntegration() {
       break
       ;;
     n)
+      systemd=false
       echo "please use 'ctrl.sh (start/stop)' for manual control"
       break
       ;;
@@ -338,6 +339,7 @@ handleIntegration() {
       break
       ;;
     n)
+      logrotate=false
       break
       ;;
     *)
