@@ -447,7 +447,7 @@ handleOptions() {
         echo "logrotate.d path must be absolute"
         exit 1
     esac
-    logrotated_path="$$LOGROTATED_PATH"
+    logrotated_path="$LOGROTATED_PATH"
   fi
   if [ "$NO_ROOT" = "true" ]; then
       no_root=true
