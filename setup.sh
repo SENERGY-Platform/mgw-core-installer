@@ -104,7 +104,6 @@ handleBin() {
   then
     exit 1
   fi
-  touch $bin_path/versions
   for item in ${binaries}
   do
     repo="${item%%:*}"
