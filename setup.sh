@@ -206,14 +206,14 @@ copyUnits() {
       else
         units="${units} $file"
       fi
-      echo "$file" >> $base_path/units
+      echo "$file" >> $base_path/.units
     done
   fi
   echo "$units"
 }
 
 handleSystemd() {
-  touch $base_path/units
+  touch $base_path/.units
   units=""
   echo "copying systemd mount units ..."
   if ! units=$(copyUnits ./assets/units/mounts "$units")
