@@ -74,11 +74,7 @@ prepareInstallDir() {
   then
     exit 1
   fi
-  if ! envsubst '$BIN_PATH' < ./assets/scripts/ctrl.sh.template > $base_path/ctrl.sh
-  then
-    exit 1
-  fi
-  if ! chmod +x $base_path/ctrl.sh
+  if ! cp ./assets/scripts/ctrl.sh $base_path/ctrl.sh
   then
     exit 1
   fi
