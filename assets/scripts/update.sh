@@ -133,30 +133,6 @@ stopBin() {
       fi
     fi
   fi
-  echo "updating systemd mount units ..."
-  if ! units=$(copyWithTemplates ./assets/units/mounts $systemd_path "$units")
-  then
-    exit 1
-  fi
-  echo "updating systemd service units ..."
-  if ! units=$(copyWithTemplates ./assets/units/services $systemd_path "$units")
-  then
-    exit 1
-  fi
-  if [ "$installed" != "" ]
-  then
-    for unit in ${installed}
-      do
-        if ! inArray "$units" "$unit"
-        then
-          echo "removing $unit ..."
-          if ! rm $systemd_path/$unit
-          then
-            exit 1
-          fi
-        fi
-      done
-  fi
 }
 
 handleSystemd() {
