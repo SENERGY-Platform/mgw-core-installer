@@ -190,10 +190,13 @@ handleSystemd() {
 }
 
 handleLogrotate() {
-  echo "updating logrotate config ..."
-  if ! envsubst < ./assets/logrotate/mgw_core.template > $logrotated_path/mgw_core
+  if [ "$logrotate" = "true" ]
   then
-    exit 1
+    echo "updating logrotate config ..."
+    if ! envsubst < ./assets/logrotate/mgw_core.template > $logrotated_path/mgw_core
+    then
+      exit 1
+    fi
   fi
 }
 
