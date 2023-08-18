@@ -198,6 +198,15 @@ handleDockerPost() {
   fi
 }
 
+handleContainerAssets() {
+  echo "removing container assets ..."
+  if ! rm -r $container_path
+  then
+    exit 1
+  fi
+  copyContainerAssets
+}
+
 checkRoot() {
   if ! isRoot
   then
