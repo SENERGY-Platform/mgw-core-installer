@@ -97,12 +97,11 @@ handlePackages() {
   fi
 }
 
-handleSystemdPre() {
-  installed=""
-  if stat $base_path/.units > /dev/null 2>& 1
+stopBin() {
+  if [ "$systemd" = "true" ]
   then
-    installed="$(readFileToArray $base_path/.units)"
-    for unit in ${installed}
+    installed_units="$(readFileToArray $base_path/.units)"
+    for unit in ${installed_units}
     do
       echo "stopping $unit ..."
       if ! systemctl stop "$unit"
@@ -115,6 +114,24 @@ handleSystemdPre() {
         exit 1
       fi
     done
+  else
+    if stat $base_path/.pid > /dev/null 2>& 1
+    then
+      pids="$(cat $base_path/.pid)"
+      echo "stopping processes ..."
+      for pid in ${pids}
+      do
+        if ! kill $pid
+        then
+          exit 1
+        fi
+      done
+      echo "unmounting secrets tmpfs ..."
+      if ! umount $secrets_path
+      then
+        exit 1
+      fi
+    fi
   fi
   echo "updating systemd mount units ..."
   if ! units=$(copyWithTemplates ./assets/units/mounts $systemd_path "$units")
@@ -142,29 +159,57 @@ handleSystemdPre() {
   fi
 }
 
-handleSystemdPost() {
-  if [ "$units" != "" ]
+handleSystemd() {
+  if [ "$systemd" = "true" ]
   then
-    echo "reloading systemd ..."
-    if ! systemctl daemon-reload
+    units=""
+    echo "updating systemd mount units ..."
+    if ! units=$(copyWithTemplates ./assets/units/mounts $systemd_path "$units")
     then
       exit 1
     fi
-    rm $base_path/.units > /dev/null 2>& 1
-    for unit in ${units}
-    do
-      echo "enabling $unit ..."
-      if ! systemctl enable "$unit"
+    echo "updating systemd service units ..."
+    if ! units=$(copyWithTemplates ./assets/units/services $systemd_path "$units")
+    then
+      exit 1
+    fi
+    if [ "$installed_units" != "" ]
+    then
+      for unit in ${installed_units}
+        do
+          if ! inArray "$units" "$unit"
+          then
+            echo "removing $unit ..."
+            if ! rm $systemd_path/$unit
+            then
+              exit 1
+            fi
+          fi
+        done
+    fi
+    if [ "$units" != "" ]
+    then
+      echo "reloading systemd ..."
+      if ! systemctl daemon-reload
       then
         exit 1
       fi
-      echo "starting $unit ..."
-      if ! systemctl start "$unit"
-      then
-        exit 1
-      fi
-      echo "$unit" >> $base_path/.units
-    done
+      rm $base_path/.units > /dev/null 2>& 1
+      for unit in ${units}
+      do
+        echo "enabling $unit ..."
+        if ! systemctl enable "$unit"
+        then
+          exit 1
+        fi
+        echo "starting $unit ..."
+        if ! systemctl start "$unit"
+        then
+          exit 1
+        fi
+        echo "$unit" >> $base_path/.units
+      done
+    fi
   fi
 }
 
