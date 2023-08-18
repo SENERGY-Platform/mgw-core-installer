@@ -268,7 +268,6 @@ cd ../..
 checkRoot
 printf "\e[93;1msetting up updater ...\e[0m\n"
 exportSettingsToEnv
-#saveSettings
 printf "\e[93;1msetting up updater done\e[0m\n"
 echo
 printf "\e[93;1msetting up required packages ...\e[0m\n"
