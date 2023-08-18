@@ -3,7 +3,7 @@ PartOf=docker.service
 Before=docker.service
 
 [Service]
-ExecStart=${BIN_PATH}/SENERGY-Platform/mgw-container-engine-wrapper/bin -config=${BIN_PATH}/SENERGY-Platform/mgw-container-engine-wrapper/conf.json
+ExecStart=${BIN_PATH}/SENERGY-Platform/mgw-container-engine-wrapper/bin -config=${BIN_PATH}/SENERGY-Platform/mgw-container-engine-wrapper/config/conf.json
 Restart=always
 
 [Install]
