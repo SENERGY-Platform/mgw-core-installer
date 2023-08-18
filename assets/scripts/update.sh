@@ -176,6 +176,28 @@ handleLogrotate() {
   fi
 }
 
+handleDockerPre() {
+  cd $container_path
+  echo "updating container images ..."
+  if ! docker compose pull
+  then
+    exit 1
+  fi
+  echo "stopping containers ..."
+  if ! docker compose stop
+  then
+    exit 1
+  fi
+}
+
+handleDockerPost() {
+  echo "starting containers ..."
+  if ! docker compose up -d
+  then
+    exit 1
+  fi
+}
+
 checkRoot() {
   if ! isRoot
   then
