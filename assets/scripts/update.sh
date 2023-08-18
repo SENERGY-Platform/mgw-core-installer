@@ -234,6 +234,102 @@ handleContainerAssets() {
   copyContainerAssets
 }
 
+handleBin() {
+  if ! mkdir -p $wrk_spc/bin
+  then
+    exit 1
+  fi
+  installed_bin="$(readFileToArray $base_path/.binaries)"
+  rm $base_path/.binaries > /dev/null 2>& 1
+  for item in ${binaries}
+  do
+    repo="${item%%:*}"
+    new_version="${item##*:}"
+    if version="$(inMap "$installed_bin" "$repo")"
+    then
+      if [ "$new_version" = "$version" ]
+      then
+        continue
+      fi
+    fi
+    echo "getting $repo release $version ..."
+    if ! release="$(getGitHubRelease "$repo" "$new_version")"
+    then
+      exit 1
+    fi
+    if ! asset_url="$(getGitHubReleaseAssetUrl "$release" "$platform")"
+    then
+      exit 1
+    fi
+    dl_pth="$wrk_spc/bin/$repo"
+    if ! mkdir -p $dl_pth
+    then
+      exit 1
+    fi
+    echo "downloading ..."
+    if ! file="$(downloadFile "$asset_url" "$dl_pth")"
+    then
+      exit 1
+    fi
+    echo "extracting ..."
+    if ! extract_path="$(extractTar "$file")"
+    then
+      exit 1
+    fi
+    echo "copying ..."
+    target_path="$bin_path/$repo"
+    if ! mkdir -p $target_path
+    then
+      exit 1
+    fi
+    if ! cp -r $extract_path/$arch/* $target_path
+    then
+      rm -r "$wrk_spc"
+    fi
+    echo "$item" >> $base_path/.binaries
+  done
+  for item in ${installed_bin}
+  do
+    repo="${item%%:*}"
+    if ! inMap "$binaries" "$repo"
+    then
+      rm -r $bin_path/$repo
+    fi
+  done
+}
+
+handleBinConfigs() {
+  for item in ${binaries}
+  do
+    repo="${item%%:*}"
+    if stat ./assets/bin/$repo > /dev/null 2>& 1
+    then
+      if ! mkdir -p $bin_path/$repo/config
+      then
+        exit 1
+      fi
+      rm -r $bin_path/$repo/config/*
+      echo "copying $repo configs ..."
+      files=$(ls ./assets/bin/$repo)
+      for file in ${files}
+      do
+        if real_file="$(getTemplateBase "$file")"
+        then
+          if ! envsubst < ./assets/bin/$repo/$file > $bin_path/$repo/config/$real_file
+          then
+            exit 1
+          fi
+        else
+          if ! cp ./assets/bin/$repo/$file $bin_path/$repo/config/$file
+          then
+            exit 1
+          fi
+        fi
+      done
+    fi
+  done
+}
+
 checkRoot() {
   if ! isRoot
   then
