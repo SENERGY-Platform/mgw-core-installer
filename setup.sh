@@ -213,6 +213,7 @@ handleSystemd() {
       then
         exit 1
       fi
+      echo "$unit" >> $base_path/.units
     done
     bin_started=true
   fi
