@@ -97,6 +97,33 @@ handlePackages() {
   fi
 }
 
+updateInstallDir() {
+  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $log_path $scripts_path
+  then
+    exit 1
+  fi
+  if ! cp ./assets/scripts/ctrl.sh $base_path/ctrl.sh
+  then
+    exit 1
+  fi
+  if ! cp ./assets/scripts/update.sh $base_path/update.sh
+  then
+    exit 1
+  fi
+  if ! cp ./assets/scripts/lib/util.sh $base_path/scripts/util.sh
+  then
+    exit 1
+  fi
+  if ! cp ./assets/scripts/lib/github.sh $base_path/scripts/github.sh
+  then
+    exit 1
+  fi
+  if ! cp .version $base_path/.version
+  then
+    exit 1
+  fi
+}
+
 stopBin() {
   if [ "$systemd" = "true" ]
   then
