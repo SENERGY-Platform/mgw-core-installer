@@ -16,12 +16,12 @@ start() {
     exit 1
   fi
   echo "starting ce-wrapper ..."
-  $bin_path/SENERGY-Platform/mgw-container-engine-wrapper/bin -config=$bin_path/SENERGY-Platform/mgw-container-engine-wrapper/conf.json &
+  $bin_path/SENERGY-Platform/mgw-container-engine-wrapper/bin -config=$bin_path/SENERGY-Platform/mgw-container-engine-wrapper/config/conf.json &
   pid="${pid}$!"
   echo "starting host-manager ..."
-  $bin_path/SENERGY-Platform/mgw-host-manager/bin -config=$bin_path/SENERGY-Platform/mgw-host-manager/conf.json &
+  $bin_path/SENERGY-Platform/mgw-host-manager/bin -config=$bin_path/SENERGY-Platform/mgw-host-manager/config/conf.json &
   pid="${pid} $!"
-  echo "$pid" > $bin_path/.pid
+  echo "$pid" > $base_path/.pid
 }
 
 stop() {
