@@ -456,7 +456,7 @@ handleIntegration
 printf "\e[93;1msetting up integration done\e[0m\n"
 echo
 printf "\e[93;1msetting up container environment ...\e[0m\n"
-handleContainer
+copyContainerAssets
 handleDocker
 printf "\e[93;1msetting up container environment done\e[0m\n"
 echo

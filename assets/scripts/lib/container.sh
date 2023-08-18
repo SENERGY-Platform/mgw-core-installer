@@ -1,6 +1,6 @@
 #!/bin/sh
 
-handleContainer() {
+copyContainerAssets() {
   echo "copying container configs ..."
   if ! cp -r ./assets/container/configs $container_path
   then
