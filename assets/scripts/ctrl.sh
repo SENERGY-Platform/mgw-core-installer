@@ -1,19 +1,27 @@
 #!/bin/sh
 
+script_path=${0%/*}
+if ! cd $script_path
+then
+  exit 1
+fi
+
+. ./.settings
+
 start() {
   pid=""
   echo "mounting secrets tmpfs ..."
-  if ! mount -t tmpfs -o size=100M tmpfs /mnt/mgw/secrets
+  if ! mount -t tmpfs -o size=100M tmpfs $secrets_path
   then
     exit 1
   fi
   echo "starting ce-wrapper ..."
-  ${BIN_PATH}/SENERGY-Platform/mgw-container-engine-wrapper/bin -config=${BIN_PATH}/SENERGY-Platform/mgw-container-engine-wrapper/conf.json &
+  $bin_path/SENERGY-Platform/mgw-container-engine-wrapper/bin -config=$bin_path/SENERGY-Platform/mgw-container-engine-wrapper/conf.json &
   pid="${pid}$!"
   echo "starting host-manager ..."
-  ${BIN_PATH}/SENERGY-Platform/mgw-host-manager/bin -config=${BIN_PATH}/SENERGY-Platform/mgw-host-manager/conf.json &
+  $bin_path/SENERGY-Platform/mgw-host-manager/bin -config=$bin_path/SENERGY-Platform/mgw-host-manager/conf.json &
   pid="${pid} $!"
-  echo "$pid" > ${BIN_PATH}/pid
+  echo "$pid" > $bin_path/.pid
 }
 
 stop() {
@@ -26,7 +34,7 @@ stop() {
     fi
   done
   echo "unmounting secrets tmpfs ..."
-  if ! umount /mnt/mgw/secrets
+  if ! umount $secrets_path
   then
     exit 1
   fi
@@ -42,14 +50,14 @@ start)
   start
   ;;
 stop)
-  if ! pid="$(cat ${BIN_PATH}/pid)"
+  if ! pid="$(cat $base_path/.pid)"
   then
     exit 1
   fi
   if [ "$pid" != "" ]
   then
     stop "$pid"
-    rm ${BIN_PATH}/pid
+    rm $base_path/.pid
   fi
   ;;
 *)
