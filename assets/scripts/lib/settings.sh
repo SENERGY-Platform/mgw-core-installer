@@ -2,6 +2,7 @@
 
 systemd_path=/etc/systemd/system
 logrotated_path=/etc/logrotate.d
+mnt_path=/mnt/mgw
 base_path=/opt/mgw
 secrets_path=""
 deployments_path=""
@@ -21,7 +22,8 @@ logrotate=true
 
 saveSettings() {
   echo \
-"base_path=$base_path
+"mnt_path=$mnt_path
+base_path=$base_path
 secrets_path=$secrets_path
 deployments_path=$deployments_path
 sockets_path=$sockets_path
