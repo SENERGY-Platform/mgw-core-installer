@@ -158,18 +158,22 @@ handleBinConfigs() {
     repo="${item%%:*}"
     if stat ./assets/bin/$repo > /dev/null 2>& 1
     then
+      if ! mkdir -p $bin_path/$repo/config
+      then
+        exit 1
+      fi
       echo "copying $repo configs ..."
       files=$(ls ./assets/bin/$repo)
       for file in ${files}
       do
         if real_file="$(getTemplateBase "$file")"
         then
-          if ! envsubst < ./assets/bin/$repo/$file > $bin_path/$repo/$real_file
+          if ! envsubst < ./assets/bin/$repo/$file > $bin_path/$repo/config/$real_file
           then
             exit 1
           fi
         else
-          if ! cp ./assets/bin/$repo/$file $bin_path/$repo/$file
+          if ! cp ./assets/bin/$repo/$file $bin_path/$repo/config/$file
           then
             exit 1
           fi
