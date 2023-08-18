@@ -7,5 +7,5 @@
     "path": "${LOG_PATH}",
     "file_name": "h_manager"
   },
-  "applications_path": "${BIN_PATH}/SENERGY-Platform/mgw-host-manager/config/applications.json"
+  "applications_path": "${BIN_PATH}/SENERGY-Platform/mgw-host-manager/applications.json"
 }
