@@ -397,7 +397,30 @@ printf "\e[93;1msetting up required packages ...\e[0m\n"
 handlePackages
 printf "\e[93;1msetting up required packages done\e[0m\n"
 echo
+printf "\e[93;1mupdating files ...\e[0m\n"
+updateInstallDir
+printf "\e[93;1mupdating done\e[0m\n"
+echo
 printf "\e[93;1mstopping components ...\e[0m\n"
 stopContainers
 stopBin
 printf "\e[93;1mstopping components done\e[0m\n"
+echo
+printf "\e[93;1mupdating binaries ...\e[0m\n"
+handleBin
+handleBinConfigs
+printf "\e[93;1mupdating binaries done\e[0m\n"
+echo
+printf "\e[93;1mupdating integration ...\e[0m\n"
+handleSystemd
+handleLogrotate
+printf "\e[93;1mupdating integration done\e[0m\n"
+echo
+printf "\e[93;1mupdating up container environment ...\e[0m\n"
+updateContainerImages
+handleContainerAssets
+startContainers
+printf "\e[93;1mupdating up container environment done\e[0m\n"
+echo
+printf "\e[92;1mupdate successful\e[0m\n"
+echo
