@@ -200,13 +200,7 @@ handleLogrotate() {
   fi
 }
 
-handleDockerPre() {
-  cd $container_path
-  echo "updating container images ..."
-  if ! docker compose pull
-  then
-    exit 1
-  fi
+stopContainers() {
   echo "stopping containers ..."
   if ! docker compose stop
   then
@@ -214,7 +208,16 @@ handleDockerPre() {
   fi
 }
 
-handleDockerPost() {
+updateContainerImages() {
+  cd $container_path
+  echo "updating container images ..."
+  if ! docker compose pull
+  then
+    exit 1
+  fi
+}
+
+startContainers() {
   echo "starting containers ..."
   if ! docker compose up -d
   then
