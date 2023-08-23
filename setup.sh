@@ -1,7 +1,7 @@
 #!/bin/sh
 
-setup_path=${0%/*}
-if ! cd $setup_path
+
+if ! cd ${0%/*}
 then
   exit 1
 fi
@@ -15,6 +15,7 @@ fi
 . ./assets/scripts/lib/docker.sh
 . ./assets/scripts/lib/container.sh
 
+setup_path=$(pwd)
 version="$(cat .version)"
 bin_started=false
 
