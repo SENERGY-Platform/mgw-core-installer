@@ -118,6 +118,9 @@ updateInstallDir() {
   then
     exit 1
   fi
+}
+
+updateVersion() {
   if ! cp .version $base_path/.version
   then
     exit 1
@@ -452,6 +455,7 @@ updateContainerImages
 handleContainerAssets
 startContainers
 printf "\e[93;1mupdating container environment done\e[0m\n"
+updateVersion
 echo
 printf "\e[92;1mupdate successful\e[0m\n"
 echo
