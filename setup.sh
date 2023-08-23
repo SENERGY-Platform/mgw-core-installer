@@ -6,7 +6,7 @@ then
   exit 1
 fi
 
-. ./assets/options
+. ./assets/.options
 . ./assets/scripts/lib/settings.sh
 . ./assets/scripts/lib/util.sh
 . ./assets/scripts/lib/os.sh
