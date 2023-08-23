@@ -95,3 +95,11 @@ copyWithTemplates() {
   fi
   echo "$items"
 }
+
+isRoot() {
+  if [ "$(id -u)" = "0" ]
+  then
+     return 0
+  fi
+  return 1
+}
