@@ -229,27 +229,53 @@ handleLogrotate() {
 
 stopContainers() {
   echo "stopping containers ..."
+  if ! cd $container_path
+  then
+    exit 1
+  fi
   if ! docker compose stop
   then
     exit 1
   fi
+  if ! cd $script_path
+  then
+    exit 1
+  fi
+  cd ../..
 }
 
 updateContainerImages() {
-  cd $container_path
   echo "updating container images ..."
+  if ! cd $container_path
+  then
+    exit 1
+  fi
   if ! docker compose pull
   then
     exit 1
   fi
+  if ! cd $script_path
+  then
+    exit 1
+  fi
+  cd ../..
 }
 
 startContainers() {
   echo "starting containers ..."
+  if ! cd $container_path
+  then
+    exit 1
+  fi
   if ! docker compose up -d
   then
     exit 1
   fi
+  if ! cd $script_path
+  then
+    exit 1
+  fi
+  cd ../..
 }
 
 handleContainerAssets() {
