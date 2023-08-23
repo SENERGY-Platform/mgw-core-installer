@@ -343,7 +343,7 @@ handleBin() {
     fi
     if ! cp -r $extract_path/$arch/* $target_path
     then
-      rm -r "$wrk_spc"
+      exit 1
     fi
     echo "$item" >> $base_path/.binaries
   done
