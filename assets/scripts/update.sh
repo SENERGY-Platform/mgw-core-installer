@@ -26,7 +26,7 @@ handleRelease() {
     echo "new release available: $new_version"
     while :
     do
-      printf "\e[96;1update? (y/n):\e[0m "
+      printf "\e[96;1mupdate? (y/n):\e[0m "
       read -r choice
       case $choice in
       y|"")
