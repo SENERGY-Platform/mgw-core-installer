@@ -64,7 +64,7 @@ handleRelease() {
     fi
     printf "\e[93;1mgetting new release done\e[0m\n"
     echo
-    $extract_path/assets/update.sh "$base_path"
+    $extract_path/assets/scripts/update.sh "$base_path"
   else
     echo "latest release at $new_version, nothing to do"
   fi
