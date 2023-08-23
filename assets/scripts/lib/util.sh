@@ -68,7 +68,10 @@ inMap() {
 
 copyWithTemplates() {
   items="$3"
-  files=$(ls $1)
+  if ! files=$(ls $1)
+  then
+    return 1
+  fi
   if [ "$files" != "" ]
   then
     for file in ${files}
