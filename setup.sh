@@ -353,7 +353,10 @@ handleIntegration() {
 
 handleDocker() {
   echo "creating containers ..."
-  cd $container_path
+  if ! cd $container_path
+  then
+    exit
+  fi
   if ! docker compose create
   then
     exit 1
@@ -381,7 +384,10 @@ handleDocker() {
       esac
     done
   fi
-  cd $setup_path
+  if ! cd $setup_path
+  then
+    exit 1
+  fi
 }
 
 handleOptions() {
