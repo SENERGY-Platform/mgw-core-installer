@@ -67,6 +67,7 @@ handleRelease() {
     $extract_path/assets/scripts/update.sh "$base_path"
   else
     echo "latest release at $new_version, nothing to do"
+    echo
   fi
 }
 
@@ -405,7 +406,9 @@ then
   . ./.settings
   checkRoot
   version="$(cat .version)"
+  echo
   echo "installed release: $version"
+  echo
   handleRelease
   exit
 fi
