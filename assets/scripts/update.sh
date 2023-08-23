@@ -379,7 +379,7 @@ fi
 
 cd ../..
 
-. ./assets/scripts/lib/var
+. ./assets/.options
 . ./assets/scripts/lib/settings.sh
 . ./assets/scripts/lib/util.sh
 . ./assets/scripts/lib/os.sh
