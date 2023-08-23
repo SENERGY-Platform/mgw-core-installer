@@ -415,6 +415,7 @@ cd ../..
 . ./assets/scripts/lib/package.sh
 . ./assets/scripts/lib/github.sh
 . ./assets/scripts/lib/docker.sh
+. ./assets/scripts/lib/container.sh
 . $install_path/.settings
 
 checkRoot
