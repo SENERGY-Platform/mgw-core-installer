@@ -447,11 +447,11 @@ handleSystemd
 handleLogrotate
 printf "\e[93;1mupdating integration done\e[0m\n"
 echo
-printf "\e[93;1mupdating up container environment ...\e[0m\n"
+printf "\e[93;1mupdating container environment ...\e[0m\n"
 updateContainerImages
 handleContainerAssets
 startContainers
-printf "\e[93;1mupdating up container environment done\e[0m\n"
+printf "\e[93;1mupdating container environment done\e[0m\n"
 echo
 printf "\e[92;1mupdate successful\e[0m\n"
 echo
