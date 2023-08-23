@@ -344,7 +344,7 @@ handleBin() {
   for item in ${installed_bin}
   do
     repo="${item%%:*}"
-    if ! inMap "$binaries" "$repo"
+    if ! inMap "$binaries" "$repo" > /dev/null 2>& 1
     then
       rm -r $bin_path/$repo
     fi
