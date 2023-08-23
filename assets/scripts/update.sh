@@ -233,7 +233,7 @@ stopContainers() {
   then
     exit 1
   fi
-  if ! docker docker compose rm -s -f
+  if ! docker compose rm -s -f
   then
     exit 1
   fi
