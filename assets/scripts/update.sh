@@ -284,6 +284,7 @@ handleContainerAssets() {
   then
     exit 1
   fi
+  mkdir -p $container_path
   copyContainerAssets
 }
 
