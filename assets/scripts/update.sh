@@ -357,11 +357,14 @@ handleBinConfigs() {
     repo="${item%%:*}"
     if stat ./assets/bin/$repo > /dev/null 2>& 1
     then
+      if stat $bin_path/$repo/config > /dev/null 2>& 1
+      then
+        rm -r $bin_path/$repo/config
+      fi
       if ! mkdir -p $bin_path/$repo/config
       then
         exit 1
       fi
-      rm -r $bin_path/$repo/config/*
       echo "copying $repo configs ..."
       files=$(ls ./assets/bin/$repo)
       for file in ${files}
