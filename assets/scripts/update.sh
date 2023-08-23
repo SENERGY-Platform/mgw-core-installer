@@ -311,7 +311,7 @@ handleBin() {
         continue
       fi
     fi
-    echo "getting $repo release $version ..."
+    echo "getting $repo release $new_version ..."
     if ! release="$(getGitHubRelease "$repo" "$new_version")"
     then
       exit 1
