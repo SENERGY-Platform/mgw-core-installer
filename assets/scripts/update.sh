@@ -296,6 +296,7 @@ handleBin() {
   rm $base_path/.binaries > /dev/null 2>& 1
   for item in ${binaries}
   do
+    echo "$item" >> $base_path/.binaries
     repo="${item%%:*}"
     new_version="${item##*:}"
     if version="$(inMap "$installed_bin" "$repo")"
@@ -339,7 +340,6 @@ handleBin() {
     then
       rm -r "$wrk_spc"
     fi
-    echo "$item" >> $base_path/.binaries
   done
   for item in ${installed_bin}
   do
