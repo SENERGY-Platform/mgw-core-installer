@@ -1,13 +1,13 @@
 #!/bin/sh
 
-script_path=${0%/*}
-if ! cd $script_path
+if ! cd ${0%/*}
 then
   exit 1
 fi
 
 repo="SENERGY-Platform/mgw-core-installer"
 install_path=$1
+script_path=$(pwd)
 wrk_spc="/tmp/mgw-update"
 installed_units=""
 
