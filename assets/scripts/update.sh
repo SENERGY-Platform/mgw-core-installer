@@ -233,7 +233,7 @@ stopContainers() {
   then
     exit 1
   fi
-  if ! docker compose stop
+  if ! docker compose down
   then
     exit 1
   fi
