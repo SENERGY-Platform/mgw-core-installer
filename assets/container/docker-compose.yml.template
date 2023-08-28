@@ -39,7 +39,7 @@ services:
         aliases:
           - core-db
   module-manager:
-    image: ghcr.io/senergy-platform/mgw-module-manager:0.7.0
+    image: ghcr.io/senergy-platform/mgw-module-manager:0.7.1
     build: ${MODULE_MANAGER_BUILD_CONTEXT}
     restart: unless-stopped
     depends_on:
