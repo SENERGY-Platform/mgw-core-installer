@@ -45,6 +45,10 @@ handleRelease() {
     then
       exit 1
     fi
+    if ! rm -r $wrk_spc/*
+    then
+      exit 1
+    fi
     if ! asset_url="$(getGitHubReleaseAssetUrl "$release" "$new_version")"
     then
       rm -r "$wrk_spc"
@@ -270,20 +274,23 @@ updateContainerImages() {
 }
 
 startContainers() {
-  echo "starting containers ..."
-  if ! cd $container_path
+  if [ "$systemd" = "true" ]
   then
-    exit 1
+    echo "starting containers ..."
+    if ! cd $container_path
+    then
+      exit 1
+    fi
+    if ! docker compose up -d
+    then
+      exit 1
+    fi
+    if ! cd $script_path
+    then
+      exit 1
+    fi
+    cd ../..
   fi
-  if ! docker compose up -d
-  then
-    exit 1
-  fi
-  if ! cd $script_path
-  then
-    exit 1
-  fi
-  cd ../..
 }
 
 handleContainerAssets() {
