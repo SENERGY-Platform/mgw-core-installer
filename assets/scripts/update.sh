@@ -476,6 +476,7 @@ updateContainerImages
 handleContainers
 printf "\e[93;1mupdating container environment done\e[0m\n"
 updateVersion
+rm -r $wrk_spc
 echo
 printf "\e[92;1mupdate successful\e[0m\n"
 echo
