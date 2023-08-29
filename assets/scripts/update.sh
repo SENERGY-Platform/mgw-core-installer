@@ -273,24 +273,29 @@ updateContainerImages() {
   cd ../..
 }
 
-startContainers() {
+handleContainers() {
+  if ! cd $container_path
+  then
+    exit 1
+  fi
+  echo "creating containers ..."
+  if ! docker compose up --no-start
+  then
+    exit 1
+  fi
   if [ "$systemd" = "true" ]
   then
     echo "starting containers ..."
-    if ! cd $container_path
+    if ! docker compose start
     then
       exit 1
     fi
-    if ! docker compose up -d
-    then
-      exit 1
-    fi
-    if ! cd $script_path
-    then
-      exit 1
-    fi
-    cd ../..
   fi
+  if ! cd $script_path
+  then
+    exit 1
+  fi
+  cd ../..
 }
 
 handleContainerAssets() {
