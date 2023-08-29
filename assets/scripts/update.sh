@@ -51,19 +51,19 @@ handleRelease() {
     fi
     if ! asset_url="$(getGitHubReleaseAssetUrl "$release" "$new_version")"
     then
-      rm -r "$wrk_spc"
+      rm -r $wrk_spc
       exit 1
     fi
     echo "downloading ..."
     if ! file="$(downloadFile "$asset_url" "$wrk_spc")"
     then
-      rm -r "$wrk_spc"
+      rm -r $wrk_spc
       exit 1
     fi
     echo "extracting ..."
     if ! extract_path="$(extractTar "$file")"
     then
-      rm -r "$wrk_spc"
+      rm -r $wrk_spc
       exit 1
     fi
     printf "\e[93;1mgetting new release done\e[0m\n"

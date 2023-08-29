@@ -110,47 +110,47 @@ handleBin() {
     echo "getting $repo release $version ..."
     if ! release="$(getGitHubRelease "$repo" "$version")"
     then
-      rm -r "$wrk_spc"
+      rm -r $wrk_spc
       exit 1
     fi
     if ! asset_url="$(getGitHubReleaseAssetUrl "$release" "$platform")"
     then
-      rm -r "$wrk_spc"
+      rm -r $wrk_spc
       exit 1
     fi
     dl_pth="$wrk_spc/$repo"
     if ! mkdir -p $dl_pth
     then
-      rm -r "$wrk_spc"
+      rm -r $wrk_spc
       exit 1
     fi
     echo "downloading ..."
     if ! file="$(downloadFile "$asset_url" "$dl_pth")"
     then
-      rm -r "$wrk_spc"
+      rm -r $wrk_spc
       exit 1
     fi
     echo "extracting ..."
     if ! extract_path="$(extractTar "$file")"
     then
-      rm -r "$wrk_spc"
+      rm -r $wrk_spc
       exit 1
     fi
     echo "copying ..."
     target_path="$bin_path/$repo"
     if ! mkdir -p $target_path
     then
-      rm -r "$wrk_spc"
+      rm -r $wrk_spc
       exit 1
     fi
     if ! cp -r $extract_path/$arch/* $target_path
     then
-      rm -r "$wrk_spc"
+      rm -r $wrk_spc
       exit 1
     fi
     echo "$item" >> $base_path/.binaries
   done
-  rm -r "$wrk_spc"
+  rm -r $wrk_spc
 }
 
 handleBinConfigs() {
