@@ -357,7 +357,7 @@ handleDocker() {
   then
     exit
   fi
-  if ! docker compose create
+  if ! docker compose up --no-start
   then
     exit 1
   fi
