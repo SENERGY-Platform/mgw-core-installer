@@ -473,7 +473,7 @@ echo
 printf "\e[93;1mupdating container environment ...\e[0m\n"
 handleContainerAssets
 updateContainerImages
-startContainers
+handleContainers
 printf "\e[93;1mupdating container environment done\e[0m\n"
 updateVersion
 echo
