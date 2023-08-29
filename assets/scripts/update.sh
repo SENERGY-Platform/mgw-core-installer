@@ -162,6 +162,10 @@ stopBin() {
       then
         exit 1
       fi
+      if ! rm $base_path/.pid
+      then
+        exit 1
+      fi
     fi
   fi
 }
