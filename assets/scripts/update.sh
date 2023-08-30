@@ -41,11 +41,8 @@ handleRelease() {
     done
     echo
     printf "\e[93;1mgetting new release ...\e[0m\n"
+    rm -r $wrk_spc > /dev/null 2>& 1
     if ! mkdir -p $wrk_spc
-    then
-      exit 1
-    fi
-    if ! rm -r $wrk_spc/*
     then
       exit 1
     fi
