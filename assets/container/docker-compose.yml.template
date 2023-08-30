@@ -45,6 +45,7 @@ services:
     depends_on:
       - db
       - gateway
+      - secret-manager
     environment:
       LOGGER_LEVEL: ${LOG_LEVEL}
       LOGGER_TERMINAL: true
