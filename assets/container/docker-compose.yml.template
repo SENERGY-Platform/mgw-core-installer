@@ -3,7 +3,7 @@ version: "2"
 name: ${STACK_NAME}
 services:
   gateway:
-    image: nginx:1.25.1-alpine
+    image: nginx:1.25.2-alpine
     restart: unless-stopped
     environment:
       SUBNET_CORE: ${SUBNET_CORE}
