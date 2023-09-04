@@ -25,7 +25,7 @@ services:
         aliases:
           - core-api
   db:
-    image: mariadb:10.11.2
+    image: mariadb:10.11.5
     restart: unless-stopped
     environment:
       MARIADB_USER: core_user
