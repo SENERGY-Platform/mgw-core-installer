@@ -11,6 +11,25 @@ script_path=$(pwd)
 wrk_spc="/tmp/mgw-update"
 installed_units=""
 
+handleParam() {
+  key="${1%%=*}"
+  val="${1##*=}"
+  case "$key" in
+  "-a")
+    auto=true
+    ;;
+  "-path")
+    if [ "$val" != "" ] && [ "$val" != "$key" ]
+    then
+      install_path="$val"
+    else
+      echo "missing install path"
+      exit 1
+    fi
+    ;;
+  esac
+}
+
 handleRelease() {
   printf "\e[93;1mchecking for new release ...\e[0m\n"
   if ! release="$(getGitHubRelease "$repo")"
@@ -412,6 +431,11 @@ checkRoot() {
     exit 1
   fi
 }
+
+for param in "$@"
+do
+  handleParam "$param"
+done
 
 if [ "$install_path" = "" ]
 then
