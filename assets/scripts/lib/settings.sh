@@ -18,9 +18,9 @@ core_db_root_pw=""
 subnet_core="10.0.0.0"
 subnet_module="10.1.0.0"
 subnet_gateway="10.10.0.0"
-systemd=true
-logrotate=true
-cron=true
+systemd=""
+logrotate=""
+cron=""
 platform=""
 arch=""
 
