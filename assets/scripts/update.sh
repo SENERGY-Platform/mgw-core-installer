@@ -83,8 +83,13 @@ handleRelease() {
       exit 1
     fi
     printColor "getting new release done" "$yellow"
-    $extract_path/assets/scripts/update.sh "$base_path"
     printLnBr
+    if [ "$auto" = "true" ]
+    then
+      $extract_path/assets/scripts/update.sh -a -path=$base_path
+    else
+      $extract_path/assets/scripts/update.sh -path=$base_path
+    fi
   else
     echo "latest release at $new_version, nothing to do"
     printLnBr

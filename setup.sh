@@ -500,7 +500,7 @@ printLnBr
 printColor "setting up integration ..." "$yellow"
 handleIntegration
 printColor "setting up integration done" "$yellow"
-echo
+printLnBr
 printColor "setting up container environment ..." "$yellow"
 copyContainerAssets
 handleDocker
