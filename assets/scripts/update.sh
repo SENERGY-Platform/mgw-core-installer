@@ -6,6 +6,7 @@ then
 fi
 
 repo="SENERGY-Platform/mgw-core-installer"
+auto=false
 install_path=$1
 script_path=$(pwd)
 wrk_spc="/tmp/mgw-update"
@@ -32,6 +33,10 @@ handleParam() {
 
 handleRelease() {
   printColor "checking for new release ..." "$yellow"
+  if [ "$auto" = "true" ]
+  then
+    date
+  fi
   if ! release="$(getGitHubRelease "$repo")"
   then
     exit 1
@@ -43,22 +48,25 @@ handleRelease() {
   if [ "$new_version" != "null" ] && [ "$version" != "$new_version" ]
   then
     echo "new release available: $new_version"
-    while :
-    do
-      printf "\e[96;1mupdate? (y/n):\e[0m "
-      read -r choice
-      case $choice in
-      y|"")
-        break
-        ;;
-      n)
-        exit 0
-        ;;
-      *)
-        echo "unknown option"
-      esac
-    done
-    echo
+    if [ "$auto" = "false" ]
+    then
+      while :
+      do
+        printColor "update? (y/n): " "$blue" "nb"
+        read -r choice
+        case $choice in
+        y|"")
+          break
+          ;;
+        n)
+          exit 0
+          ;;
+        *)
+          echo "unknown option"
+        esac
+      done
+      printLnBr
+    fi
     printColor "getting new release ..." "$yellow"
     rm -r $wrk_spc > /dev/null 2>& 1
     if ! mkdir -p $wrk_spc
@@ -100,26 +108,30 @@ handlePackages() {
   missing=$(getMissingPkg "$install_pkg")
   if [ "$missing" != "" ]
   then
-    printf "\e[96;1mthe following new packages will be installed:\e[0m %s \n" "$missing"
-    while :
-    do
-      printf "\e[96;1mcontinue? (y/n):\e[0m "
-      read -r choice
-      case "$choice" in
-      y|"")
-        if ! installPkg "$missing"
-        then
-          exit 1
-        fi
-        break
-        ;;
-      n)
-        exit 0
-        ;;
-      *)
-        echo "unknown option"
-      esac
-    done
+    printColor "the following new packages will be installed: " "$blue" "nb"
+    echo "$missing"
+    if [ "$auto" = "false" ]
+    then
+      while :
+      do
+        printColor "continue? (y/n): " "$blue" "nb"
+        read -r choice
+        case "$choice" in
+        y|"")
+          break
+          ;;
+        n)
+          exit 0
+          ;;
+        *)
+          echo "unknown option"
+        esac
+      done
+    fi
+    if ! installPkg "$missing"
+    then
+      exit 1
+    fi
   fi
 }
 
@@ -490,7 +502,7 @@ printColor "updating binaries ..." "$yellow"
 handleBin
 handleBinConfigs
 printColor "updating binaries done" "$yellow"
-echo
+printLnBr
 printColor "updating integration ..." "$yellow"
 handleSystemd
 handleLogrotate
