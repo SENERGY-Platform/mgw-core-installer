@@ -100,6 +100,7 @@ prepareInstallDir() {
 
 handleBin() {
   wrk_spc="/tmp/mgw-install"
+  rm -r $wrk_spc > /dev/null 2>& 1
   if ! mkdir -p $wrk_spc
   then
     exit 1
