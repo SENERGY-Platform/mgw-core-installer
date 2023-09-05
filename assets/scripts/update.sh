@@ -83,11 +83,11 @@ handleRelease() {
       exit 1
     fi
     printColor "getting new release done" "$yellow"
-    echo
     $extract_path/assets/scripts/update.sh "$base_path"
+    printLnBr
   else
     echo "latest release at $new_version, nothing to do"
-    echo
+    printLnBr
   fi
 }
 
@@ -444,9 +444,9 @@ then
   . ./.settings
   checkRoot
   version="$(cat .version)"
-  echo
+  printLnBr
   echo "installed release: $version"
-  echo
+  printLnBr
   handleRelease
   exit
 fi
@@ -467,20 +467,20 @@ checkRoot
 printColor "setting up updater ..." "$yellow"
 exportSettingsToEnv
 printColor "setting up updater done" "$yellow"
-echo
+printLnBr
 printColor "setting up required packages ..." "$yellow"
 handlePackages
 printColor "setting up required packages done" "$yellow"
-echo
+printLnBr
 printColor "updating files ..." "$yellow"
 updateInstallDir
 printColor "updating done" "$yellow"
-echo
+printLnBr
 printColor "stopping components ..." "$yellow"
 stopContainers
 stopBin
 printColor "stopping components done" "$yellow"
-echo
+printLnBr
 printColor "updating binaries ..." "$yellow"
 handleBin
 handleBinConfigs
@@ -490,7 +490,7 @@ printColor "updating integration ..." "$yellow"
 handleSystemd
 handleLogrotate
 printColor "updating integration done" "$yellow"
-echo
+printLnBr
 printColor "updating container environment ..." "$yellow"
 handleContainerAssets
 updateContainerImages
@@ -498,6 +498,6 @@ handleContainers
 printColor "updating container environment done" "$yellow"
 updateVersion
 rm -r $wrk_spc
-echo
+printLnBr
 printColor "update successful" "$yellow"
-echo
+printLnBr

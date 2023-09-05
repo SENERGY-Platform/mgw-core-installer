@@ -477,26 +477,26 @@ do
     echo "unknown option"
   esac
 done
-echo
+printLnBr
 printColor "setting up installer ..." "$yellow"
 handleDefaultSettings
 handleDatabasePasswords
 exportSettingsToEnv
 printColor "setting up installer done" "$yellow"
-echo
+printLnBr
 printColor "setting up required packages ..." "$yellow"
 handlePackages
 printColor "setting up required packages done" "$yellow"
-echo
+printLnBr
 printColor "setting up install directory ..." "$yellow"
 prepareInstallDir
 printColor "setting up install directory done" "$yellow"
-echo
+printLnBr
 printColor "setting up binaries ..." "$yellow"
 handleBin
 handleBinConfigs
 printColor "setting up binaries done" "$yellow"
-echo
+printLnBr
 printColor "setting up integration ..." "$yellow"
 handleIntegration
 printColor "setting up integration done" "$yellow"
@@ -505,7 +505,7 @@ printColor "setting up container environment ..." "$yellow"
 copyContainerAssets
 handleDocker
 printColor "setting up container environment done" "$yellow"
-echo
+printLnBr
 saveSettings
 printColor "installation successful" "$yellow"
-echo
+printLnBr
