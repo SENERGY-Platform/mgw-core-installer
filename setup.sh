@@ -230,6 +230,14 @@ handleLogrotate() {
   fi
 }
 
+handleCron() {
+  echo "creating cronjob ..."
+  if ! envsubst '$BASE_PATH $LOG_PATH' < ./assets/cron/mgw_update.template > $cron_path/mgw_update
+  then
+    exit 1
+  fi
+}
+
 handleDefaultSettings() {
   while :
   do
@@ -350,6 +358,23 @@ handleIntegration() {
       echo "unknown option"
     esac
   done
+  while :
+  do
+    printColor "use cron for automatic updates? (y/n): " "$blue" "nb"
+    read -r choice
+    case "$choice" in
+    y|"")
+      handleCron
+      break
+      ;;
+    n)
+      cron=false
+      break
+      ;;
+    *)
+      echo "unknown option"
+    esac
+  done
 }
 
 handleDocker() {
@@ -413,6 +438,17 @@ handleOptions() {
         exit 1
     esac
     logrotated_path="$LOGROTATED_PATH"
+  fi
+  if [ "$CRON_PATH" != "" ]
+  then
+    case $CRON_PATH in
+      /*)
+        ;;
+      *)
+        echo "cron path must be absolute"
+        exit 1
+    esac
+    cron_path="$CRON_PATH"
   fi
 }
 
