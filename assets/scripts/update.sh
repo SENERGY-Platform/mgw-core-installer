@@ -31,7 +31,7 @@ handleParam() {
 }
 
 handleRelease() {
-  printf "\e[93;1mchecking for new release ...\e[0m\n"
+  printColor "checking for new release ..." "$yellow"
   if ! release="$(getGitHubRelease "$repo")"
   then
     exit 1
@@ -59,7 +59,7 @@ handleRelease() {
       esac
     done
     echo
-    printf "\e[93;1mgetting new release ...\e[0m\n"
+    printColor "getting new release ..." "$yellow"
     rm -r $wrk_spc > /dev/null 2>& 1
     if ! mkdir -p $wrk_spc
     then
@@ -82,7 +82,7 @@ handleRelease() {
       rm -r $wrk_spc
       exit 1
     fi
-    printf "\e[93;1mgetting new release done\e[0m\n"
+    printColor "getting new release done" "$yellow"
     echo
     $extract_path/assets/scripts/update.sh "$base_path"
   else
@@ -464,40 +464,40 @@ cd ../..
 . $install_path/.settings
 
 checkRoot
-printf "\e[93;1msetting up updater ...\e[0m\n"
+printColor "setting up updater ..." "$yellow"
 exportSettingsToEnv
-printf "\e[93;1msetting up updater done\e[0m\n"
+printColor "setting up updater done" "$yellow"
 echo
-printf "\e[93;1msetting up required packages ...\e[0m\n"
+printColor "setting up required packages ..." "$yellow"
 handlePackages
-printf "\e[93;1msetting up required packages done\e[0m\n"
+printColor "setting up required packages done" "$yellow"
 echo
-printf "\e[93;1mupdating files ...\e[0m\n"
+printColor "updating files ..." "$yellow"
 updateInstallDir
-printf "\e[93;1mupdating done\e[0m\n"
+printColor "updating done" "$yellow"
 echo
-printf "\e[93;1mstopping components ...\e[0m\n"
+printColor "stopping components ..." "$yellow"
 stopContainers
 stopBin
-printf "\e[93;1mstopping components done\e[0m\n"
+printColor "stopping components done" "$yellow"
 echo
-printf "\e[93;1mupdating binaries ...\e[0m\n"
+printColor "updating binaries ..." "$yellow"
 handleBin
 handleBinConfigs
-printf "\e[93;1mupdating binaries done\e[0m\n"
+printColor "updating binaries done" "$yellow"
 echo
-printf "\e[93;1mupdating integration ...\e[0m\n"
+printColor "updating integration ..." "$yellow"
 handleSystemd
 handleLogrotate
-printf "\e[93;1mupdating integration done\e[0m\n"
+printColor "updating integration done" "$yellow"
 echo
-printf "\e[93;1mupdating container environment ...\e[0m\n"
+printColor "updating container environment ..." "$yellow"
 handleContainerAssets
 updateContainerImages
 handleContainers
-printf "\e[93;1mupdating container environment done\e[0m\n"
+printColor "updating container environment done" "$yellow"
 updateVersion
 rm -r $wrk_spc
 echo
-printf "\e[92;1mupdate successful\e[0m\n"
+printColor "update successful" "$yellow"
 echo
