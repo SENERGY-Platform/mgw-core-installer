@@ -1,5 +1,8 @@
 #!/bin/sh
 
+yellow="\e[93;1m"
+blue="\e[96;1m"
+
 downloadFile() {
   path="$2/$(basename "$1")"
   if ! curl -L -s -o "$path" "$1"
@@ -105,4 +108,17 @@ isRoot() {
      return 0
   fi
   return 1
+}
+
+printColor() {
+  format="%s"
+  if [ "$auto" = "false" ] || [ "$auto" = "" ]
+  then
+    format="$2%s\e[0m"
+  fi
+  if [ "$3" != "nb" ]
+  then
+    format="$format\n"
+  fi
+  printf $format "$1"
 }
