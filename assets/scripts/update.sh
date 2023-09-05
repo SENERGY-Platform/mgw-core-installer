@@ -452,6 +452,38 @@ handleBinConfigs() {
   done
 }
 
+handleNew() {
+  if [ "$cron" = "" ]
+  then
+    requireUser
+    while :
+    do
+      printColor "use cron for automatic updates? (y/n): " "$blue" "nb"
+      read -r choice
+      case "$choice" in
+      y|"")
+        cron=true
+        break
+        ;;
+      n)
+        cron=false
+        break
+        ;;
+      *)
+        echo "unknown option"
+      esac
+    done
+  fi
+}
+
+requireUser() {
+  if [ "$auto" = "true" ]
+  then
+    echo "user interaction required, please run update manually"
+    exit 1
+  fi
+}
+
 checkRoot() {
   if ! isRoot
   then
@@ -493,6 +525,7 @@ cd ../..
 
 checkRoot
 printColor "setting up updater ..." "$yellow"
+handleNew
 exportSettingsToEnv
 printColor "setting up updater done" "$yellow"
 printLnBr
