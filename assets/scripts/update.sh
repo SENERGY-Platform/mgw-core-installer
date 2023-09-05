@@ -514,6 +514,7 @@ updateContainerImages
 handleContainers
 printColor "updating container environment done" "$yellow"
 updateVersion
+saveSettings
 rm -r $wrk_spc
 printLnBr
 printColor "update successful" "$yellow"
