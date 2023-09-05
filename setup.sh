@@ -187,55 +187,64 @@ handleBinConfigs() {
 }
 
 handleSystemd() {
-  units=""
-  echo "copying systemd mount units ..."
-  if ! units=$(copyWithTemplates ./assets/units/mounts $systemd_path "$units")
+  if [ "$systemd" = "true" ]
   then
-    exit 1
-  fi
-  echo "copying systemd service units ..."
-  if ! units=$(copyWithTemplates ./assets/units/services $systemd_path "$units")
-  then
-    exit 1
-  fi
-  if [ "$units" != "" ]
-  then
-    echo "reloading systemd ..."
-    if ! systemctl daemon-reload
+    units=""
+    echo "copying systemd mount units ..."
+    if ! units=$(copyWithTemplates ./assets/units/mounts $systemd_path "$units")
     then
       exit 1
     fi
-    for unit in ${units}
-    do
-      echo "enabling $unit ..."
-      if ! systemctl enable "$unit"
+    echo "copying systemd service units ..."
+    if ! units=$(copyWithTemplates ./assets/units/services $systemd_path "$units")
+    then
+      exit 1
+    fi
+    if [ "$units" != "" ]
+    then
+      echo "reloading systemd ..."
+      if ! systemctl daemon-reload
       then
         exit 1
       fi
-      echo "starting $unit ..."
-      if ! systemctl start "$unit"
-      then
-        exit 1
-      fi
-      echo "$unit" >> $base_path/.units
-    done
-    bin_started=true
+      for unit in ${units}
+      do
+        echo "enabling $unit ..."
+        if ! systemctl enable "$unit"
+        then
+          exit 1
+        fi
+        echo "starting $unit ..."
+        if ! systemctl start "$unit"
+        then
+          exit 1
+        fi
+        echo "$unit" >> $base_path/.units
+      done
+      bin_started=true
+    fi
   fi
 }
 
 handleLogrotate() {
-  echo "copying logrotate config ..."
-  if ! envsubst < ./assets/logrotate/mgw_core.template > $logrotated_path/mgw_core
+  if [ "$logrotate" = "true" ]
   then
-    exit 1
+    echo "copying logrotate config ..."
+    if ! envsubst < ./assets/logrotate/mgw_core.template > $logrotated_path/mgw_core
+    then
+      exit 1
+    fi
   fi
 }
 
 handleCron() {
-  echo "creating cronjob ..."
-  if ! envsubst '$BASE_PATH $LOG_PATH' < ./assets/cron/mgw_update.template > $cron_path/mgw_update
+  if [ "$cron" = "true" ]
   then
-    exit 1
+    echo "creating cronjob ..."
+    if ! envsubst '$BASE_PATH $LOG_PATH' < ./assets/cron/mgw_update.template > $cron_path/mgw_update
+    then
+      exit 1
+    fi
   fi
 }
 
@@ -326,11 +335,11 @@ handleDatabasePasswords() {
 handleIntegration() {
   while :
   do
-    printColor "use systemd? (y/n): " "$blue" "nb"
+    printColor "enable OS startup integration? (y/n): " "$blue" "nb"
     read -r choice
     case "$choice" in
     y|"")
-      handleSystemd
+      systemd=true
       break
       ;;
     n)
@@ -344,11 +353,11 @@ handleIntegration() {
   done
   while :
   do
-    printColor "use logrotate? (y/n): " "$blue" "nb"
+    printColor "enable log rotation? (y/n): " "$blue" "nb"
     read -r choice
     case "$choice" in
     y|"")
-      handleLogrotate
+      logrotate=true
       break
       ;;
     n)
@@ -361,11 +370,11 @@ handleIntegration() {
   done
   while :
   do
-    printColor "use cron for automatic updates? (y/n): " "$blue" "nb"
+    printColor "enable automatic updates? (y/n): " "$blue" "nb"
     read -r choice
     case "$choice" in
     y|"")
-      handleCron
+      cron=true
       break
       ;;
     n)
@@ -482,6 +491,7 @@ printLnBr
 printColor "setting up installer ..." "$yellow"
 handleDefaultSettings
 handleDatabasePasswords
+handleIntegration
 exportSettingsToEnv
 printColor "setting up installer done" "$yellow"
 printLnBr
@@ -499,14 +509,16 @@ handleBinConfigs
 printColor "setting up binaries done" "$yellow"
 printLnBr
 printColor "setting up integration ..." "$yellow"
-handleIntegration
+handleSystemd
+handleLogrotate
+handleCron
 printColor "setting up integration done" "$yellow"
 printLnBr
 printColor "setting up container environment ..." "$yellow"
 copyContainerAssets
 handleDocker
 printColor "setting up container environment done" "$yellow"
-printLnBr
 saveSettings
+printLnBr
 printColor "installation successful" "$yellow"
 printLnBr
