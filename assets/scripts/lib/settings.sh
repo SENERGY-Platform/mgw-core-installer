@@ -2,6 +2,7 @@
 
 systemd_path=/etc/systemd/system
 logrotated_path=/etc/logrotate.d
+cron_path=/etc/cron.daily
 mnt_path=/mnt/mgw
 base_path=/opt/mgw
 secrets_path=""
@@ -19,6 +20,7 @@ subnet_module="10.1.0.0"
 subnet_gateway="10.10.0.0"
 systemd=true
 logrotate=true
+cron=true
 platform=""
 arch=""
 
@@ -41,8 +43,10 @@ core_db_pw=$core_db_pw
 core_db_root_pw=$core_db_root_pw
 systemd_path=$systemd_path
 logrotated_path=$logrotated_path
+cron_path=$cron_path
 systemd=$systemd
 logrotate=$logrotate
+cron=$cron
 platform=$platform
 arch=$arch" \
   > $base_path/.settings
