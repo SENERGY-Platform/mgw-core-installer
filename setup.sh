@@ -34,13 +34,13 @@ handlePackages() {
   missing=$(getMissingPkg "$require_pkg")
   if [ "$missing" != "" ]
   then
-    printf "missing required packages: %s\n" "$missing"
+    echo "missing required packages: $missing"
     exit 1
   fi
   missing=$(getMissingDockerPkg)
   if [ "$missing" != "" ]
   then
-   printf "missing required packages: %s\n" "$missing"
+   echo "missing required packages: $missing"
    echo "please follow instructions at 'https://docs.docker.com/engine/install' and run setup again"
    exit 1
   fi
