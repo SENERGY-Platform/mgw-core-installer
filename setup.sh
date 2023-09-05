@@ -392,7 +392,8 @@ handleDocker() {
 }
 
 handleOptions() {
-  if [ "$SYSTEMD_PATH" != "" ]; then
+  if [ "$SYSTEMD_PATH" != "" ]
+  then
     case $SYSTEMD_PATH in
       /*)
         ;;
@@ -402,7 +403,8 @@ handleOptions() {
     esac
     systemd_path="$SYSTEMD_PATH"
   fi
-  if [ "$LOGROTATED_PATH" != "" ]; then
+  if [ "$LOGROTATED_PATH" != "" ]
+  then
     case $LOGROTATED_PATH in
       /*)
         ;;
