@@ -47,10 +47,11 @@ handlePackages() {
   missing=$(getMissingPkg "$install_pkg")
   if [ "$missing" != "" ]
   then
-    printf "\e[96;1mthe following new packages will be installed:\e[0m %s \n" "$missing"
+    printColor "the following new packages will be installed: " "$blue" "nb"
+    echo "$missing"
     while :
     do
-      printf "\e[96;1mcontinue? (y/n):\e[0m "
+      printColor "continue? (y/n): " "$blue" "nb"
       read -r choice
       case "$choice" in
       y|"")
@@ -232,7 +233,7 @@ handleLogrotate() {
 handleDefaultSettings() {
   while :
   do
-    printf "\e[96;1mchange default settings? (n/y):\e[0m "
+    printColor "change default settings? (n/y): " "$blue" "nb"
     read -r choice
     case "$choice" in
       y)
@@ -316,7 +317,7 @@ handleDatabasePasswords() {
 handleIntegration() {
   while :
   do
-    printf "\e[96;1muse systemd? (y/n):\e[0m "
+    printColor "use systemd? (y/n): " "$blue" "nb"
     read -r choice
     case "$choice" in
     y|"")
@@ -334,7 +335,7 @@ handleIntegration() {
   done
   while :
   do
-    printf "\e[96;1muse logrotate? (y/n):\e[0m "
+    printColor "use logrotate? (y/n): " "$blue" "nb"
     read -r choice
     case "$choice" in
     y|"")
@@ -365,7 +366,7 @@ handleDocker() {
   then
     while :
     do
-      printf "\e[96;1mstart containers? (y/n):\e[0m "
+      printColor "start containers? (y/n): " "$blue" "nb"
       read -r choice
       case $choice in
       y|"")
@@ -425,7 +426,7 @@ handleOptions
 checkRoot
 while :
 do
-  printf "\e[96;1minstall multi-gateway core %s? (y/n):\e[0m " "$version"
+  printColor "install multi-gateway core $version? (y/n): " "$blue" "nb"
   read -r choice
   case $choice in
   y|"")
@@ -439,34 +440,34 @@ do
   esac
 done
 echo
-printf "\e[93;1msetting up installer ...\e[0m\n"
+printColor "setting up installer ..." "$yellow"
 handleDefaultSettings
 handleDatabasePasswords
 exportSettingsToEnv
-printf "\e[93;1msetting up installer done\e[0m\n"
+printColor "setting up installer done" "$yellow"
 echo
-printf "\e[93;1msetting up required packages ...\e[0m\n"
+printColor "setting up required packages ..." "$yellow"
 handlePackages
-printf "\e[93;1msetting up required packages done\e[0m\n"
+printColor "setting up required packages done" "$yellow"
 echo
-printf "\e[93;1msetting up install directory ...\e[0m\n"
+printColor "setting up install directory ..." "$yellow"
 prepareInstallDir
-printf "\e[93;1msetting up install directory done\e[0m\n"
+printColor "setting up install directory done" "$yellow"
 echo
-printf "\e[93;1msetting up binaries ...\e[0m\n"
+printColor "setting up binaries ..." "$yellow"
 handleBin
 handleBinConfigs
-printf "\e[93;1msetting up binaries done\e[0m\n"
+printColor "setting up binaries done" "$yellow"
 echo
-printf "\e[93;1msetting up integration ...\e[0m\n"
+printColor "setting up integration ..." "$yellow"
 handleIntegration
-printf "\e[93;1msetting up integration done\e[0m\n"
+printColor "setting up integration done" "$yellow"
 echo
-printf "\e[93;1msetting up container environment ...\e[0m\n"
+printColor "setting up container environment ..." "$yellow"
 copyContainerAssets
 handleDocker
-printf "\e[93;1msetting up container environment done\e[0m\n"
+printColor "setting up container environment done" "$yellow"
 echo
 saveSettings
-printf "\e[92;1minstallation successful\e[0m\n"
+printColor "installation successful" "$yellow"
 echo
