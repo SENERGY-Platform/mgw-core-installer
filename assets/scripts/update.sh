@@ -272,6 +272,17 @@ handleLogrotate() {
   fi
 }
 
+handleCron() {
+  if [ "$cron" = "true" ]
+  then
+    echo "updating cronjob ..."
+    if ! envsubst '$BASE_PATH $LOG_PATH' < ./assets/cron/mgw_update.template > $cron_path/mgw_update
+    then
+      exit 1
+    fi
+  fi
+}
+
 stopContainers() {
   echo "stopping containers ..."
   if ! cd $container_path
@@ -506,6 +517,7 @@ printLnBr
 printColor "updating integration ..." "$yellow"
 handleSystemd
 handleLogrotate
+handleCron
 printColor "updating integration done" "$yellow"
 printLnBr
 printColor "updating container environment ..." "$yellow"
