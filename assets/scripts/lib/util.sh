@@ -122,3 +122,10 @@ printColor() {
   fi
   printf $format "$1"
 }
+
+printLnBr() {
+  if [ "$auto" = "false" ] || [ "$auto" = "" ]
+  then
+    echo
+  fi
+}
