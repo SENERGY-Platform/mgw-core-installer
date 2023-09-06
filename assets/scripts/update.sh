@@ -38,10 +38,6 @@ handleParam() {
 
 handleRelease() {
   printColor "checking for new release ..." "$yellow"
-  if [ "$auto" = "true" ]
-  then
-    date
-  fi
   if ! release="$(getGitHubRelease "$repo")"
   then
     exit 1
@@ -514,6 +510,10 @@ then
   checkRoot
   version="$(cat .version)"
   printLnBr
+  if [ "$auto" = "true" ]
+  then
+    date
+  fi
   echo "installed release: $version"
   printLnBr
   handleRelease
