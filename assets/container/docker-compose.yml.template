@@ -90,7 +90,7 @@ services:
         aliases:
           - secret-manager
   web-ui:
-    image: ghcr.io/senergy-platform/mgw-gui:v0.1.2
+    image: ghcr.io/senergy-platform/mgw-gui:v0.1.3
     build:
       context: ${WEB_UI_BUILD_CONTEXT}
       dockerfile: ./build/Dockerfile
