@@ -28,6 +28,11 @@ handleParam() {
       exit 1
     fi
     ;;
+  *)
+    if [ "$val" = "$key" ] && [ "$install_path" = "" ]
+    then
+      install_path="$val"
+    fi
   esac
 }
 
