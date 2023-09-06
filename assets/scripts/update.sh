@@ -512,7 +512,7 @@ then
   printLnBr
   if [ "$auto" = "true" ]
   then
-    date
+    date -u --rfc-3339=ns
   fi
   echo "installed release: $version"
   printLnBr
