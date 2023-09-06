@@ -280,6 +280,10 @@ handleCron() {
     then
       exit 1
     fi
+    if ! chmod +x $cron_path/mgw_update
+    then
+      exit 1
+    fi
   fi
 }
 
