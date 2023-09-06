@@ -7,7 +7,7 @@ fi
 
 repo="SENERGY-Platform/mgw-core-installer"
 auto=false
-install_path=$1
+install_path=""
 script_path=$(pwd)
 wrk_spc="/tmp/mgw-update"
 installed_units=""
