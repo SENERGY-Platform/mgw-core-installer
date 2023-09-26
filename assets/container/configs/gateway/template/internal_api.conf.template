@@ -1,31 +1,31 @@
 server {
-    listen       80;
-    listen  [::]:80;
-    server_name  internal-api;
+    listen 80;
+    listen [::]:80;
+    server_name internal-api;
     resolver 127.0.0.11 valid=10s;
     resolver_timeout 5s;
-    rewrite ^/(.*)/$ /$1 permanent;
-    location ~ ^/core-manager/(.*)$ {
-          proxy_pass http://c_manager_sock/$1$is_args$args;
-          allow ${SUBNET_CORE}/16;
-          deny all;
-    }
-    location ~ ^/ce-wrapper/(.*)$ {
-          proxy_pass http://ce_wrapper_sock/$1$is_args$args;
-          allow ${SUBNET_CORE}/16;
-          deny all;
-    }
-    location ~ ^/host-manager/(.*)$ {
-          proxy_pass http://h_manager_sock/$1$is_args$args;
-          allow ${SUBNET_CORE}/16;
-          deny all;
-    }
-    location /host-info {
-          proxy_pass http://h_manager_sock/host_info;
-          allow ${SUBNET_MODULE}/16;
-          deny all;
-    }
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $host;
     proxy_set_header X-Static-Origin internal-api;
+    rewrite ^/(.*)/$ /$1 permanent;
+    location ~ ^/core-manager/(.*)$ {
+        proxy_pass http://c_manager_sock/$1$is_args$args;
+        allow ${SUBNET_CORE}/16;
+        deny all;
+    }
+    location ~ ^/ce-wrapper/(.*)$ {
+        proxy_pass http://ce_wrapper_sock/$1$is_args$args;
+        allow ${SUBNET_CORE}/16;
+        deny all;
+    }
+    location ~ ^/host-manager/(.*)$ {
+        proxy_pass http://h_manager_sock/$1$is_args$args;
+        allow ${SUBNET_CORE}/16;
+        deny all;
+    }
+    location /host-info {
+        proxy_pass http://h_manager_sock/host_info;
+        allow ${SUBNET_MODULE}/16;
+        deny all;
+    }
 }
