@@ -1,5 +1,7 @@
 #!/bin/sh
 
+old_compose=false
+
 getMissingDockerPkg() {
   missing=""
   if ! command -v docker > /dev/null 2>& 1
@@ -21,11 +23,19 @@ getMissingDockerPkg() {
 detectDockerCompose() {
   if docker compose version > /dev/null 2>& 1
   then
-    alias dockerCompose="docker compose"
     return
   fi
   if docker-compose version > /dev/null 2>& 1
   then
-    alias dockerCompose="docker-compose"
+    old_compose=true
   fi
+}
+
+dockerCompose() {
+  if [ "$old_compose" = "true" ]; then
+    docker-compose "$@"
+    return $?
+  fi
+  docker compose "$@"
+  return $?
 }
