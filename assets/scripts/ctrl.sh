@@ -28,6 +28,10 @@ unmountTmpfs() {
 }
 
 startBin() {
+  if [ -e $base_path/.pid ]
+  then
+    exit 1
+  fi
   echo "starting processes ..."
   pid=""
   $bin_path/SENERGY-Platform/mgw-container-engine-wrapper/bin -config=$bin_path/SENERGY-Platform/mgw-container-engine-wrapper/config/conf.json &
