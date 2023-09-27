@@ -39,7 +39,6 @@ services:
           - core-db
   module-manager:
     image: ghcr.io/senergy-platform/mgw-module-manager:0.9.1
-    build: ${MODULE_MANAGER_BUILD_CONTEXT}
     restart: unless-stopped
     depends_on:
       - db
@@ -65,10 +64,6 @@ services:
           - module-manager
   secret-manager:
     image: ghcr.io/senergy-platform/mgw-secret-manager:v0.2.0
-    build:
-      context: ${SECRET_MANAGER_BUILD_CONTEXT}
-      dockerfile: ./build/Dockerfile
-      target: prod
     restart: unless-stopped
     depends_on:
       - db
@@ -90,9 +85,6 @@ services:
           - secret-manager
   web-ui:
     image: ghcr.io/senergy-platform/mgw-gui:v0.1.4
-    build:
-      context: ${WEB_UI_BUILD_CONTEXT}
-      dockerfile: ./build/Dockerfile
     restart: unless-stopped
     depends_on:
       - gateway
