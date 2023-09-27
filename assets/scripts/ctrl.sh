@@ -25,6 +25,19 @@ start() {
   $bin_path/SENERGY-Platform/mgw-host-manager/bin -config=$bin_path/SENERGY-Platform/mgw-host-manager/config/conf.json &
   pid="${pid} $!"
   echo "$pid" > $base_path/.pid
+  echo "starting containers ..."
+  if ! cd $container_path
+  then
+    exit 1
+  fi
+  if ! dockerCompose start
+  then
+    exit 1
+  fi
+  if ! cd $script_path
+  then
+    exit 1
+  fi
 }
 
 stop() {
