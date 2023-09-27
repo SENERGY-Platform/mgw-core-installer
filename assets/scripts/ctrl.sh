@@ -48,6 +48,7 @@ then
   echo "root privileges required"
   exit 1
 fi
+detectDockerCompose
 case $1 in
 start)
   start
