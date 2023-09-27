@@ -493,7 +493,7 @@ do
 done
 printLnBr
 printColor "setting up installer ..." "$yellow"
-setDockerComposeAlias
+detectDockerCompose
 handleDefaultSettings
 handleDatabasePasswords
 handleIntegration

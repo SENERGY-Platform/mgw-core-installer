@@ -18,7 +18,7 @@ getMissingDockerPkg() {
   echo "$missing"
 }
 
-setDockerComposeAlias() {
+detectDockerCompose() {
   if docker compose version > /dev/null 2>& 1
   then
     alias dockerCompose="docker compose"

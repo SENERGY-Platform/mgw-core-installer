@@ -534,7 +534,7 @@ cd ../..
 
 checkRoot
 printColor "setting up updater ..." "$yellow"
-setDockerComposeAlias
+detectDockerCompose
 handleNew
 exportSettingsToEnv
 printColor "setting up updater done" "$yellow"
