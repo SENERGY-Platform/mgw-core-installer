@@ -37,5 +37,5 @@ server {
         deny ${SUBNET_GATEWAY}/16;
         deny ${SUBNET_MODULE}/16;
     }
-    include conf.d/public_api.location;
+    #include conf.d/public_api.location;
 }
