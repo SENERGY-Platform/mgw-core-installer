@@ -41,6 +41,19 @@ start() {
 }
 
 stop() {
+  echo "stopping containers ..."
+  if ! cd $container_path
+  then
+    exit 1
+  fi
+  if ! dockerCompose stop
+  then
+    exit 1
+  fi
+  if ! cd $script_path
+  then
+    exit 1
+  fi
   echo "stopping processes ..."
   for pid in ${1}
   do
