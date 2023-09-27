@@ -88,6 +88,26 @@ stopContainers() {
   fi
 }
 
+recreateContainers() {
+  echo "recreating containers ..."
+  if ! cd $container_path
+  then
+    exit 1
+  fi
+  if ! dockerCompose rm -s -f
+  then
+    exit 1
+  fi
+  if ! dockerCompose up --no-start
+  then
+    exit 1
+  fi
+  if ! cd $script_path
+  then
+    exit 1
+  fi
+}
+
 if ! [ "$(id -u)" = "0" ]
 then
   echo "root privileges required"
@@ -96,14 +116,31 @@ fi
 detectDockerCompose
 case $1 in
 start)
-  mountTmpfs
   startBin
+  mountTmpfs
   startContainers
   ;;
 stop)
   stopContainers
-  stopBin
   unmountTmpfs
+  stopBin
+  ;;
+prc-start)
+  startBin
+  ;;
+prc-stop)
+  stopBin
+  ;;
+ctr-start)
+  mountTmpfs
+  startContainers
+  ;;
+ctr-stop)
+  stopContainers
+  unmountTmpfs
+  ;;
+ctr-recreate)
+  recreateContainers
   ;;
 *)
   echo "unknown option"
