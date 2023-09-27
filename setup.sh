@@ -352,7 +352,7 @@ handleIntegration() {
       ;;
     n)
       systemd=false
-      echo "please use 'ctrl.sh (start/stop)' for manual control"
+      echo "please use 'ctrl.sh' for manual control"
       break
       ;;
     *)
@@ -420,7 +420,7 @@ handleDocker() {
         break
         ;;
       n)
-        echo "please use 'docker compose start' to manually start containers"
+        echo "please use 'ctrl.sh' for manual control or reboot your system"
         break
         ;;
       *)
