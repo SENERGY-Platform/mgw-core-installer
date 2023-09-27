@@ -92,6 +92,10 @@ prepareInstallDir() {
   then
     exit 1
   fi
+  if ! cp ./assets/scripts/lib/docker.sh $base_path/scripts/docker.sh
+  then
+    exit 1
+  fi
   if ! cp .version $base_path/.version
   then
     exit 1
