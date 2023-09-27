@@ -11,20 +11,52 @@ fi
 
 export COMPOSE_PROJECT_NAME="$stack_name"
 
-start() {
-  pid=""
-  echo "mounting secrets tmpfs ..."
+mountTmpfs() {
+  echo "mounting tmpfs ..."
   if ! mount -t tmpfs -o size=100M tmpfs $secrets_path
   then
     exit 1
   fi
-  echo "starting ce-wrapper ..."
+}
+
+unmountTmpfs() {
+  echo "unmounting tmpfs ..."
+  if ! umount $secrets_path
+  then
+    exit 1
+  fi
+}
+
+startBin() {
+  echo "starting processes ..."
+  pid=""
   $bin_path/SENERGY-Platform/mgw-container-engine-wrapper/bin -config=$bin_path/SENERGY-Platform/mgw-container-engine-wrapper/config/conf.json &
   pid="${pid}$!"
-  echo "starting host-manager ..."
   $bin_path/SENERGY-Platform/mgw-host-manager/bin -config=$bin_path/SENERGY-Platform/mgw-host-manager/config/conf.json &
   pid="${pid} $!"
   echo "$pid" > $base_path/.pid
+}
+
+stopBin() {
+  if ! pid="$(cat $base_path/.pid)"
+  then
+    exit 1
+  fi
+  if [ "$pid" != "" ]
+  then
+    echo "stopping processes ..."
+    for pid in ${pid}
+    do
+      if ! kill $pid
+      then
+        exit 1
+      fi
+    done
+    rm $base_path/.pid
+  fi
+}
+
+startContainers() {
   echo "starting containers ..."
   if ! cd $container_path
   then
@@ -40,7 +72,7 @@ start() {
   fi
 }
 
-stop() {
+stopContainers() {
   echo "stopping containers ..."
   if ! cd $container_path
   then
@@ -54,19 +86,6 @@ stop() {
   then
     exit 1
   fi
-  echo "stopping processes ..."
-  for pid in ${1}
-  do
-    if ! kill $pid
-    then
-      exit 1
-    fi
-  done
-  echo "unmounting secrets tmpfs ..."
-  if ! umount $secrets_path
-  then
-    exit 1
-  fi
 }
 
 if ! [ "$(id -u)" = "0" ]
@@ -77,18 +96,14 @@ fi
 detectDockerCompose
 case $1 in
 start)
-  start
+  mountTmpfs
+  startBin
+  startContainers
   ;;
 stop)
-  if ! pid="$(cat $base_path/.pid)"
-  then
-    exit 1
-  fi
-  if [ "$pid" != "" ]
-  then
-    stop "$pid"
-    rm $base_path/.pid
-  fi
+  stopContainers
+  stopBin
+  unmountTmpfs
   ;;
 *)
   echo "unknown option"
