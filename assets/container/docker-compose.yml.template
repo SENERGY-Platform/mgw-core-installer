@@ -47,7 +47,7 @@ services:
       - secret-manager
     environment:
       LOGGER_LEVEL: ${LOG_LEVEL}
-      LOGGER_TERMINAL: true
+      LOGGER_TERMINAL: "true"
       DB_USER: core_user
       DB_PASSWD: ${CORE_DB_PW}
       DH_HOST_DEP_PATH: ${DEPLOYMENTS_PATH}
@@ -74,13 +74,13 @@ services:
       - db
     environment:
       TMPFS_PATH: /tmp
-      ENABLE_ENCRYPTION: false
-      EXPOSE_CONFIDENTIAL_ENDPOINTS: true
+      ENABLE_ENCRYPTION: "false"
+      EXPOSE_CONFIDENTIAL_ENDPOINTS: "true"
       DB_CONNECTION_URL: core_user:${CORE_DB_PW}@tcp(core-db:3306)/secret_manager
       MASTER_KEY_FILE_PATH: /opt/data/key
       SERVER_PORT: 80
       LOGGER_LEVEL: ${LOG_LEVEL}
-      LOGGER_TERMINAL: true
+      LOGGER_TERMINAL: "true"
     volumes:
       - /mnt/mgw/secrets:/tmp
       - sm-data:/opt/data
