@@ -1,6 +1,5 @@
 version: "2"
 
-name: ${STACK_NAME}
 services:
   gateway:
     image: nginx:1.25.2-alpine
