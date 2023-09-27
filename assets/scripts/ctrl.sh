@@ -6,6 +6,7 @@ then
   exit 1
 fi
 
+. ./scripts/docker.sh
 . ./.settings
 
 start() {
