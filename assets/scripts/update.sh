@@ -294,7 +294,7 @@ stopContainers() {
   then
     exit 1
   fi
-  if ! docker compose rm -s -f
+  if ! dockerCompose rm -s -f
   then
     exit 1
   fi
@@ -311,7 +311,7 @@ updateContainerImages() {
   then
     exit 1
   fi
-  if ! docker compose pull
+  if ! dockerCompose pull
   then
     exit 1
   fi
@@ -328,14 +328,14 @@ handleContainers() {
     exit 1
   fi
   echo "creating containers ..."
-  if ! docker compose up --no-start
+  if ! dockerCompose up --no-start
   then
     exit 1
   fi
   if [ "$systemd" = "true" ]
   then
     echo "starting containers ..."
-    if ! docker compose start
+    if ! dockerCompose start
     then
       exit 1
     fi
@@ -534,6 +534,7 @@ cd ../..
 
 checkRoot
 printColor "setting up updater ..." "$yellow"
+setDockerComposeAlias
 handleNew
 exportSettingsToEnv
 printColor "setting up updater done" "$yellow"

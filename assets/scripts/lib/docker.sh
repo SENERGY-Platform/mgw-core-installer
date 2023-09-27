@@ -6,7 +6,7 @@ getMissingDockerPkg() {
   then
     missing="${missing}docker-ce docker-ce-cli containerd.io"
   fi
-  if ! docker compose version > /dev/null 2>& 1
+  if ! dockerCompose version > /dev/null 2>& 1
   then
     pkg="docker-compose-plugin"
     if [ "$missing" = "" ]; then
@@ -16,4 +16,16 @@ getMissingDockerPkg() {
     fi
   fi
   echo "$missing"
+}
+
+setDockerComposeAlias() {
+  if docker compose version > /dev/null 2>& 1
+  then
+    alias dockerCompose="docker compose"
+    return
+  fi
+  if docker-compose version > /dev/null 2>& 1
+  then
+    alias dockerCompose="docker-compose"
+  fi
 }

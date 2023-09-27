@@ -397,7 +397,7 @@ handleDocker() {
   then
     exit
   fi
-  if ! docker compose up --no-start
+  if ! dockerCompose up --no-start
   then
     exit 1
   fi
@@ -409,7 +409,7 @@ handleDocker() {
       read -r choice
       case $choice in
       y|"")
-        if ! docker compose start
+        if ! dockerCompose start
         then
           exit 1
         fi
@@ -493,6 +493,7 @@ do
 done
 printLnBr
 printColor "setting up installer ..." "$yellow"
+setDockerComposeAlias
 handleDefaultSettings
 handleDatabasePasswords
 handleIntegration
