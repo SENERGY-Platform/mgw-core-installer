@@ -61,10 +61,10 @@ exportSettingsToEnv() {
     BIN_PATH="$bin_path" \
     CONTAINER_PATH="$container_path" \
     LOG_PATH="$log_path" \
-    STACK_NAME="$stack_name" \
     SUBNET_CORE="$subnet_core" \
     SUBNET_MODULE="$subnet_module" \
     SUBNET_GATEWAY="$subnet_gateway" \
     CORE_DB_PW="$core_db_pw" \
-    CORE_DB_ROOT_PW="$core_db_root_pw"
+    CORE_DB_ROOT_PW="$core_db_root_pw" \
+    COMPOSE_PROJECT_NAME="$stack_name"
 }
