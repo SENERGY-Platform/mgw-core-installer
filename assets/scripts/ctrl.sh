@@ -9,6 +9,8 @@ fi
 . ./scripts/docker.sh
 . ./.settings
 
+export COMPOSE_PROJECT_NAME="$stack_name"
+
 start() {
   pid=""
   echo "mounting secrets tmpfs ..."
