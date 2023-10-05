@@ -53,6 +53,7 @@ services:
       DH_HOST_SEC_PATH: /mnt/mgw/secrets
       DH_MODULE_NET: mgw-2-module-net
     volumes:
+      - mm-data:/opt/module-manager/data
       - mm-modules:/opt/module-manager/modules
       - ${DEPLOYMENTS_PATH}:/opt/module-manager/deployments
     tmpfs:
@@ -97,6 +98,7 @@ services:
 
 volumes:
   db-data:
+  mm-data:
   mm-modules:
   sm-data:
 
