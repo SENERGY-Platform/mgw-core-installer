@@ -6,6 +6,7 @@ services:
     image: nginx:1.25.2-alpine
     restart: unless-stopped
     environment:
+      CORE_ID: ${CORE_ID}
       SUBNET_CORE: ${SUBNET_CORE}
       SUBNET_MODULE: ${SUBNET_MODULE}
       SUBNET_GATEWAY: ${SUBNET_GATEWAY}
