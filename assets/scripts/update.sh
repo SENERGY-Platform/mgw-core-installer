@@ -483,6 +483,20 @@ handleNew() {
       esac
     done
   fi
+  if [ "$core_id" = "" ]
+  then
+    if ! core_id="$(openssl rand -hex 8)"
+    then
+      exit 1
+    fi
+  fi
+  if [ "$net_prefix" = "" ]
+  then
+    if ! net_prefix="mgw"
+    then
+      exit 1
+    fi
+  fi
 }
 
 requireUser() {
