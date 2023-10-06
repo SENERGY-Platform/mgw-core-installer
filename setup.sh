@@ -350,6 +350,26 @@ handleDatabasePasswords() {
   fi
 }
 
+handleCoreID() {
+  if [ "$core_id" = "" ]
+  then
+    if ! core_id="$(openssl rand -hex 8)"
+    then
+      exit 1
+    fi
+  fi
+}
+
+handleNetPrefix() {
+  if [ "$net_prefix" = "" ]
+  then
+    if ! net_prefix="$core_id"
+    then
+      exit 1
+    fi
+  fi
+}
+
 handleIntegration() {
   while :
   do
@@ -509,6 +529,8 @@ printLnBr
 printColor "setting up installer ..." "$yellow"
 detectDockerCompose
 handleDefaultSettings
+handleCoreID
+handleNetPrefix
 handleDatabasePasswords
 handleIntegration
 exportSettingsToEnv
