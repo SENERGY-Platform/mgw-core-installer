@@ -47,6 +47,7 @@ services:
     environment:
       LOGGER_LEVEL: ${LOG_LEVEL}
       LOGGER_TERMINAL: "true"
+      CORE_ID: ${CORE_ID}
       DB_USER: core_user
       DB_PASSWD: ${CORE_DB_PW}
       DH_HOST_DEP_PATH: ${DEPLOYMENTS_PATH}
