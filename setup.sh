@@ -541,6 +541,7 @@ detectDockerCompose
 handleDefaultSettings
 handleCoreID
 handleNetPrefix
+handleStackName
 handleDatabasePasswords
 handleIntegration
 exportSettingsToEnv
