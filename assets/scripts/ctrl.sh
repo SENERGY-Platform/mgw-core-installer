@@ -92,8 +92,24 @@ stopContainers() {
   fi
 }
 
-recreateContainers() {
-  echo "recreating containers ..."
+createContainers() {
+  echo "creating containers ..."
+  if ! cd $container_path
+  then
+    exit 1
+  fi
+  if ! dockerCompose up --no-start
+  then
+    exit 1
+  fi
+  if ! cd $script_path
+  then
+    exit 1
+  fi
+}
+
+removeContainers() {
+  echo "removing containers ..."
   if ! cd $container_path
   then
     exit 1
@@ -102,7 +118,19 @@ recreateContainers() {
   then
     exit 1
   fi
-  if ! dockerCompose up --no-start
+  if ! cd $script_path
+  then
+    exit 1
+  fi
+}
+
+purgeContainers() {
+  echo "purging containers ..."
+  if ! cd $container_path
+  then
+    exit 1
+  fi
+  if ! dockerCompose down -v
   then
     exit 1
   fi
@@ -143,8 +171,18 @@ ctr-stop)
   stopContainers
   unmountTmpfs
   ;;
+ctr-create)
+  createContainers
+  ;;
+ctr-remove)
+  removeContainers
+  ;;
 ctr-recreate)
-  recreateContainers
+  removeContainers
+  createContainers
+  ;;
+ctr-purge)
+  purgeContainers
   ;;
 *)
   echo "unknown option"
