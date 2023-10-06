@@ -370,6 +370,16 @@ handleNetPrefix() {
   fi
 }
 
+handleStackName() {
+  if [ "$stack_name" = "" ]
+  then
+    if ! stack_name="$core_id"
+    then
+      exit 1
+    fi
+  fi
+}
+
 handleIntegration() {
   while :
   do
