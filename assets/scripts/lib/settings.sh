@@ -23,6 +23,8 @@ logrotate=""
 cron=""
 platform=""
 arch=""
+core_id=""
+net_prefix=""
 
 saveSettings() {
   echo \
@@ -48,7 +50,9 @@ systemd=$systemd
 logrotate=$logrotate
 cron=$cron
 platform=$platform
-arch=$arch" \
+arch=$arch
+core_id=$core_id
+net_prefix=$net_prefix" \
   > $base_path/.settings
 }
 
@@ -66,5 +70,7 @@ exportSettingsToEnv() {
     SUBNET_GATEWAY="$subnet_gateway" \
     CORE_DB_PW="$core_db_pw" \
     CORE_DB_ROOT_PW="$core_db_root_pw" \
-    COMPOSE_PROJECT_NAME="$stack_name"
+    COMPOSE_PROJECT_NAME="$stack_name" \
+    CORE_ID="$core_id" \
+    NET_PREFIX="$net_prefix"
 }
