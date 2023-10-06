@@ -353,7 +353,7 @@ handleDatabasePasswords() {
 handleCoreID() {
   if [ "$core_id" = "" ]
   then
-    if ! core_id="$(openssl rand -hex 8)"
+    if ! core_id="mgw-core-$(openssl rand -hex 4)"
     then
       exit 1
     fi
