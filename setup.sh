@@ -280,11 +280,6 @@ handleDefaultSettings() {
         if [ "$input" != "" ]; then
           stack_name="$input"
         fi
-        printf "network name prefix [%s]: " "$net_prefix"
-        read -r input
-        if [ "$input" != "" ]; then
-          net_prefix="$input"
-        fi
         printf "core id [%s]: " "$core_id"
         read -r input
         if [ "$input" != "" ]; then
