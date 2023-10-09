@@ -360,10 +360,10 @@ handleCoreID() {
   fi
 }
 
-handleNetPrefix() {
-  if [ "$net_prefix" = "" ]
+handleCorePrefix() {
+  if [ "$core_prefix" = "" ]
   then
-    if ! net_prefix="$core_id"
+    if ! core_prefix="$core_id"
     then
       exit 1
     fi
@@ -540,7 +540,7 @@ printColor "setting up installer ..." "$yellow"
 detectDockerCompose
 handleDefaultSettings
 handleCoreID
-handleNetPrefix
+handleCorePrefix
 handleStackName
 handleDatabasePasswords
 handleIntegration

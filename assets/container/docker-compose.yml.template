@@ -56,7 +56,7 @@ services:
       DB_PASSWD: ${CORE_DB_PW}
       DH_HOST_DEP_PATH: ${DEPLOYMENTS_PATH}
       DH_HOST_SEC_PATH: /mnt/mgw/secrets
-      DH_MODULE_NET: ${NET_PREFIX}-2-module-net
+      DH_MODULE_NET: ${CORE_PREFIX}-2-module-net
     volumes:
       - mm-data:/opt/module-manager/data
       - mm-modules:/opt/module-manager/modules
@@ -111,7 +111,7 @@ volumes:
 
 networks:
   g_net:
-    name: ${NET_PREFIX}-0-gateway-net
+    name: ${CORE_PREFIX}-0-gateway-net
     attachable: true
     driver: bridge
     ipam:
@@ -119,7 +119,7 @@ networks:
       config:
         - subnet: ${SUBNET_GATEWAY}/29
   c_net:
-    name: ${NET_PREFIX}-1-core-net
+    name: ${CORE_PREFIX}-1-core-net
     attachable: true
     driver: bridge
     ipam:
@@ -127,7 +127,7 @@ networks:
       config:
         - subnet: ${SUBNET_CORE}/28
   m_net:
-    name: ${NET_PREFIX}-2-module-net
+    name: ${CORE_PREFIX}-2-module-net
     attachable: true
     driver: bridge
     ipam:

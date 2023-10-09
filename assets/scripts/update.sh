@@ -490,9 +490,9 @@ handleNew() {
       exit 1
     fi
   fi
-  if [ "$net_prefix" = "" ]
+  if [ "$core_prefix" = "" ]
   then
-    if ! net_prefix="mgw"
+    if ! core_prefix="mgw"
     then
       exit 1
     fi
