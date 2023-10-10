@@ -217,12 +217,12 @@ handleSystemd() {
   then
     units=""
     echo "updating systemd mount units ..."
-    if ! units=$(copyWithTemplates ./assets/units/mounts $systemd_path "$units")
+    if ! units=$(copyWithTemplates ./assets/units/mounts $systemd_path "$units" "mnt-$core_name-")
     then
       exit 1
     fi
     echo "updating systemd service units ..."
-    if ! units=$(copyWithTemplates ./assets/units/services $systemd_path "$units")
+    if ! units=$(copyWithTemplates ./assets/units/services $systemd_path "$units" "$core_name-")
     then
       exit 1
     fi
