@@ -245,7 +245,7 @@ handleCron() {
   if [ "$cron" = "true" ]
   then
     echo "creating cronjob ..."
-    if ! envsubst '$BASE_PATH $LOG_PATH' < ./assets/cron/mgw_update.template > $cron_path/mgw_update
+    if ! envsubst '$BASE_PATH $LOG_PATH' < ./assets/cron/mgw_update.template > $cron_path/"$core_name"_update
     then
       exit 1
     fi
