@@ -365,10 +365,7 @@ handleCoreName() {
 handleStackName() {
   if [ "$stack_name" = "" ]
   then
-    if ! stack_name="$core_id"
-    then
-      exit 1
-    fi
+    stack_name="$core_name"
   fi
 }
 
