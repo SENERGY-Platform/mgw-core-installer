@@ -81,16 +81,17 @@ copyWithTemplates() {
     do
       if real_file="$(getTemplateBase "$file")"
       then
-        if ! envsubst < $1/$file > $2/$real_file
+        if ! envsubst < $1/$file > $2/$4$real_file
         then
           return 1
         fi
-        file="$real_file"
+        file="$4$real_file"
       else
-        if ! cp $1/$file $2/$file
+        if ! cp $1/$file $2/$4$file
         then
           return 1
         fi
+        file="$4$file"
       fi
       if [ "$items" = "" ]; then
         items="${items}$file"
