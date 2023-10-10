@@ -25,6 +25,7 @@ platform=""
 arch=""
 core_id=""
 core_name=""
+gateway_port="8080"
 
 saveSettings() {
   echo \
@@ -52,7 +53,8 @@ cron=$cron
 platform=$platform
 arch=$arch
 core_id=$core_id
-core_name=$core_name" \
+core_name=$core_name
+gateway_port=$gateway_port" \
   > $base_path/.settings
 }
 
@@ -72,5 +74,6 @@ exportSettingsToEnv() {
     CORE_DB_ROOT_PW="$core_db_root_pw" \
     COMPOSE_PROJECT_NAME="$stack_name" \
     CORE_ID="$core_id" \
-    CORE_NAME="$core_name"
+    CORE_NAME="$core_name" \
+    GATEWAY_PORT="$gateway_port"
 }
