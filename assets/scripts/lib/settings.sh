@@ -24,7 +24,7 @@ cron=""
 platform=""
 arch=""
 core_id=""
-core_prefix=""
+core_name=""
 
 saveSettings() {
   echo \
@@ -52,7 +52,7 @@ cron=$cron
 platform=$platform
 arch=$arch
 core_id=$core_id
-core_prefix=$core_prefix" \
+core_name=$core_name" \
   > $base_path/.settings
 }
 
@@ -72,5 +72,5 @@ exportSettingsToEnv() {
     CORE_DB_ROOT_PW="$core_db_root_pw" \
     COMPOSE_PROJECT_NAME="$stack_name" \
     CORE_ID="$core_id" \
-    CORE_PREFIX="$core_prefix"
+    CORE_NAME="$core_name"
 }
