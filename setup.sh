@@ -234,7 +234,7 @@ handleLogrotate() {
   if [ "$logrotate" = "true" ]
   then
     echo "copying logrotate config ..."
-    if ! envsubst < ./assets/logrotate/mgw_core.template > $logrotated_path/mgw_core
+    if ! envsubst < ./assets/logrotate/mgw_core.template > $logrotated_path/"$core_name"_core
     then
       exit 1
     fi
