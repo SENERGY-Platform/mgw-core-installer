@@ -355,13 +355,10 @@ handleCoreID() {
   fi
 }
 
-handleCorePrefix() {
-  if [ "$core_prefix" = "" ]
+handleCoreName() {
+  if [ "$core_name" = "" ]
   then
-    if ! core_prefix="$core_id"
-    then
-      exit 1
-    fi
+    core_name="mgw_$core_id"
   fi
 }
 
@@ -535,7 +532,7 @@ printColor "setting up installer ..." "$yellow"
 detectDockerCompose
 handleDefaultSettings
 handleCoreID
-handleCorePrefix
+handleCoreName
 handleStackName
 handleDatabasePasswords
 handleIntegration
