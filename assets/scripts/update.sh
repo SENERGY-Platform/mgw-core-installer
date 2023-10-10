@@ -490,9 +490,9 @@ handleNew() {
       exit 1
     fi
   fi
-  if [ "$core_prefix" = "" ]
+  if [ "$core_name" = "" ]
   then
-    if ! core_prefix="mgw"
+    if ! core_name="mgw"
     then
       exit 1
     fi
