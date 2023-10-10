@@ -295,6 +295,11 @@ handleDefaultSettings() {
         if [ "$input" != "" ]; then
           core_db_root_pw="$input"
         fi
+        printf "gateway port [%s]: " "$gateway_port"
+        read -r input
+        if [ "$input" != "" ]; then
+          gateway_port="$input"
+        fi
         printf "core subnet [%s]: " "$subnet_core"
         read -r input
         if [ "$input" != "" ]; then
