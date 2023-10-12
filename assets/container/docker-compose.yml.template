@@ -42,7 +42,7 @@ services:
           - core-db
   module-manager:
     container_name: ${CORE_NAME}-module-manager
-    image: ghcr.io/senergy-platform/mgw-module-manager:0.11.2
+    image: ghcr.io/senergy-platform/mgw-module-manager:0.11.3
     restart: unless-stopped
     depends_on:
       - db
@@ -92,7 +92,7 @@ services:
           - secret-manager
   web-ui:
     container_name: ${CORE_NAME}-web-ui
-    image: ghcr.io/senergy-platform/mgw-gui:v0.1.6
+    image: ghcr.io/senergy-platform/mgw-gui:v0.1.8
     restart: unless-stopped
     depends_on:
       - gateway
