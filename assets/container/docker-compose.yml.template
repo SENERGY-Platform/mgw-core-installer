@@ -92,7 +92,7 @@ services:
           - secret-manager
   web-ui:
     container_name: ${CORE_NAME}-web-ui
-    image: ghcr.io/senergy-platform/mgw-gui:v0.2.16
+    image: ghcr.io/senergy-platform/mgw-gui:v0.2.17
     restart: unless-stopped
     depends_on:
       - gateway
