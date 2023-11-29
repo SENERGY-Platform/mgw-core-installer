@@ -1,7 +1,9 @@
 server {
+    server_name public-api;
     listen 8080;
     listen [::]:8080;
-    server_name public-api;
+    deny ${SUBNET_GATEWAY}/16;
+    deny ${SUBNET_MODULE}/16;
     resolver 127.0.0.11 valid=10s;
     resolver_timeout 5s;
     proxy_set_header X-Real-IP $remote_addr;
@@ -13,30 +15,20 @@ server {
     set $default_gui web-ui;
     location / {
         proxy_pass http://$default_gui;
-        deny ${SUBNET_GATEWAY}/16;
-        deny ${SUBNET_MODULE}/16;
     }
     set $module_mngr module-manager;
     location ~ ^/api/module-manager/(.*)$ {
         proxy_pass http://$module_mngr/$1$is_args$args;
-        deny ${SUBNET_GATEWAY}/16;
-        deny ${SUBNET_MODULE}/16;
     }
     set $secret_mngr secret-manager;
     location ~ ^/api/secret-manager/(.*)$ {
         proxy_pass http://$secret_mngr/$1$is_args$args;
-        deny ${SUBNET_GATEWAY}/16;
-        deny ${SUBNET_MODULE}/16;
     }
     location ~ ^/api/host-manager/(.*)$ {
         proxy_pass http://h_manager_sock/$1$is_args$args;
-        deny ${SUBNET_GATEWAY}/16;
-        deny ${SUBNET_MODULE}/16;
     }
     location ~ ^/api/logs/(.*)$ {
         proxy_pass http://ce_wrapper_sock/logs/$1$is_args$args;
-        deny ${SUBNET_GATEWAY}/16;
-        deny ${SUBNET_MODULE}/16;
     }
     #include conf.d/public_api.location;
 }
