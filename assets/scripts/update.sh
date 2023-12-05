@@ -56,7 +56,7 @@ handleRelease() {
         printColor "update? (y/n): " "$blue" "nb"
         read -r choice
         case $choice in
-        y|"")
+        y)
           break
           ;;
         n)
@@ -118,7 +118,7 @@ handlePackages() {
         printColor "continue? (y/n): " "$blue" "nb"
         read -r choice
         case "$choice" in
-        y|"")
+        y)
           break
           ;;
         n)
@@ -470,7 +470,7 @@ handleNew() {
       printColor "use cron for automatic updates? (y/n): " "$blue" "nb"
       read -r choice
       case "$choice" in
-      y|"")
+      y)
         cron=true
         break
         ;;

@@ -54,7 +54,7 @@ handlePackages() {
       printColor "continue? (y/n): " "$blue" "nb"
       read -r choice
       case "$choice" in
-      y|"")
+      y)
         if ! installPkg "$missing"
         then
           exit 1
@@ -259,7 +259,7 @@ handleCron() {
 handleDefaultSettings() {
   while :
   do
-    printColor "change default settings? (n/y): " "$blue" "nb"
+    printColor "change default settings? (y/n): " "$blue" "nb"
     read -r choice
     case "$choice" in
       y)
@@ -317,7 +317,7 @@ handleDefaultSettings() {
         fi
         break
         ;;
-      n|"")
+      n)
         break
         ;;
       *)
@@ -383,7 +383,7 @@ handleIntegration() {
     printColor "enable OS startup integration? (y/n): " "$blue" "nb"
     read -r choice
     case "$choice" in
-    y|"")
+    y)
       systemd=true
       break
       ;;
@@ -401,7 +401,7 @@ handleIntegration() {
     printColor "enable log rotation? (y/n): " "$blue" "nb"
     read -r choice
     case "$choice" in
-    y|"")
+    y)
       logrotate=true
       break
       ;;
@@ -418,7 +418,7 @@ handleIntegration() {
     printColor "enable automatic updates? (y/n): " "$blue" "nb"
     read -r choice
     case "$choice" in
-    y|"")
+    y)
       cron=true
       break
       ;;
@@ -449,7 +449,7 @@ handleDocker() {
       printColor "start containers? (y/n): " "$blue" "nb"
       read -r choice
       case $choice in
-      y|"")
+      y)
         if ! dockerCompose start
         then
           exit 1
@@ -522,7 +522,7 @@ do
   printColor "install multi-gateway core $version? (y/n): " "$blue" "nb"
   read -r choice
   case $choice in
-  y|"")
+  y)
     break
     ;;
   n)
