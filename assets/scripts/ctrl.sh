@@ -7,6 +7,7 @@ then
 fi
 
 . ./scripts/docker.sh
+. ./scripts/gw_user_file.sh
 . ./.settings
 
 export COMPOSE_PROJECT_NAME="$stack_name"
@@ -140,6 +141,13 @@ purgeContainers() {
   fi
 }
 
+changeGatewayPW() {
+  printf "set gateway password: "
+  read -r input
+  basic_auth_pw="$input"
+  handleGatewayUserFile
+}
+
 if ! [ "$(id -u)" = "0" ]
 then
   echo "root privileges required"
@@ -183,6 +191,9 @@ ctr-recreate)
   ;;
 ctr-purge)
   purgeContainers
+  ;;
+set-pw)
+  changeGatewayPW
   ;;
 *)
   echo "unknown option"

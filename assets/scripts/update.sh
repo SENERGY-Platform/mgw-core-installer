@@ -501,6 +501,11 @@ handleNew() {
   then
     secrets_path=/mnt/$core_name/secrets
   fi
+  if [ -e $base_path/.htpasswd ]
+  then
+    basic_auth_pw=""
+    handleGatewayUserFile
+  fi
 }
 
 requireUser() {
@@ -552,6 +557,7 @@ cd ../..
 . ./assets/scripts/lib/github.sh
 . ./assets/scripts/lib/docker.sh
 . ./assets/scripts/lib/container.sh
+. ./assets/scripts/lib/gw_user_file.sh
 . $install_path/.settings
 
 checkRoot

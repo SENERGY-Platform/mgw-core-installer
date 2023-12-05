@@ -14,6 +14,7 @@ fi
 . ./assets/scripts/lib/github.sh
 . ./assets/scripts/lib/docker.sh
 . ./assets/scripts/lib/container.sh
+. ./assets/scripts/lib/gw_user_file.sh
 
 setup_path=$(pwd)
 version="$(cat .version)"
@@ -93,6 +94,10 @@ prepareInstallDir() {
     exit 1
   fi
   if ! cp ./assets/scripts/lib/docker.sh $base_path/scripts/docker.sh
+  then
+    exit 1
+  fi
+  if ! cp ./assets/scripts/lib/gw_user_file.sh $base_path/scripts/gw_user_file.sh
   then
     exit 1
   fi
@@ -299,6 +304,11 @@ handleDefaultSettings() {
         read -r input
         if [ "$input" != "" ]; then
           gateway_port="$input"
+        fi
+        printf "gateway password [%s]: " "$basic_auth_pw"
+        read -r input
+        if [ "$input" != "" ]; then
+          basic_auth_pw="$input"
         fi
         printf "core subnet [%s]: " "$subnet_core"
         read -r input
@@ -566,6 +576,7 @@ printColor "setting up integration done" "$yellow"
 printLnBr
 printColor "setting up container environment ..." "$yellow"
 copyContainerAssets
+handleGatewayUserFile
 handleDocker
 printColor "setting up container environment done" "$yellow"
 saveSettings
