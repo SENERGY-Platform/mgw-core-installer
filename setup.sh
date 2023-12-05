@@ -324,7 +324,7 @@ handleDefaultSettings() {
         echo "unknown option"
     esac
   done
-  secrets_path=$mnt_path/secrets
+  secrets_path=/mnt/$core_name/secrets
   deployments_path=$base_path/deployments
   sockets_path=$base_path/sockets
   bin_path=$base_path/bin

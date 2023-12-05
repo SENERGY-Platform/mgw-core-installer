@@ -3,7 +3,6 @@
 systemd_path=/etc/systemd/system
 logrotated_path=/etc/logrotate.d
 cron_path=/etc/cron.daily
-mnt_path=/mnt/mgw
 base_path=/opt/mgw
 secrets_path=""
 deployments_path=""
@@ -29,8 +28,7 @@ gateway_port="8080"
 
 saveSettings() {
   echo \
-"mnt_path=$mnt_path
-base_path=$base_path
+"base_path=$base_path
 secrets_path=$secrets_path
 deployments_path=$deployments_path
 sockets_path=$sockets_path

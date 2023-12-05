@@ -55,7 +55,7 @@ services:
       DB_USER: core_user
       DB_PASSWD: ${CORE_DB_PW}
       DH_HOST_DEP_PATH: ${DEPLOYMENTS_PATH}
-      DH_HOST_SEC_PATH: /mnt/${CORE_NAME}/secrets
+      DH_HOST_SEC_PATH: ${SECRETS_PATH}
       DH_MODULE_NET: ${CORE_NAME}-2-module-net
     volumes:
       - mm-data:/opt/module-manager/data
@@ -84,7 +84,7 @@ services:
       LOGGER_LEVEL: ${LOG_LEVEL}
       LOGGER_TERMINAL: "true"
     volumes:
-      - /mnt/${CORE_NAME}/secrets:/tmp
+      - ${SECRETS_PATH}:/tmp
       - sm-data:/opt/data
     networks:
       c_net:

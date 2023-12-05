@@ -497,6 +497,10 @@ handleNew() {
       exit 1
     fi
   fi
+  if [ "$secrets_path" = "/mnt/mgw/secrets" ]
+  then
+    secrets_path=/mnt/$core_name/secrets
+  fi
 }
 
 requireUser() {
