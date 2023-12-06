@@ -199,15 +199,12 @@ stopBin() {
           exit 1
         fi
       done
-      echo "unmounting secrets tmpfs ..."
-      if ! umount $secrets_path
-      then
-        exit 1
-      fi
       if ! rm $base_path/.pid
       then
         exit 1
       fi
+      echo "unmounting secrets tmpfs ..."
+      umount $secrets_path
     fi
   fi
 }
