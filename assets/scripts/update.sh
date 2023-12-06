@@ -161,6 +161,10 @@ updateInstallDir() {
   then
     exit 1
   fi
+  if ! cp ./assets/scripts/lib/gw_user_file.sh $base_path/scripts/gw_user_file.sh
+  then
+    exit 1
+  fi
 }
 
 updateVersion() {
