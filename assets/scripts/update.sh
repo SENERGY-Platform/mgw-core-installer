@@ -204,7 +204,7 @@ stopBin() {
         exit 1
       fi
       echo "unmounting secrets tmpfs ..."
-      umount $secrets_path
+      umount -f $secrets_path
     fi
   fi
   rm -r $secrets_path/*
@@ -494,7 +494,7 @@ handleNew() {
   fi
   if [ "$secrets_path" = "/mnt/mgw/secrets" ] && [ "$core_name" != "mgw" ]
   then
-    umount $secrets_path
+    umount -f $secrets_path
     rm -r $secrets_path
     secrets_path=/mnt/$core_name/secrets
   fi
