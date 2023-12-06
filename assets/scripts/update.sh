@@ -490,13 +490,12 @@ handleNew() {
   fi
   if [ "$core_name" = "" ]
   then
-    if ! core_name="mgw"
-    then
-      exit 1
-    fi
+    core_name="mgw"
   fi
-  if [ "$secrets_path" = "/mnt/mgw/secrets" ]
+  if [ "$secrets_path" = "/mnt/mgw/secrets" ] && [ "$core_name" != "mgw" ]
   then
+    umount $secrets_path
+    rm -r $secrets_path
     secrets_path=/mnt/$core_name/secrets
   fi
   if [ -e $base_path/.htpasswd ]
