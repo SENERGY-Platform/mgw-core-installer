@@ -207,6 +207,7 @@ stopBin() {
       umount $secrets_path
     fi
   fi
+  rm -r $secrets_path/*
 }
 
 handleSystemd() {
