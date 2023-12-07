@@ -502,7 +502,7 @@ handleNew() {
     rm -r "/mnt/mgw"
     secrets_path=/mnt/$core_name/secrets
   fi
-  if [ -e $base_path/.htpasswd ]
+  if ! [ -e $base_path/.htpasswd ]
   then
     basic_auth_pw=""
     handleGatewayUserFile
