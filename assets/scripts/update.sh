@@ -562,15 +562,15 @@ cd ../..
 . $install_path/.settings
 
 checkRoot
+printColor "setting up required packages ..." "$yellow"
+handlePackages
+printColor "setting up required packages done" "$yellow"
+printLnBr
 printColor "setting up updater ..." "$yellow"
 detectDockerCompose
 handleNew
 exportSettingsToEnv
 printColor "setting up updater done" "$yellow"
-printLnBr
-printColor "setting up required packages ..." "$yellow"
-handlePackages
-printColor "setting up required packages done" "$yellow"
 printLnBr
 printColor "updating files ..." "$yellow"
 updateInstallDir
