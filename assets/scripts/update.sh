@@ -46,7 +46,7 @@ handleRelease() {
   then
     exit 1
   fi
-  if [ "$new_version" != "null" ] && [ -n "${version##*beta*}" ] && [ "$version" != "$new_version" ]
+  if [ "$new_version" != "null" ] && [ -n "${new_version##*beta*}" ] && [ "$version" != "$new_version" ]
   then
     echo "new release available: $new_version"
     if [ "$auto" = "false" ]
