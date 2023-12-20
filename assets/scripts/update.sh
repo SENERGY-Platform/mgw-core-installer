@@ -38,70 +38,100 @@ handleParam() {
 
 handleRelease() {
   printColor "checking for new release ..." "$yellow"
-  if ! release="$(getGitHubRelease "$repo")"
+  if ! releases="$(getGitHubReleases "$repo")"
   then
     exit 1
   fi
-  if ! new_version="$(getGitHubReleaseVersion "$release")"
+  if ! tag_names="$(echo "$releases" | jq -r '.[].tag_name')"
   then
     exit 1
   fi
-  if [ "$new_version" != "null" ] && [ -n "${new_version##*beta*}" ] && [ "$version" != "$new_version" ]
-  then
-    echo "new release available: $new_version"
-    if [ "$auto" = "false" ]
+  new_version=""
+  i=-1
+  for tag_name in ${tag_names}
+  do
+    i=$((i + 1))
+    if [ "$tag_name" = "$version" ]
     then
-      while :
-      do
-        printColor "update? (y/n): " "$blue" "nb"
-        read -r choice
-        case $choice in
-        y)
-          break
-          ;;
-        n)
-          exit 0
-          ;;
-        *)
-          echo "unknown option"
-        esac
-      done
+      echo "latest release at $tag_name, nothing to do"
       printLnBr
+      exit 0
     fi
-    printColor "getting new release ..." "$yellow"
-    rm -r $wrk_spc > /dev/null 2>& 1
-    if ! mkdir -p $wrk_spc
+    if [ -n "${tag_name##*alpha*}" ]
     then
-      exit 1
+      if semVerLessThan "$version" "$tag_name"
+      then
+        if [ -z "${tag_name##*beta*}" ]
+        then
+          if [ "$allow_beta" = "true" ]
+          then
+            new_version="$tag_name"
+            break
+          fi
+          continue
+        fi
+        new_version="$tag_name"
+        break
+      fi
     fi
-    if ! asset_url="$(getGitHubReleaseAssetUrl "$release" "$new_version")"
-    then
-      rm -r $wrk_spc
-      exit 1
-    fi
-    echo "downloading ..."
-    if ! file="$(downloadFile "$asset_url" "$wrk_spc")"
-    then
-      rm -r $wrk_spc
-      exit 1
-    fi
-    echo "extracting ..."
-    if ! extract_path="$(extractTar "$file")"
-    then
-      rm -r $wrk_spc
-      exit 1
-    fi
-    printColor "getting new release done" "$yellow"
+  done
+  if [ "$new_version" = "" ]
+  then
+    exit 1
+  fi
+  if ! release="$(echo "$releases" | jq -r '.['$i']')"
+  then
+    exit 1
+  fi
+  if ! asset_url="$(getGitHubReleaseAssetUrl "$release" "$new_version")"
+  then
+    exit 1
+  fi
+  echo "new release available: $new_version"
+  if [ "$auto" = "false" ]
+  then
+    while :
+    do
+      printColor "update? (y/n): " "$blue" "nb"
+      read -r choice
+      case $choice in
+      y)
+        break
+        ;;
+      n)
+        exit 0
+        ;;
+      *)
+        echo "unknown option"
+      esac
+    done
     printLnBr
-    if [ "$auto" = "true" ]
-    then
-      $extract_path/assets/scripts/update.sh -a -path=$base_path
-    else
-      $extract_path/assets/scripts/update.sh -path=$base_path
-    fi
+  fi
+  printColor "getting new release ..." "$yellow"
+  rm -r $wrk_spc > /dev/null 2>& 1
+  if ! mkdir -p $wrk_spc
+  then
+    exit 1
+  fi
+  echo "downloading ..."
+  if ! file="$(downloadFile "$asset_url" "$wrk_spc")"
+  then
+    rm -r $wrk_spc
+    exit 1
+  fi
+  echo "extracting ..."
+  if ! extract_path="$(extractTar "$file")"
+  then
+    rm -r $wrk_spc
+    exit 1
+  fi
+  printColor "getting new release done" "$yellow"
+  printLnBr
+  if [ "$auto" = "true" ]
+  then
+    $extract_path/assets/scripts/update.sh -a -path=$base_path
   else
-    echo "latest release at $new_version, nothing to do"
-    printLnBr
+    $extract_path/assets/scripts/update.sh -path=$base_path
   fi
 }
 

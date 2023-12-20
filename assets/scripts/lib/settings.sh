@@ -25,6 +25,7 @@ arch=""
 core_id=""
 core_name=""
 gateway_port="8080"
+allow_beta=""
 
 saveSettings() {
   echo \
@@ -52,7 +53,8 @@ platform=$platform
 arch=$arch
 core_id=$core_id
 core_name=$core_name
-gateway_port=$gateway_port" \
+gateway_port=$gateway_port
+allow_beta=$allow_beta" \
   > $base_path/.settings
 }
 
