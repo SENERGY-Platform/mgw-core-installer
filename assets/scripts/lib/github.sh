@@ -18,8 +18,12 @@ getGitHubRelease() {
   fi
 }
 
-getGitHubReleaseVersion() {
-  if ! echo "$1" | jq -r '.tag_name'
+getGitHubReleases() {
+  url="https://api.github.com/repos/$1/releases"
+  if ! curl -L -s \
+      -H "Accept: application/vnd.github+json" \
+      -H "X-GitHub-Api-Version: 2022-11-28" \
+      "$url"
   then
     return 1
   fi
