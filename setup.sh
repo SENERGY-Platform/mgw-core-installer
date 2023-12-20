@@ -102,6 +102,10 @@ prepareInstallDir() {
   then
     exit 1
   fi
+  if ! cp ./assets/scripts/lib/sem_ver.sh $base_path/scripts/sem_ver.sh
+  then
+    exit 1
+  fi
   if ! cp .version $base_path/.version
   then
     exit 1
