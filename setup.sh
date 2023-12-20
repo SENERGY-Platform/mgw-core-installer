@@ -15,6 +15,7 @@ fi
 . ./assets/scripts/lib/docker.sh
 . ./assets/scripts/lib/container.sh
 . ./assets/scripts/lib/gw_user_file.sh
+. ./assets/scripts/lib/sem_ver.sh
 
 setup_path=$(pwd)
 version="$(cat .version)"
