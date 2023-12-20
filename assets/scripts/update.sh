@@ -542,6 +542,7 @@ if [ "$install_path" = "" ]
 then
   . ./scripts/util.sh
   . ./scripts/github.sh
+  . ./scripts/sem_ver.sh
   . ./.settings
   checkRoot
   version="$(cat .version)"
