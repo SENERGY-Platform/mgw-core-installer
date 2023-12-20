@@ -507,6 +507,10 @@ handleNew() {
     basic_auth_pw=""
     handleGatewayUserFile
   fi
+  if [ "$allow_beta" = "" ]
+  then
+    allow_beta=false
+  fi
 }
 
 requireUser() {
