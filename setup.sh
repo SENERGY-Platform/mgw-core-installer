@@ -392,6 +392,26 @@ handleStackName() {
   fi
 }
 
+handleBetaRelease() {
+  while :
+  do
+    printColor "allow beta releases? (y/n): " "$blue" "nb"
+    read -r choice
+    case "$choice" in
+    y)
+      allow_beta=true
+      break
+      ;;
+    n)
+      allow_beta=false
+      break
+      ;;
+    *)
+      echo "unknown option"
+    esac
+  done
+}
+
 handleIntegration() {
   while :
   do
@@ -557,6 +577,7 @@ handleSecretsPath
 handleStackName
 handleDatabasePasswords
 handleIntegration
+handleBetaRelease
 exportSettingsToEnv
 printColor "setting up installer done" "$yellow"
 printLnBr
