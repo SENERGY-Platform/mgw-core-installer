@@ -106,6 +106,10 @@ prepareInstallDir() {
   then
     exit 1
   fi
+  if ! cp ./assets/scripts/lib/settings.sh $base_path/scripts/settings.sh
+  then
+    exit 1
+  fi
   if ! cp .version $base_path/.version
   then
     exit 1

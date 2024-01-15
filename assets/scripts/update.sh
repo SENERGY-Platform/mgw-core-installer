@@ -199,6 +199,10 @@ updateInstallDir() {
   then
     exit 1
   fi
+  if ! cp ./assets/scripts/lib/settings.sh $base_path/scripts/settings.sh
+  then
+    exit 1
+  fi
 }
 
 updateVersion() {
