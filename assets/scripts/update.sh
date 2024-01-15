@@ -37,6 +37,11 @@ handleParam() {
 }
 
 handleRelease() {
+  if [ -z "${version##*alpha*}" ]
+  then
+    echo "alpha versions must be updated manually"
+    exit 1
+  fi
   printColor "checking for new release ..." "$yellow"
   if ! releases="$(getGitHubReleases "$repo")"
   then
