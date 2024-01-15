@@ -8,6 +8,7 @@ fi
 
 . ./scripts/docker.sh
 . ./scripts/gw_user_file.sh
+. ./scripts/settings.sh
 . ./.settings
 
 export COMPOSE_PROJECT_NAME="$stack_name"
@@ -148,6 +149,23 @@ changeGatewayPW() {
   handleGatewayUserFile
 }
 
+handleBetaRelease() {
+  printf "allow beta releases? (y/n): "
+  read -r choice
+  case "$choice" in
+  y)
+    allow_beta=true
+    ;;
+  n)
+    allow_beta=false
+    ;;
+  *)
+    echo "unknown option"
+    exit 1
+  esac
+  saveSettings
+}
+
 if ! [ "$(id -u)" = "0" ]
 then
   echo "root privileges required"
@@ -194,6 +212,9 @@ ctr-purge)
   ;;
 set-pw)
   changeGatewayPW
+  ;;
+beta-test)
+  handleBetaRelease
   ;;
 *)
   echo "unknown option"
