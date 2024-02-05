@@ -14,10 +14,6 @@ server {
     add_header Cache-Control no-store always;
     add_header X-Core-ID ${CORE_ID};
     rewrite ^/(.*)/$ /$1 permanent;
-    set $default_gui web-ui;
-    location / {
-        proxy_pass http://$default_gui;
-    }
     set $module_mngr module-manager;
     location ~ ^/api/module-manager/(.*)$ {
         proxy_pass http://$module_mngr/$1$is_args$args;
@@ -32,5 +28,9 @@ server {
     location ~ ^/api/logs/(.*)$ {
         proxy_pass http://ce_wrapper_sock/logs/$1$is_args$args;
     }
-    #include conf.d/public_api.location;
+    include conf.d/public_api.location;
+    set $default_gui web-ui;
+    location / {
+        proxy_pass http://$default_gui;
+    }
 }
