@@ -1,0 +1,19 @@
+{
+  "socket": {
+    "path": "${SOCKETS_PATH}/c_manager.sock",
+    "group_id": 101
+  },
+  "logger": {
+    "path": "${LOG_PATH}",
+    "file_name": "c_manager"
+  },
+  "http_client": {
+    "cew_socket_path": "${SOCKETS_PATH}/ce_wrapper.sock"
+  },
+  "endpoints_conf_path": "${BASE_PATH}/.public_api.location",
+  "compose_file_path": "${CONTAINER_PATH}/docker-compose.yml",
+  "core_id": "${CORE_ID}",
+  "core_service": {
+    "gateway_srv_name": "gateway"
+  }
+}
