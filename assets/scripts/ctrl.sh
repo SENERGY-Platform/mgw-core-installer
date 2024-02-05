@@ -40,6 +40,8 @@ startBin() {
   pid="${pid}$!"
   $bin_path/SENERGY-Platform/mgw-host-manager/bin -config=$bin_path/SENERGY-Platform/mgw-host-manager/config/conf.json &
   pid="${pid} $!"
+  $bin_path/SENERGY-Platform/mgw-core-manager/bin -config=$bin_path/SENERGY-Platform/mgw-core-manager/config/conf.json &
+  pid="${pid} $!"
   echo "$pid" > $base_path/.pid
 }
 
