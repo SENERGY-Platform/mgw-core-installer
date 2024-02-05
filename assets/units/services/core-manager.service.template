@@ -1,0 +1,10 @@
+[Unit]
+PartOf=mgw-ce-wrapper.service
+Before=mgw-ce-wrapper.service
+
+[Service]
+ExecStart=${BIN_PATH}/SENERGY-Platform/mgw-host-manager/bin -config=${BIN_PATH}/SENERGY-Platform/mgw-host-manager/config/conf.json
+Restart=always
+
+[Install]
+WantedBy=default.target
