@@ -50,7 +50,7 @@ services:
           - core-db
   module-manager:
     container_name: ${CORE_NAME}-module-manager
-    image: ghcr.io/senergy-platform/mgw-module-manager:0.12.8
+    image: ghcr.io/senergy-platform/mgw-module-manager:0.13.0
     restart: unless-stopped
     depends_on:
       - db
