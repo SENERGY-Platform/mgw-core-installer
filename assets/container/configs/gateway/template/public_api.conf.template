@@ -22,11 +22,8 @@ server {
     location ~ ^/api/secret-manager/(.*)$ {
         proxy_pass http://$secret_mngr/$1$is_args$args;
     }
-    location ~ ^/api/core-manager/endpoints(.*)$ {
-        proxy_pass http://c_manager_sock/restricted/endpoints$1$is_args$args;
-    }
     location ~ ^/api/core-manager/(.*)$ {
-        proxy_pass http://c_manager_sock/$1$is_args$args;
+        proxy_pass http://c_manager_sock/restricted/$1$is_args$args;
     }
     location ~ ^/api/host-manager/(.*)$ {
         proxy_pass http://h_manager_sock/$1$is_args$args;
