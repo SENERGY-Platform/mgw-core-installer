@@ -28,8 +28,8 @@ server {
     location ~ ^/api/host-manager/(.*)$ {
         proxy_pass http://h_manager_sock/$1$is_args$args;
     }
-    location ~ ^/api/logs/(.*)$ {
-        proxy_pass http://ce_wrapper_sock/logs/$1$is_args$args;
+    location ~ ^/api/ce-wrapper/(.*)$ {
+        proxy_pass http://ce_wrapper_sock/restricted/$1$is_args$args;
     }
     include conf.d/public_api.location;
     set $default_gui web-ui;
