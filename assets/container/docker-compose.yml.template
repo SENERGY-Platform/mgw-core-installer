@@ -106,7 +106,7 @@ services:
           - secret-manager
   web-ui:
     container_name: ${CORE_NAME}-web-ui
-    image: ghcr.io/senergy-platform/mgw-gui:v2.3.0-alpha11
+    image: ghcr.io/senergy-platform/mgw-gui:v2.3.0-alpha13
     restart: unless-stopped
     labels:
       mgw_cid: ${CORE_ID}
