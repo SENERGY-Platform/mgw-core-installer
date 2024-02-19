@@ -19,22 +19,21 @@ server {
     set $module_mngr module-manager;
     set $secret_mngr secret-manager;
     set $core_gui web-ui;
-    location = /auth-check {
+    location = /validate-session {
         internal;
-        proxy_pass http://$auth_srv;
+        proxy_pass http://$identity_server/sessions/whoami;
         proxy_pass_request_body off;
         proxy_set_header Content-Length "";
-        proxy_set_header X-Original-Uri $request_uri;
     }
     location = / {
         return 302 /core/web-ui;
     }
-    location @error401 {
+    location @errorAuth {
     	return 302 /core/web-ui/login;
     }
     location /core/web-ui {
-        auth_request /auth-check;
-        error_page 401 = @error401;
+        auth_request /validate-session;
+        error_page 401 403 = @errorAuth;
         rewrite /core/web-ui(.*) /$1 break;
         proxy_pass http://$core_gui$1$is_args$args;
         location /core/web-ui/login {
@@ -54,7 +53,7 @@ server {
         }
     }
     location /core/api {
-        auth_request /auth-check;
+        auth_request /validate-session;
         location /core/api/module-manager {
             rewrite /core/api/module-manager(.*) /$1 break;
             proxy_pass http://$module_mngr$1$is_args$args;
@@ -77,7 +76,7 @@ server {
         }
     }
     location /endpoints {
-        auth_request /auth-check;
+        auth_request /validate-session;
         include conf.d/public_api.location;
     }
 }
