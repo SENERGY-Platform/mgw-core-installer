@@ -48,6 +48,75 @@ services:
       c_net:
         aliases:
           - core-db
+  identity-server:
+    container_name: ${CORE_NAME}-identity-server
+    image: oryd/kratos:v1.0.0
+    restart: unless-stopped
+    depends_on:
+      - db2
+      - identity-server-migrate
+    environment:
+      DSN: mysql://root:${CORE_DB_ROOT_PW}@tcp(db2:3306)/mysql?max_conns=20&max_idle_conns=4
+      LOG_LEVEL: trace
+    labels:
+      mgw_cid: ${CORE_ID}
+      core_srv: "true"
+    command: serve -c /etc/config/kratos/kratos.yml --watch-courier
+    volumes:
+      - ${CONTAINER_PATH}/configs/identity-server:/etc/config/kratos:ro
+      - is-home:/home/ory
+      - is-data:/var/lib/sqlite
+    networks:
+      c_net:
+  identity-server-migrate:
+    container_name: ${CORE_NAME}-identity-server-migrate
+    image: oryd/kratos:v1.0.0
+    restart: on-failure
+    depends_on:
+      - db2
+    environment:
+      DSN: mysql://root:${CORE_DB_ROOT_PW}@tcp(db2:3306)/mysql?max_conns=20&max_idle_conns=4
+      LOG_LEVEL: trace
+    labels:
+      mgw_cid: ${CORE_ID}
+      core_srv: "true"
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    volumes:
+      - ${CONTAINER_PATH}/configs/identity-server:/etc/config/kratos:ro
+      - ism-home:/home/ory
+      - ism-data:/var/lib/sqlite
+    networks:
+      c_net:
+  db2:
+    container_name: ${CORE_NAME}-db2
+    image: mysql:8.3.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${CORE_DB_ROOT_PW}
+    labels:
+      mgw_cid: ${CORE_ID}
+      core_srv: "true"
+    volumes:
+      - db2-data:/var/lib/mysql
+    networks:
+      c_net:
+        aliases:
+          - core-db2
+  auth-service:
+    container_name: ${CORE_NAME}-auth-service
+    image: ghcr.io/senergy-platform/mgw-auth-service:0.0.1-alpha2
+    restart: unless-stopped
+    depends_on:
+      - identity-server
+    environment:
+      LOGGER_LEVEL: ${LOG_LEVEL}
+      LOGGER_TERMINAL: "true"
+      CORE_ID: ${CORE_ID}
+    labels:
+      mgw_cid: ${CORE_ID}
+      core_srv: "true"
+    networks:
+      c_net:
   module-manager:
     container_name: ${CORE_NAME}-module-manager
     image: ghcr.io/senergy-platform/mgw-module-manager:0.15.7
@@ -122,9 +191,14 @@ services:
 
 volumes:
   db-data:
+  db2-data:
   mm-data:
   mm-modules:
   sm-data:
+  is-home:
+  ism-home:
+  is-data:
+  ism-data:
 
 networks:
   g_net:
