@@ -36,6 +36,10 @@ server {
         error_page 401 403 = @errorAuth;
         rewrite /core/web-ui(.*) /$1 break;
         proxy_pass http://$core_gui$1$is_args$args;
+        location ~* ^/core/web-ui/(.+\.(js|css|ico))$ {
+            auth_request off;
+            proxy_pass http://$core_gui/$1;
+        }
         location /core/web-ui/login {
             auth_request off;
             rewrite /core/web-ui/login(.*) /$1 break;
