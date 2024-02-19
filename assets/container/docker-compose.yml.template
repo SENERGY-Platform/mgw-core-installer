@@ -146,8 +146,6 @@ services:
       - /opt/module-manager/staging
     networks:
       c_net:
-        aliases:
-          - module-manager
   secret-manager:
     container_name: ${CORE_NAME}-secret-manager
     image: ghcr.io/senergy-platform/mgw-secret-manager:v0.3.0-beta2
@@ -171,8 +169,6 @@ services:
       - sm-data:/opt/data
     networks:
       c_net:
-        aliases:
-          - secret-manager
   web-ui:
     container_name: ${CORE_NAME}-web-ui
     image: ghcr.io/senergy-platform/mgw-gui:v2.3.0-beta12
@@ -186,8 +182,6 @@ services:
       - secret-manager
     networks:
       m_net:
-        aliases:
-          - web-ui
 
 volumes:
   db-data:
