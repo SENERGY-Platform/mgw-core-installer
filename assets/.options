@@ -1,3 +1,3 @@
 require_pkg="systemd: apt:"
 install_pkg="curl: tar: gzip: jq: avahi-daemon:/usr/sbin/avahi-daemon openssl: gettext-base:envsubst logrotate:/usr/sbin/logrotate apache2-utils:htpasswd"
-binaries="SENERGY-Platform/mgw-container-engine-wrapper:v0.8.2 SENERGY-Platform/mgw-host-manager:v0.1.17 SENERGY-Platform/mgw-core-manager:v0.6.0"
+binaries="SENERGY-Platform/mgw-container-engine-wrapper:v0.8.2 SENERGY-Platform/mgw-host-manager:v0.1.17 SENERGY-Platform/mgw-core-manager:v0.7.0"
