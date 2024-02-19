@@ -6,18 +6,21 @@ server {
     proxy_set_header X-Forwarded-For $host;
     proxy_set_header X-Static-Origin internal-api;
     rewrite ^/(.*)/$ /$1 permanent;
-    location ~ ^/core-manager/(.*)$ {
-        proxy_pass http://c_manager_sock/$1$is_args$args;
+    location /core-manager {
+        rewrite /core-manager(.*) /$1 break;
+        proxy_pass http://c_manager_sock$1$is_args$args;
         allow ${SUBNET_CORE}/16;
         deny all;
     }
-    location ~ ^/ce-wrapper/(.*)$ {
-        proxy_pass http://ce_wrapper_sock/$1$is_args$args;
+    location /ce-wrapper {
+        rewrite /ce-wrapper(.*) /$1 break;
+        proxy_pass http://ce_wrapper_sock$1$is_args$args;
         allow ${SUBNET_CORE}/16;
         deny all;
     }
-    location ~ ^/host-manager/(.*)$ {
-        proxy_pass http://h_manager_sock/$1$is_args$args;
+    location /host-manager {
+        rewrite /host-manager(.*) /$1 break;
+        proxy_pass http://h_manager_sock$1$is_args$args;
         allow ${SUBNET_CORE}/16;
         deny all;
     }
