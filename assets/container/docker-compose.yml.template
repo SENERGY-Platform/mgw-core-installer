@@ -61,7 +61,7 @@ services:
     labels:
       mgw_cid: ${CORE_ID}
       core_srv: "true"
-    command: serve -c /etc/config/kratos/kratos.yml --watch-courier
+    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
     volumes:
       - ${CONTAINER_PATH}/configs/identity-server:/etc/config/kratos:ro
       - is-home:/home/ory
