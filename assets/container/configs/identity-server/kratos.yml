@@ -36,6 +36,14 @@ selfservice:
             - hook: revoke_active_sessions
           default_browser_return_url: /core/web-ui
 
+#    registration:
+#      ui_url: /core/web-ui/register
+#      lifespan: 10m
+#      after:
+#        password:
+#          hooks:
+#            - hook: session
+
 log:
   level: debug
   format: text
