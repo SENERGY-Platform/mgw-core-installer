@@ -61,6 +61,7 @@ services:
     labels:
       mgw_cid: ${CORE_ID}
       core_srv: "true"
+    # TODO remove --dev flag
     command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
     volumes:
       - ${CONTAINER_PATH}/configs/identity-server:/etc/config/kratos:ro
