@@ -36,19 +36,22 @@ selfservice:
             - hook: revoke_active_sessions
           default_browser_return_url: /core/web-ui
 
-#    registration:
-#      ui_url: /core/web-ui/register
-#      lifespan: 10m
-#      after:
-#        password:
-#          hooks:
-#            - hook: session
+    # TODO remove -->
+    registration:
+      ui_url: /core/web-ui/register
+      lifespan: 10m
+      after:
+        password:
+          hooks:
+            - hook: session
+    # TODO <-- remove
 
 log:
   level: debug
   format: text
   leak_sensitive_values: true
 
+# TODO should be generated
 secrets:
   cookie: # len=17
     - =qcoEW+yhi<@4k>i2
