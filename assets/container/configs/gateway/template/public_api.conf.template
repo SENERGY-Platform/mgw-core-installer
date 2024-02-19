@@ -14,26 +14,72 @@ server {
     add_header Cache-Control no-store always;
     add_header X-Core-ID ${CORE_ID};
     rewrite ^/(.*)/$ /$1 permanent;
+    set $auth_srv auth-service;
+    set $identity_server identity-server:4433;
     set $module_mngr module-manager;
-    location ~ ^/api/module-manager/(.*)$ {
-        proxy_pass http://$module_mngr/$1$is_args$args;
-    }
     set $secret_mngr secret-manager;
-    location ~ ^/api/secret-manager/(.*)$ {
-        proxy_pass http://$secret_mngr/$1$is_args$args;
+    set $core_gui web-ui;
+    location = /auth-check {
+        internal;
+        proxy_pass http://$auth_srv;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Original-Uri $request_uri;
     }
-    location ~ ^/api/core-manager/(.*)$ {
-        proxy_pass http://c_manager_sock/restricted/$1$is_args$args;
+    location = / {
+        return 302 /core/web-ui;
     }
-    location ~ ^/api/host-manager/(.*)$ {
-        proxy_pass http://h_manager_sock/$1$is_args$args;
+    location @error401 {
+    	return 302 /core/web-ui/login;
     }
-    location ~ ^/api/ce-wrapper/(.*)$ {
-        proxy_pass http://ce_wrapper_sock/restricted/$1$is_args$args;
+    location /core/web-ui {
+        auth_request /auth-check;
+        error_page 401 = @error401;
+        sub_filter_types *;
+        sub_filter 'href="/' 'href="/core/web-ui/';
+        rewrite /core/web-ui(.*) /$1 break;
+        proxy_pass http://$core_gui$1$is_args$args;
+        location /core/web-ui/login {
+            auth_request off;
+            rewrite /core/web-ui/login(.*) /$1 break;
+            proxy_pass http://$core_gui/login$1$is_args$args;
+        }
     }
-    include conf.d/public_api.location;
-    set $default_gui web-ui;
-    location / {
-        proxy_pass http://$default_gui;
+    location /core/auth {
+        location /core/auth/login {
+            rewrite /core/auth/login(.*) /$1 break;
+            proxy_pass http://$identity_server/self-service/login$1$is_args$args;
+        }
+        location /core/auth/logout {
+            rewrite /core/auth/logout(.*) /$1 break;
+            proxy_pass http://$identity_server/self-service/logout$1$is_args$args;
+        }
+    }
+    location /core/api {
+        auth_request /auth-check;
+        location /core/api/module-manager {
+            rewrite /core/api/module-manager(.*) /$1 break;
+            proxy_pass http://$module_mngr$1$is_args$args;
+        }
+        location /core/api/secret-manager {
+            rewrite /core/api/secret-manager(.*) /$1 break;
+            proxy_pass http://$secret_mngr$1$is_args$args;
+        }
+        location /core/api/core-manager {
+            rewrite /core/api/core-manager(.*) /$1 break;
+            proxy_pass http://c_manager_sock/restricted$1$is_args$args;
+        }
+        location /core/api/host-manager {
+            rewrite /core/api/host-manager(.*) /$1 break;
+            proxy_pass http://h_manager_sock$1$is_args$args;
+        }
+        location /core/api/ce-wrapper {
+            rewrite /core/api/ce-wrapper(.*) /$1 break;
+            proxy_pass http://ce_wrapper_sock/restricted$1$is_args$args;
+        }
+    }
+    location /endpoints {
+        auth_request /auth-check;
+        include conf.d/public_api.location;
     }
 }
