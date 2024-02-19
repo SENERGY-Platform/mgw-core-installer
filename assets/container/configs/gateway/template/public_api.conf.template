@@ -55,6 +55,10 @@ server {
             rewrite /core/auth/logout(.*) /$1 break;
             proxy_pass http://$identity_server/self-service/logout$1$is_args$args;
         }
+        #location /core/auth/register {
+        #    rewrite /core/auth/register(.*) /$1 break;
+        #    proxy_pass http://$identity_server/self-service/registration$1$is_args$args;
+        #}
     }
     location /core/api {
         auth_request /validate-session;
