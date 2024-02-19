@@ -35,8 +35,6 @@ server {
     location /core/web-ui {
         auth_request /auth-check;
         error_page 401 = @error401;
-        sub_filter_types *;
-        sub_filter 'href="/' 'href="/core/web-ui/';
         rewrite /core/web-ui(.*) /$1 break;
         proxy_pass http://$core_gui$1$is_args$args;
         location /core/web-ui/login {
