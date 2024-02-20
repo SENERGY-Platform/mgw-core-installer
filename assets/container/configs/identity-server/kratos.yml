@@ -51,12 +51,13 @@ log:
   format: text
   leak_sensitive_values: true
 
-# TODO should be generated
+# TODO should be generated -->
 secrets:
   cookie: # len=17
     - =qcoEW+yhi<@4k>i2
   cipher: # len=32
     - LN>c&wrz2&>}>7z^*m(<\[ae(F;-\tP}
+# TODO <-- should be generated
 
 ciphers:
   algorithm: xchacha20-poly1305
@@ -67,10 +68,10 @@ hashers:
     cost: 8
 
 identity:
-  default_schema_id: person
+  default_schema_id: human
   schemas:
-    - id: person
-      url: file:///etc/config/kratos/person_identity.schema.json
+    - id: human
+      url: file:///etc/config/kratos/human_identity.schema.json
     - id: machine
       url: file:///etc/config/kratos/machine_identity.schema.json
 
