@@ -29,6 +29,10 @@
             "model": {
               "title": "Model",
               "type": "string"
+            },
+            "owner": {
+              "title": "Owner",
+              "type": "string"
             }
           }
         }
