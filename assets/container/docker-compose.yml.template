@@ -50,7 +50,7 @@ services:
           - core-db
   identity-server:
     container_name: ${CORE_NAME}-identity-server
-    image: oryd/kratos:v1.0.0
+    image: oryd/kratos:v1.1.0
     restart: unless-stopped
     depends_on:
       - db2
@@ -71,7 +71,7 @@ services:
       c_net:
   identity-server-migrate:
     container_name: ${CORE_NAME}-identity-server-migrate
-    image: oryd/kratos:v1.0.0
+    image: oryd/kratos:v1.1.0
     restart: on-failure
     depends_on:
       - db2
