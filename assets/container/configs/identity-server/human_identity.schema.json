@@ -1,5 +1,5 @@
 {
-  "$id": "human_schema",
+  "$id": "human",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Human",
   "type": "object",
