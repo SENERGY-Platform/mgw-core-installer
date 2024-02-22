@@ -105,7 +105,7 @@ services:
           - core-db2
   auth-service:
     container_name: ${CORE_NAME}-auth-service
-    image: ghcr.io/senergy-platform/mgw-auth-service:0.0.1-alpha2
+    image: ghcr.io/senergy-platform/mgw-auth-service:0.0.2
     restart: unless-stopped
     depends_on:
       - identity-server
@@ -113,6 +113,7 @@ services:
       LOGGER_LEVEL: ${LOG_LEVEL}
       LOGGER_TERMINAL: "true"
       CORE_ID: ${CORE_ID}
+      IDENTITY_SRV_BASE_URL: http://identity-server:4434
     labels:
       mgw_cid: ${CORE_ID}
       core_srv: "true"
