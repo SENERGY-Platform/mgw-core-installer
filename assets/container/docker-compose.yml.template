@@ -105,7 +105,7 @@ services:
           - core-db2
   auth-service:
     container_name: ${CORE_NAME}-auth-service
-    image: ghcr.io/senergy-platform/mgw-auth-service:0.0.2
+    image: ghcr.io/senergy-platform/mgw-auth-service:0.0.3
     restart: unless-stopped
     depends_on:
       - identity-server
