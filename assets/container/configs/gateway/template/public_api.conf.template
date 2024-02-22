@@ -58,6 +58,10 @@ server {
     }
     location /core/api {
         auth_request /validate-session;
+        location /core/api/auth-service {
+            rewrite /core/api/auth-service(.*) /$1 break;
+            proxy_pass http://$auth_srv$1$is_args$args;
+        }
         location /core/api/module-manager {
             rewrite /core/api/module-manager(.*) /$1 break;
             proxy_pass http://$module_mngr$1$is_args$args;
