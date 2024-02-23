@@ -56,7 +56,7 @@ services:
       - db2
       - identity-server-migrate
     environment:
-      DSN: mysql://root:${CORE_DB_ROOT_PW}@tcp(db2:3306)/mysql?max_conns=20&max_idle_conns=4
+      DSN: mysql://core_user:${CORE_DB_PW}@tcp(db:3306)/kratos?max_conns=20&max_idle_conns=4
       LOG_LEVEL: trace
     labels:
       mgw_cid: ${CORE_ID}
@@ -76,7 +76,7 @@ services:
     depends_on:
       - db2
     environment:
-      DSN: mysql://root:${CORE_DB_ROOT_PW}@tcp(db2:3306)/mysql?max_conns=20&max_idle_conns=4
+      DSN: mysql://core_user:${CORE_DB_PW}@tcp(db:3306)/kratos?max_conns=20&max_idle_conns=4
       LOG_LEVEL: trace
     labels:
       mgw_cid: ${CORE_ID}
@@ -93,6 +93,8 @@ services:
     image: mysql:8.3.0
     restart: unless-stopped
     environment:
+      MYSQL_USER: core_user
+      MYSQL_PASSWORD: ${CORE_DB_PW}
       MYSQL_ROOT_PASSWORD: ${CORE_DB_ROOT_PW}
     labels:
       mgw_cid: ${CORE_ID}
