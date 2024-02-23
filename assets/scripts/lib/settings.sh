@@ -26,6 +26,7 @@ core_id=""
 core_name=""
 gateway_port="8080"
 allow_beta=""
+core_usr_pw=""
 
 saveSettings() {
   echo \
@@ -54,7 +55,8 @@ arch=$arch
 core_id=$core_id
 core_name=$core_name
 gateway_port=$gateway_port
-allow_beta=$allow_beta" \
+allow_beta=$allow_beta
+core_usr_pw=$core_usr_pw" \
   > $base_path/.settings
 }
 
@@ -75,5 +77,6 @@ exportSettingsToEnv() {
     COMPOSE_PROJECT_NAME="$stack_name" \
     CORE_ID="$core_id" \
     CORE_NAME="$core_name" \
-    GATEWAY_PORT="$gateway_port"
+    GATEWAY_PORT="$gateway_port" \
+    CORE_USR_PW="$core_usr_pw"
 }
