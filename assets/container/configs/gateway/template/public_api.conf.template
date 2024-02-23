@@ -61,6 +61,11 @@ server {
         location /core/api/auth-service {
             rewrite /core/api/auth-service(.*) /$1 break;
             proxy_pass http://$auth_srv$1$is_args$args;
+            location /core/api/auth-service/pairing/request {
+                auth_request off;
+                rewrite /core/api/auth-service/pairing/request(.*) /$1 break;
+                proxy_pass http://$auth_srv/pairing/request$1$is_args$args;
+            }
         }
         location /core/api/module-manager {
             rewrite /core/api/module-manager(.*) /$1 break;
