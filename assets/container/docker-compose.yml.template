@@ -116,6 +116,8 @@ services:
       LOGGER_TERMINAL: "true"
       CORE_ID: ${CORE_ID}
       IDENTITY_SRV_BASE_URL: http://identity-server:4434
+      II_USER: core-user
+      II_SECRET: ${CORE_USR_PW}
     labels:
       mgw_cid: ${CORE_ID}
       core_srv: "true"
