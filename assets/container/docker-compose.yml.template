@@ -30,30 +30,30 @@ services:
       m_net:
         aliases:
           - core-api
-  db:
-    container_name: ${CORE_NAME}-db
-    image: mariadb:10.11.5
-    restart: unless-stopped
-    environment:
-      MARIADB_USER: core_user
-      MARIADB_PASSWORD: ${CORE_DB_PW}
-      MARIADB_ROOT_PASSWORD: ${CORE_DB_ROOT_PW}
-    labels:
-      mgw_cid: ${CORE_ID}
-      core_srv: "true"
-    volumes:
-      - db-data:/var/lib/mysql
-      - ${CONTAINER_PATH}/configs/db:/docker-entrypoint-initdb.d:ro
-    networks:
-      c_net:
-        aliases:
-          - core-db
+  #db:
+  #  container_name: ${CORE_NAME}-db
+  #  image: mariadb:10.11.5
+  #  restart: unless-stopped
+  #  environment:
+  #    MARIADB_USER: core_user
+  #    MARIADB_PASSWORD: ${CORE_DB_PW}
+  #    MARIADB_ROOT_PASSWORD: ${CORE_DB_ROOT_PW}
+  #  labels:
+  #    mgw_cid: ${CORE_ID}
+  #    core_srv: "true"
+  #  volumes:
+  #    - db-data:/var/lib/mysql
+  #    - ${CONTAINER_PATH}/configs/db:/docker-entrypoint-initdb.d:ro
+  #  networks:
+  #    c_net:
+  #      aliases:
+  #        - core-db
   identity-server:
     container_name: ${CORE_NAME}-identity-server
     image: oryd/kratos:v1.1.0
     restart: unless-stopped
     depends_on:
-      - db2
+      - db
       - identity-server-migrate
     environment:
       DSN: mysql://core_user:${CORE_DB_PW}@tcp(db:3306)/kratos?max_conns=20&max_idle_conns=4
@@ -74,7 +74,7 @@ services:
     image: oryd/kratos:v1.1.0
     restart: on-failure
     depends_on:
-      - db2
+      - db
     environment:
       DSN: mysql://core_user:${CORE_DB_PW}@tcp(db:3306)/kratos?max_conns=20&max_idle_conns=4
       LOG_LEVEL: trace
@@ -88,8 +88,8 @@ services:
       - ism-data:/var/lib/sqlite
     networks:
       c_net:
-  db2:
-    container_name: ${CORE_NAME}-db2
+  db:
+    container_name: ${CORE_NAME}-db
     image: mysql:8.3.0
     restart: unless-stopped
     environment:
@@ -100,11 +100,12 @@ services:
       mgw_cid: ${CORE_ID}
       core_srv: "true"
     volumes:
-      - db2-data:/var/lib/mysql
+      - db-data:/var/lib/mysql
+      - ${CONTAINER_PATH}/configs/db:/docker-entrypoint-initdb.d:ro
     networks:
       c_net:
         aliases:
-          - core-db2
+          - core-db
   auth-service:
     container_name: ${CORE_NAME}-auth-service
     image: ghcr.io/senergy-platform/mgw-auth-service:0.2.5
@@ -191,7 +192,7 @@ services:
 
 volumes:
   db-data:
-  db2-data:
+  #db2-data:
   mm-data:
   mm-modules:
   sm-data:
