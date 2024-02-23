@@ -554,6 +554,13 @@ handleNew() {
   then
     allow_beta=false
   fi
+  if [ "$core_usr_pw" = "" ]
+  then
+    if ! core_usr_pw="$(openssl rand -hex 16)"
+    then
+      exit 1
+    fi
+  fi
 }
 
 requireUser() {
