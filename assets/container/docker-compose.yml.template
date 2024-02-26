@@ -1,8 +1,8 @@
 version: "2"
 
 services:
-  gateway:
-    container_name: ${CORE_NAME}-gateway
+  nginx:
+    container_name: ${CORE_NAME}-nginx
     image: nginx:1.25.3-alpine
     restart: unless-stopped
     environment:
