@@ -30,66 +30,8 @@ services:
       m_net:
         aliases:
           - core-api
-  #db:
-  #  container_name: ${CORE_NAME}-db
-  #  image: mariadb:10.11.5
-  #  restart: unless-stopped
-  #  environment:
-  #    MARIADB_USER: core_user
-  #    MARIADB_PASSWORD: ${CORE_DB_PW}
-  #    MARIADB_ROOT_PASSWORD: ${CORE_DB_ROOT_PW}
-  #  labels:
-  #    mgw_cid: ${CORE_ID}
-  #    core_srv: "true"
-  #  volumes:
-  #    - db-data:/var/lib/mysql
-  #    - ${CONTAINER_PATH}/configs/db:/docker-entrypoint-initdb.d:ro
-  #  networks:
-  #    c_net:
-  #      aliases:
-  #        - core-db
-  identity-server:
-    container_name: ${CORE_NAME}-identity-server
-    image: oryd/kratos:v1.1.0
-    restart: unless-stopped
-    depends_on:
-      - db
-      - identity-server-migrate
-    environment:
-      DSN: mysql://core_user:${CORE_DB_PW}@tcp(db:3306)/kratos?max_conns=20&max_idle_conns=4
-      LOG_LEVEL: trace
-    labels:
-      mgw_cid: ${CORE_ID}
-      core_srv: "true"
-    # TODO remove --dev flag
-    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
-    volumes:
-      - ${CONTAINER_PATH}/configs/identity-server:/etc/config/kratos:ro
-      - is-home:/home/ory
-      - is-data:/var/lib/sqlite
-    networks:
-      c_net:
-  identity-server-migrate:
-    container_name: ${CORE_NAME}-identity-server-migrate
-    image: oryd/kratos:v1.1.0
-    restart: on-failure
-    depends_on:
-      - db
-    environment:
-      DSN: mysql://core_user:${CORE_DB_PW}@tcp(db:3306)/kratos?max_conns=20&max_idle_conns=4
-      LOG_LEVEL: trace
-    labels:
-      mgw_cid: ${CORE_ID}
-      core_srv: "true"
-    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
-    volumes:
-      - ${CONTAINER_PATH}/configs/identity-server:/etc/config/kratos:ro
-      - ism-home:/home/ory
-      - ism-data:/var/lib/sqlite
-    networks:
-      c_net:
-  db:
-    container_name: ${CORE_NAME}-db
+  mysqldb:
+    container_name: ${CORE_NAME}-mysqldb
     image: mysql:8.3.0
     restart: unless-stopped
     environment:
@@ -100,18 +42,61 @@ services:
       mgw_cid: ${CORE_ID}
       core_srv: "true"
     volumes:
-      - db-data:/var/lib/mysql
+      - mysqldb-data:/var/lib/mysql
       - ${CONTAINER_PATH}/configs/db:/docker-entrypoint-initdb.d:ro
     networks:
       c_net:
         aliases:
           - core-db
+  kratos:
+    container_name: ${CORE_NAME}-kratos
+    image: oryd/kratos:v1.1.0
+    restart: unless-stopped
+    depends_on:
+      - mysqldb
+      - kratos-migrate
+    environment:
+      DSN: mysql://core_user:${CORE_DB_PW}@tcp(core-db:3306)/kratos?max_conns=20&max_idle_conns=4
+      LOG_LEVEL: trace
+    labels:
+      mgw_cid: ${CORE_ID}
+      core_srv: "true"
+    # TODO remove --dev flag -->
+    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    # TODO <-- remove --dev flag
+    volumes:
+      - ${CONTAINER_PATH}/configs/identity-server:/etc/config/kratos:ro
+      - kratos-home:/home/ory
+      - kratos-data:/var/lib/sqlite
+    networks:
+      c_net:
+        aliases:
+          - identity-server
+  kratos-migrate:
+    container_name: ${CORE_NAME}-kratos-migrate
+    image: oryd/kratos:v1.1.0
+    restart: on-failure
+    depends_on:
+      - mysqldb
+    environment:
+      DSN: mysql://core_user:${CORE_DB_PW}@tcp(core-db:3306)/kratos?max_conns=20&max_idle_conns=4
+      LOG_LEVEL: trace
+    labels:
+      mgw_cid: ${CORE_ID}
+      core_srv: "true"
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    volumes:
+      - ${CONTAINER_PATH}/configs/identity-server:/etc/config/kratos:ro
+      - kratosm-home:/home/ory
+      - kratosm-data:/var/lib/sqlite
+    networks:
+      c_net:
   auth-service:
     container_name: ${CORE_NAME}-auth-service
     image: ghcr.io/senergy-platform/mgw-auth-service:0.2.5
     restart: unless-stopped
     depends_on:
-      - identity-server
+      - kratos
     environment:
       LOGGER_LEVEL: ${LOG_LEVEL}
       LOGGER_TERMINAL: "true"
@@ -129,8 +114,8 @@ services:
     image: ghcr.io/senergy-platform/mgw-module-manager:0.15.8
     restart: unless-stopped
     depends_on:
-      - db
-      - gateway
+      - mysqldb
+      - nginx
       - secret-manager
     environment:
       LOGGER_LEVEL: ${LOG_LEVEL}
@@ -158,7 +143,7 @@ services:
     image: ghcr.io/senergy-platform/mgw-secret-manager:v0.3.0-beta2
     restart: unless-stopped
     depends_on:
-      - db
+      - mysqldb
     environment:
       TMPFS_PATH: /tmp
       ENABLE_ENCRYPTION: "false"
@@ -184,7 +169,8 @@ services:
       mgw_cid: ${CORE_ID}
       core_srv: "true"
     depends_on:
-      - gateway
+      - nginx
+      - auth-service
       - module-manager
       - secret-manager
     networks:
@@ -192,14 +178,14 @@ services:
 
 volumes:
   db-data:
-  #db2-data:
   mm-data:
   mm-modules:
   sm-data:
-  is-home:
-  ism-home:
-  is-data:
-  ism-data:
+  mysqldb-data:
+  kratos-home:
+  kratosm-home:
+  kratos-data:
+  kratosm-data:
 
 networks:
   g_net:
