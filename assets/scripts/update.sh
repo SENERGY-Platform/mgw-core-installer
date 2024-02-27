@@ -371,6 +371,36 @@ updateContainerImages() {
   cd ../..
 }
 
+handleMigration() {
+  if ! docker volume inspect "$stack_name"_mysqldb-data > /dev/null 2>& 1
+  then
+    echo "migrating database ..."
+    if ! envsubst < ./assets/container/migrate.yml.template > ./assets/container/migrate.yml
+    then
+      exit 1
+    fi
+    if ! dockerCompose -f ./assets/container/migrate.yml up -d
+    then
+      exit 1
+    fi
+    echo "waiting 30s for database init ..."
+    sleep 30
+    if ! docker container exec -it "$core_name-db1" sh -c  "mysqldump -u root --password=$core_db_root_pw --databases module_manager secret_manager > db_dump.sql"
+    then
+      exit 1
+    fi
+    if ! docker container exec -it "$core_name-db1" sh -c "mysql -h $core_name-db2 -u root --password=$core_db_root_pw < db_dump.sql"
+    then
+      exit 1
+    fi
+    if ! dockerCompose -f ./assets/container/migrate.yml rm -s -f
+    then
+      exit 1
+    fi
+    rm ./assets/container/migrate.yml
+  fi
+}
+
 handleContainers() {
   if ! cd $container_path
   then
@@ -650,6 +680,7 @@ printLnBr
 printColor "updating container environment ..." "$yellow"
 handleContainerAssets
 updateContainerImages
+handleMigration
 handleContainers
 printColor "updating container environment done" "$yellow"
 updateVersion
