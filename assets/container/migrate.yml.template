@@ -1,0 +1,35 @@
+version: "2"
+
+services:
+  db1:
+    container_name: ${CORE_NAME}-db1
+    image: mariadb:10.11.5
+    restart: unless-stopped
+    environment:
+      MARIADB_USER: core_user
+      MARIADB_PASSWORD: ${CORE_DB_PW}
+      MARIADB_ROOT_PASSWORD: ${CORE_DB_ROOT_PW}
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      c_net:
+  db2:
+    container_name: ${CORE_NAME}-db2
+    image: mysql:8.3.0
+    environment:
+      MYSQL_USER: core_user
+      MYSQL_PASSWORD: ${CORE_DB_PW}
+      MYSQL_ROOT_PASSWORD: ${CORE_DB_ROOT_PW}
+    volumes:
+      - mysqldb-data:/var/lib/mysql
+      - ${CONTAINER_PATH}/configs/db:/docker-entrypoint-initdb.d:ro
+    networks:
+      c_net:
+
+volumes:
+  db-data:
+  mysqldb-data:
+
+networks:
+  c_net:
+    name: ${CORE_NAME}-1-core-net
