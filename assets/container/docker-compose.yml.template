@@ -177,7 +177,6 @@ services:
       m_net:
 
 volumes:
-  db-data:
   mm-data:
   mm-modules:
   sm-data:
