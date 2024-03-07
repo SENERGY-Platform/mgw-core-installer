@@ -6,12 +6,12 @@ services:
     image: nginx:1.25.3-alpine
     restart: unless-stopped
     environment:
-      CORE_ID: ${CORE_ID}
+      CORE_ID: "${CORE_ID}"
       SUBNET_CORE: ${SUBNET_CORE}
       SUBNET_MODULE: ${SUBNET_MODULE}
       SUBNET_GATEWAY: ${SUBNET_GATEWAY}
     labels:
-      mgw_cid: ${CORE_ID}
+      mgw_cid: "${CORE_ID}"
       core_srv: "true"
     volumes:
       - ${CONTAINER_PATH}/configs/gateway/conf/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
@@ -39,7 +39,7 @@ services:
       MYSQL_PASSWORD: ${CORE_DB_PW}
       MYSQL_ROOT_PASSWORD: ${CORE_DB_ROOT_PW}
     labels:
-      mgw_cid: ${CORE_ID}
+      mgw_cid: "${CORE_ID}"
       core_srv: "true"
     volumes:
       - mysqldb-data:/var/lib/mysql
@@ -59,7 +59,7 @@ services:
       DSN: mysql://core_user:${CORE_DB_PW}@tcp(core-db:3306)/kratos?max_conns=20&max_idle_conns=4
       LOG_LEVEL: trace
     labels:
-      mgw_cid: ${CORE_ID}
+      mgw_cid: "${CORE_ID}"
       core_srv: "true"
     # TODO remove --dev flag -->
     command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
@@ -82,7 +82,7 @@ services:
       DSN: mysql://core_user:${CORE_DB_PW}@tcp(core-db:3306)/kratos?max_conns=20&max_idle_conns=4
       LOG_LEVEL: trace
     labels:
-      mgw_cid: ${CORE_ID}
+      mgw_cid: "${CORE_ID}"
       core_srv: "true"
     command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
     volumes:
@@ -100,12 +100,12 @@ services:
     environment:
       LOGGER_LEVEL: ${LOG_LEVEL}
       LOGGER_TERMINAL: "true"
-      CORE_ID: ${CORE_ID}
+      CORE_ID: "${CORE_ID}"
       IDENTITY_SRV_BASE_URL: http://identity-server:4434
       II_USER: core-user
       II_SECRET: ${CORE_USR_PW}
     labels:
-      mgw_cid: ${CORE_ID}
+      mgw_cid: "${CORE_ID}"
       core_srv: "true"
     networks:
       c_net:
@@ -120,14 +120,14 @@ services:
     environment:
       LOGGER_LEVEL: ${LOG_LEVEL}
       LOGGER_TERMINAL: "true"
-      CORE_ID: ${CORE_ID}
+      CORE_ID: "${CORE_ID}"
       DB_USER: core_user
       DB_PASSWD: ${CORE_DB_PW}
       DH_HOST_DEP_PATH: ${DEPLOYMENTS_PATH}
       DH_HOST_SEC_PATH: ${SECRETS_PATH}
       DH_MODULE_NET: ${CORE_NAME}-2-module-net
     labels:
-      mgw_cid: ${CORE_ID}
+      mgw_cid: "${CORE_ID}"
       core_srv: "true"
     volumes:
       - mm-data:/opt/module-manager/data
@@ -154,7 +154,7 @@ services:
       LOGGER_LEVEL: ${LOG_LEVEL}
       LOGGER_TERMINAL: "true"
     labels:
-      mgw_cid: ${CORE_ID}
+      mgw_cid: "${CORE_ID}"
       core_srv: "true"
     volumes:
       - ${SECRETS_PATH}:/tmp
@@ -166,7 +166,7 @@ services:
     image: ghcr.io/senergy-platform/mgw-gui:v2.4.0-alpha14
     restart: unless-stopped
     labels:
-      mgw_cid: ${CORE_ID}
+      mgw_cid: "${CORE_ID}"
       core_srv: "true"
     depends_on:
       - nginx
