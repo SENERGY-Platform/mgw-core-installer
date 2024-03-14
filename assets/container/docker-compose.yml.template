@@ -194,7 +194,7 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: ${SUBNET_GATEWAY}/29
+        - subnet: ${SUBNET_GATEWAY}/28
   c_net:
     name: ${CORE_NAME}-1-core-net
     attachable: true
