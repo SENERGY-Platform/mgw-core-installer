@@ -401,6 +401,17 @@ handleMigration() {
   fi
 }
 
+handleGatewayNet() {
+  if docker network inspect "$core_name-0-gateway-net" | grep -q "/29"
+  then
+    echo "removing $core_name-0-gateway-net ..."
+    if ! docker network rm "$core_name-0-gateway-net"
+    then
+      exit 1
+    fi
+  fi
+}
+
 handleContainers() {
   if ! cd $container_path
   then
@@ -681,6 +692,7 @@ printColor "updating container environment ..." "$yellow"
 handleContainerAssets
 updateContainerImages
 handleMigration
+handleGatewayNet
 handleContainers
 printColor "updating container environment done" "$yellow"
 updateVersion
