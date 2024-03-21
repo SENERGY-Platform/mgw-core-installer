@@ -383,8 +383,8 @@ handleMigration() {
     then
       exit 1
     fi
-    echo "waiting 30s for database init ..."
-    sleep 30
+    echo "waiting 120s for database init ..."
+    sleep 120
     if ! docker container exec -it "$core_name-db1" sh -c  "mysqldump -u root --password=$core_db_root_pw --databases module_manager secret_manager > db_dump.sql"
     then
       exit 1
