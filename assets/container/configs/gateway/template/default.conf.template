@@ -6,6 +6,7 @@ server {
     proxy_set_header X-Forwarded-For $host;
     proxy_set_header X-Static-Origin internal-api;
     rewrite ^/(.*)/$ /$1 permanent;
+    set $module_mngr module-manager;
     location /core-manager {
         rewrite /core-manager(.*) /$1 break;
         proxy_pass http://c_manager_sock$1$is_args$args;
@@ -26,6 +27,12 @@ server {
     }
     location /host-info {
         proxy_pass http://h_manager_sock/host-info;
+        allow ${SUBNET_MODULE}/16;
+        deny all;
+    }
+    location /module-manager {
+        rewrite /module-manager(.*) /$1 break;
+        proxy_pass http://$module_mngr/restricted$1$is_args$args;
         allow ${SUBNET_MODULE}/16;
         deny all;
     }
