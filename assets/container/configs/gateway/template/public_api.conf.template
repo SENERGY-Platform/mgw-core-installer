@@ -1,7 +1,7 @@
 server {
     server_name public-api;
-    listen 8080;
-    listen [::]:8080;
+    listen ${GATEWAY_PORT};
+    listen [::]:${GATEWAY_PORT};
     deny ${SUBNET_MODULE}/16;
     resolver 127.0.0.11 valid=10s;
     resolver_timeout 5s;
