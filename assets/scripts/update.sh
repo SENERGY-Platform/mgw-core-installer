@@ -333,6 +333,17 @@ handleCron() {
   fi
 }
 
+handleAvahi() {
+  if [ "$advertise" = "true" ]
+  then
+    echo "updating avahi service ..."
+    if ! envsubst < ./assets/avahi/core.service.template > $avahi_path/"$core_name"_core.service
+    then
+      exit 1
+    fi
+  fi
+}
+
 stopContainers() {
   echo "stopping containers ..."
   if ! cd $container_path
@@ -593,6 +604,10 @@ handleNew() {
       exit 1
     fi
   fi
+  if [ "$advertise" = "" ]
+  then
+    advertise=true
+  fi
 }
 
 requireUser() {
@@ -676,6 +691,7 @@ printColor "updating integration ..." "$yellow"
 handleSystemd
 handleLogrotate
 handleCron
+handleAvahi
 printColor "updating integration done" "$yellow"
 printLnBr
 printColor "updating container environment ..." "$yellow"

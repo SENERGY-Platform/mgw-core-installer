@@ -265,6 +265,17 @@ handleCron() {
   fi
 }
 
+handleAvahi() {
+  if [ "$advertise" = "true" ]
+  then
+    echo "creating avahi service ..."
+    if ! envsubst < ./assets/avahi/core.service.template > $avahi_path/"$core_name"_core.service
+    then
+      exit 1
+    fi
+  fi
+}
+
 handleDefaultSettings() {
   while :
   do
@@ -323,6 +334,11 @@ handleDefaultSettings() {
         read -r input
         if [ "$input" != "" ]; then
           subnet_gateway="$input"
+        fi
+        printf "avahi services path [%s]: " "$avahi_path"
+        read -r input
+        if [ "$input" != "" ]; then
+          avahi_path="$input"
         fi
         break
         ;;
@@ -469,6 +485,23 @@ handleIntegration() {
       echo "unknown option"
     esac
   done
+  while :
+  do
+    printColor "enable mDNS advertisement? (y/n): " "$blue" "nb"
+    read -r choice
+    case "$choice" in
+    y)
+      advertise=true
+      break
+      ;;
+    n)
+      advertise=false
+      break
+      ;;
+    *)
+      echo "unknown option"
+    esac
+  done
 }
 
 handleDocker() {
@@ -603,6 +636,7 @@ printColor "setting up integration ..." "$yellow"
 handleSystemd
 handleLogrotate
 handleCron
+handleAvahi
 printColor "setting up integration done" "$yellow"
 printLnBr
 printColor "setting up container environment ..." "$yellow"

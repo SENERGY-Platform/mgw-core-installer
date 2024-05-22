@@ -2,6 +2,7 @@
 
 systemd_path=/etc/systemd/system
 logrotated_path=/etc/logrotate.d
+avahi_path=/etc/avahi/services
 cron_path=/etc/cron.daily
 base_path=/opt/mgw
 secrets_path=""
@@ -20,6 +21,7 @@ subnet_gateway="10.10.0.0"
 systemd=""
 logrotate=""
 cron=""
+advertise=""
 platform=""
 arch=""
 core_id=""
@@ -46,10 +48,12 @@ core_db_pw=$core_db_pw
 core_db_root_pw=$core_db_root_pw
 systemd_path=$systemd_path
 logrotated_path=$logrotated_path
+avahi_path=$avahi_path
 cron_path=$cron_path
 systemd=$systemd
 logrotate=$logrotate
 cron=$cron
+advertise=$advertise
 platform=$platform
 arch=$arch
 core_id=$core_id
@@ -67,6 +71,7 @@ exportSettingsToEnv() {
     DEPLOYMENTS_PATH="$deployments_path" \
     SOCKETS_PATH="$sockets_path" \
     BIN_PATH="$bin_path" \
+    AVAHI_PATH="$avahi_path" \
     CONTAINER_PATH="$container_path" \
     LOG_PATH="$log_path" \
     SUBNET_CORE="$subnet_core" \

@@ -1,0 +1,13 @@
+<?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="no">MGW Core</name>
+  <service protocol="ipv4">
+    <type>_mgwcore_${CORE_ID}._tcp</type>
+    <port>${GATEWAY_PORT}</port>
+    <txt-record value-format="text">api_path=/core/api</txt-record>
+    <txt-record value-format="text">auth_path=/core/auth</txt-record>
+    <txt-record value-format="text">discovery_path=/core/discovery</txt-record>
+    <txt-record value-format="text">core_id=${CORE_ID}</txt-record>
+  </service>
+</service-group>
