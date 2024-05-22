@@ -7,7 +7,6 @@ then
 fi
 
 . ./scripts/docker.sh
-. ./scripts/gw_user_file.sh
 . ./scripts/settings.sh
 . ./.settings
 
@@ -144,13 +143,6 @@ purgeContainers() {
   fi
 }
 
-changeGatewayPW() {
-  printf "set gateway password: "
-  read -r input
-  basic_auth_pw="$input"
-  handleGatewayUserFile
-}
-
 handleBetaRelease() {
   printf "allow beta releases? (y/n): "
   read -r choice
@@ -211,9 +203,6 @@ ctr-recreate)
   ;;
 ctr-purge)
   purgeContainers
-  ;;
-set-pw)
-  changeGatewayPW
   ;;
 beta-test)
   handleBetaRelease

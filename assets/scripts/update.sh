@@ -196,10 +196,6 @@ updateInstallDir() {
   then
     exit 1
   fi
-  if ! cp ./assets/scripts/lib/gw_user_file.sh $base_path/scripts/gw_user_file.sh
-  then
-    exit 1
-  fi
   if ! cp ./assets/scripts/lib/sem_ver.sh $base_path/scripts/sem_ver.sh
   then
     exit 1
@@ -586,11 +582,6 @@ handleNew() {
     rm -r "/mnt/mgw"
     secrets_path=/mnt/$core_name/secrets
   fi
-  if ! [ -e $base_path/.htpasswd ]
-  then
-    basic_auth_pw=""
-    handleGatewayUserFile
-  fi
   if [ "$allow_beta" = "" ]
   then
     allow_beta=false
@@ -654,7 +645,6 @@ cd ../..
 . ./assets/scripts/lib/github.sh
 . ./assets/scripts/lib/docker.sh
 . ./assets/scripts/lib/container.sh
-. ./assets/scripts/lib/gw_user_file.sh
 . $install_path/.settings
 
 checkRoot
