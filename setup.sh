@@ -335,11 +335,6 @@ handleDefaultSettings() {
         if [ "$input" != "" ]; then
           subnet_gateway="$input"
         fi
-        printf "avahi services path [%s]: " "$avahi_path"
-        read -r input
-        if [ "$input" != "" ]; then
-          avahi_path="$input"
-        fi
         break
         ;;
       n)
