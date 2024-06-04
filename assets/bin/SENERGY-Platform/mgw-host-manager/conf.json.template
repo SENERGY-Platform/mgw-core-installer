@@ -8,5 +8,6 @@
     "file_name": "h_manager"
   },
   "applications_path": "${BIN_PATH}/SENERGY-Platform/mgw-host-manager/applications.json",
-  "avahi_services_path": "${AVAHI_PATH}"
+  "avahi_services_path": "${AVAHI_PATH}",
+  "net_rng_blacklist": ["${SUBNET_GATEWAY}/28", "${SUBNET_CORE}/28", "${SUBNET_MODULE}/16"]
 }
