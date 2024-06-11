@@ -85,6 +85,10 @@ server {
             proxy_pass http://ce_wrapper_sock/restricted$1$is_args$args;
         }
     }
+    location /core/discovery {
+        rewrite /core/discovery(.*) /$1 break;
+        proxy_pass http://$module_mngr/discovery$1$is_args$args;
+    }
     location /endpoints {
         auth_request /validate-session;
         include conf.d/public_api.location;
