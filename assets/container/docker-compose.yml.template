@@ -163,7 +163,7 @@ services:
       c_net:
   web-ui:
     container_name: ${CORE_NAME}-web-ui
-    image: ghcr.io/senergy-platform/mgw-gui:v2.7.0-beta1
+    image: ghcr.io/senergy-platform/mgw-gui:v2.8.1
     restart: unless-stopped
     labels:
       mgw_cid: "${CORE_ID}"
