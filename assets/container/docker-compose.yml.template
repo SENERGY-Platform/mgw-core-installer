@@ -43,7 +43,8 @@ services:
       core_srv: "true"
     volumes:
       - mysqldb-data:/var/lib/mysql
-      - ${CONTAINER_PATH}/configs/db:/docker-entrypoint-initdb.d:ro
+      - ${CONTAINER_PATH}/configs/db/init:/docker-entrypoint-initdb.d:ro
+      - ${CONTAINER_PATH}/configs/db/conf:/etc/mysql/conf.d:ro
     networks:
       c_net:
         aliases:
