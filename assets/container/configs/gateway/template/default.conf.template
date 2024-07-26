@@ -10,8 +10,10 @@ server {
     proxy_set_header X-Forwarded-For $remote_addr;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Static-Origin internal-api;
-    rewrite ^/(.*)/$ /$1 permanent;
     set $module_mngr module-manager;
+    location ~ ^(.*)/$ {
+        return 301 $1$is_args$args;
+    }
     location /core-manager {
         rewrite /core-manager(.*) /$1 break;
         proxy_pass http://c_manager_sock$1$is_args$args;

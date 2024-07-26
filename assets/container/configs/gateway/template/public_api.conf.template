@@ -13,7 +13,6 @@ server {
     proxy_set_header X-Static-Origin public-api;
     add_header Cache-Control no-store always;
     add_header X-Core-ID ${CORE_ID};
-    rewrite ^/(.*)/$ /$1 permanent;
     set $auth_srv auth-service;
     set $identity_server identity-server:4433;
     set $module_mngr module-manager;
@@ -30,6 +29,9 @@ server {
     }
     location @errorAuth {
     	return 302 /core/web-ui/login;
+    }
+    location ~ ^(/core.*)/$ {
+        return 301 $1$is_args$args;
     }
     location /core/web-ui {
         auth_request /validate-session;
