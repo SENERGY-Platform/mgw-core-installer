@@ -27,16 +27,6 @@ selfservice:
           default_browser_return_url: /core/web-ui
 log:
   format: text
-  leak_sensitive_values: true
-
-# TODO should be generated -->
-secrets:
-  cookie: # len=17
-    - =qcoEW+yhi<@4k>i2
-  cipher: # len=32
-    - LN>c&wrz2&>}>7z^*m(<\[ae(F;-\tP}
-# TODO <-- should be generated
-
 ciphers:
   algorithm: xchacha20-poly1305
 hashers:
