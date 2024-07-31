@@ -28,7 +28,6 @@ selfservice:
             - hook: revoke_active_sessions
           default_browser_return_url: /core/web-ui
 log:
-  level: debug
   format: text
   leak_sensitive_values: true
 
