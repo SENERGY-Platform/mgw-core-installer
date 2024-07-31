@@ -24,8 +24,6 @@ selfservice:
       lifespan: 10m
       after:
         password:
-          hooks:
-            - hook: revoke_active_sessions
           default_browser_return_url: /core/web-ui
 log:
   format: text
