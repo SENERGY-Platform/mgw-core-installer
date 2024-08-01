@@ -3,7 +3,7 @@ version: "2"
 services:
   nginx:
     container_name: ${CORE_NAME}-nginx
-    image: nginx:1.25.3-alpine
+    image: nginx:1.27.0-alpine
     restart: unless-stopped
     environment:
       CORE_ID: "${CORE_ID}"
@@ -32,7 +32,7 @@ services:
           - core-api
   mysqldb:
     container_name: ${CORE_NAME}-mysqldb
-    image: mysql:8.3.0
+    image: mysql:8.4.2
     restart: unless-stopped
     environment:
       MYSQL_USER: core_user
@@ -51,7 +51,7 @@ services:
           - core-db
   kratos:
     container_name: ${CORE_NAME}-kratos
-    image: oryd/kratos:v1.1.0
+    image: oryd/kratos:v1.2.0
     restart: unless-stopped
     depends_on:
       - mysqldb
@@ -75,7 +75,7 @@ services:
           - identity-server
   kratos-migrate:
     container_name: ${CORE_NAME}-kratos-migrate
-    image: oryd/kratos:v1.1.0
+    image: oryd/kratos:v1.2.0
     restart: on-failure
     depends_on:
       - mysqldb
@@ -94,7 +94,7 @@ services:
       c_net:
   auth-service:
     container_name: ${CORE_NAME}-auth-service
-    image: ghcr.io/senergy-platform/mgw-auth-service:0.2.7
+    image: ghcr.io/senergy-platform/mgw-auth-service:0.2.8
     restart: unless-stopped
     depends_on:
       - kratos
@@ -112,7 +112,7 @@ services:
       c_net:
   module-manager:
     container_name: ${CORE_NAME}-module-manager
-    image: ghcr.io/senergy-platform/mgw-module-manager:0.25.1
+    image: ghcr.io/senergy-platform/mgw-module-manager:0.25.2
     restart: unless-stopped
     depends_on:
       - mysqldb
