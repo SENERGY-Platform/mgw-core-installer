@@ -94,7 +94,7 @@ services:
       c_net:
   auth-service:
     container_name: ${CORE_NAME}-auth-service
-    image: ghcr.io/senergy-platform/mgw-auth-service:0.2.6
+    image: ghcr.io/senergy-platform/mgw-auth-service:0.2.7
     restart: unless-stopped
     depends_on:
       - kratos
@@ -112,7 +112,7 @@ services:
       c_net:
   module-manager:
     container_name: ${CORE_NAME}-module-manager
-    image: ghcr.io/senergy-platform/mgw-module-manager:0.25.0
+    image: ghcr.io/senergy-platform/mgw-module-manager:0.25.1
     restart: unless-stopped
     depends_on:
       - mysqldb
