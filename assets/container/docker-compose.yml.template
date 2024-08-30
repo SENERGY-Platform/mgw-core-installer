@@ -58,7 +58,7 @@ services:
       - kratos-migrate
     environment:
       DSN: mysql://core_user:${CORE_DB_PW}@tcp(core-db:3306)/kratos?max_conns=20&max_idle_conns=4
-      LOG_LEVEL: trace
+      LOG_LEVEL: ${KRATOS_LOG_LEVEL}
     labels:
       mgw_cid: "${CORE_ID}"
       core_srv: "true"
@@ -81,7 +81,7 @@ services:
       - mysqldb
     environment:
       DSN: mysql://core_user:${CORE_DB_PW}@tcp(core-db:3306)/kratos?max_conns=20&max_idle_conns=4
-      LOG_LEVEL: trace
+      LOG_LEVEL: ${KRATOS_MIGRATE_LOG_LEVEL}
     labels:
       mgw_cid: "${CORE_ID}"
       core_srv: "true"
@@ -99,7 +99,7 @@ services:
     depends_on:
       - kratos
     environment:
-      LOGGER_LEVEL: ${LOG_LEVEL}
+      LOGGER_LEVEL: ${AUTH_SERVICE_LOG_LEVEL}
       LOGGER_TERMINAL: "true"
       CORE_ID: "${CORE_ID}"
       IDENTITY_SRV_BASE_URL: http://identity-server:4434
@@ -119,7 +119,7 @@ services:
       - nginx
       - secret-manager
     environment:
-      LOGGER_LEVEL: ${LOG_LEVEL}
+      LOGGER_LEVEL: ${MODULE_MANAGER_LOG_LEVEL}
       LOGGER_TERMINAL: "true"
       CORE_ID: "${CORE_ID}"
       DB_USER: core_user
@@ -152,7 +152,7 @@ services:
       DB_CONNECTION_URL: core_user:${CORE_DB_PW}@tcp(core-db:3306)/secret_manager
       MASTER_KEY_FILE_PATH: /opt/data/key
       SERVER_PORT: 80
-      LOGGER_LEVEL: ${LOG_LEVEL}
+      LOGGER_LEVEL: ${SECRET_MANAGER_LOG_LEVEL}
       LOGGER_TERMINAL: "true"
     labels:
       mgw_cid: "${CORE_ID}"
