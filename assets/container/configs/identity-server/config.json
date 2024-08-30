@@ -1,0 +1,73 @@
+{
+  "version": "v1.2.0",
+  "serve": {
+    "public": {
+      "base_url": "http://127.0.0.1:4433/",
+      "port": 4433
+    },
+    "admin": {
+      "base_url": "http://identity-server:4434/",
+      "port": 4434
+    }
+  },
+  "selfservice": {
+    "default_browser_return_url": "/core/web-ui",
+    "allowed_return_urls": [
+      "/*"
+    ],
+    "methods": {
+      "password": {
+        "enabled": true
+      }
+    },
+    "flows": {
+      "error": {
+        "ui_url": "/core/web-ui/error"
+      },
+      "logout": {
+        "after": {
+          "default_browser_return_url": "/core/web-ui/login"
+        }
+      },
+      "login": {
+        "ui_url": "/core/web-ui/login",
+        "lifespan": "10m",
+        "after": {
+          "password": {
+            "default_browser_return_url": "/core/web-ui"
+          }
+        }
+      }
+    }
+  },
+  "log": {
+    "format": "text"
+  },
+  "ciphers": {
+    "algorithm": "xchacha20-poly1305"
+  },
+  "hashers": {
+    "algorithm": "bcrypt",
+    "bcrypt": {
+      "cost": 8
+    }
+  },
+  "identity": {
+    "default_schema_id": "human",
+    "schemas": [
+      {
+        "id": "human",
+        "url": "file:///etc/config/kratos/human_identity.schema.json"
+      },
+      {
+        "id": "machine",
+        "url": "file:///etc/config/kratos/machine_identity.schema.json"
+      }
+    ]
+  },
+  "courier": {
+    "smtp": {
+      "connection_uri": "smtps://127.0.0.1:12346"
+    }
+  }
+}
