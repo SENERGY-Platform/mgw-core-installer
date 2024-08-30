@@ -100,6 +100,6 @@ server {
     }
     location /endpoints {
         auth_request /validate-session;
-        include conf.d/public_api.location;
+        include conf.d/public_api/dep_endpoints.location;
     }
 }

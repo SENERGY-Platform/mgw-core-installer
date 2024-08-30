@@ -10,7 +10,7 @@
   "http_client": {
     "cew_socket_path": "${SOCKETS_PATH}/ce_wrapper.sock"
   },
-  "endpoints_conf_path": "${BASE_PATH}/.public_api.location",
+  "endpoints_conf_path": "${MOUNTS_PATH}/nginx/dep_endpoints.location",
   "compose_file_path": "${CONTAINER_PATH}/docker-compose.yml",
   "core_id": "${CORE_ID}",
   "core_service": {

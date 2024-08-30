@@ -608,6 +608,17 @@ handleNew() {
   then
     advertise=true
   fi
+  if [ "$mounts_path" = "" ]
+  then
+    mounts_path=$base_path/mounts
+    if ! mkdir -p $mounts_path/nginx $mounts_path/kratos
+    then
+      exit 1
+    fi
+    cp $base_path/.public_api.location $mounts_path/nginx/dep_endpoints.location
+    cp $base_path/.public_api.location.bk $mounts_path/nginx/dep_endpoints.location.bk
+    rm $base_path/.public_api.location $base_path/.public_api.location.bk
+  fi
 }
 
 requireUser() {

@@ -16,7 +16,7 @@ services:
       core_srv: "true"
     volumes:
       - ${CONTAINER_PATH}/configs/gateway/conf/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
-      - ${BASE_PATH}/.public_api.location:/etc/nginx/conf.d/public_api.location:ro
+      - ${MOUNTS_PATH}/nginx:/etc/nginx/conf.d/public_api:ro
       - ${CONTAINER_PATH}/configs/gateway/template:/etc/nginx/templates:ro
       - ${SOCKETS_PATH}:/opt/core/sockets
     ports:
