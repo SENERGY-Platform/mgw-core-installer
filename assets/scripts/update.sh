@@ -172,7 +172,7 @@ handlePackages() {
 }
 
 updateInstallDir() {
-  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $log_path $scripts_path
+  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $log_path $scripts_path $mounts_path/nginx $mounts_path/kratos
   then
     exit 1
   fi

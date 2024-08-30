@@ -73,7 +73,7 @@ handlePackages() {
 }
 
 prepareInstallDir() {
-  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $log_path $scripts_path
+  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $log_path $scripts_path $mounts_path $mounts_path/nginx $mounts_path/kratos
   then
     exit 1
   fi
@@ -350,6 +350,7 @@ handleDefaultSettings() {
   container_path=$base_path/container
   log_path=$base_path/log
   scripts_path=$base_path/scripts
+  mounts_path=$base_path/mounts
 }
 
 handleDatabasePasswords() {
