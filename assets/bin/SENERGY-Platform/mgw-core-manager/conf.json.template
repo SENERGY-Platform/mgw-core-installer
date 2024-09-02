@@ -15,5 +15,9 @@
   "core_id": "${CORE_ID}",
   "core_service": {
     "gateway_srv_name": "nginx"
+  },
+  "kratos": {
+    "version": "v1.2.0",
+    "config_path": "${MOUNTS_PATH}/kratos/config.json"
   }
 }

@@ -63,10 +63,11 @@ services:
       mgw_cid: "${CORE_ID}"
       core_srv: "true"
     # TODO remove --dev flag -->
-    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    command: serve -c /etc/config/kratos/config.json -c /etc/config/kratos-dyn/config.json --dev --watch-courier
     # TODO <-- remove --dev flag
     volumes:
       - ${CONTAINER_PATH}/configs/identity-server:/etc/config/kratos:ro
+      - ${MOUNTS_PATH}/kratos:/etc/config/kratos-dyn:ro
       - kratos-home:/home/ory
       - kratos-data:/var/lib/sqlite
     networks:
@@ -85,9 +86,10 @@ services:
     labels:
       mgw_cid: "${CORE_ID}"
       core_srv: "true"
-    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    command: -c /etc/config/kratos/config.json -c /etc/config/kratos-dyn/config.json migrate sql -e --yes
     volumes:
       - ${CONTAINER_PATH}/configs/identity-server:/etc/config/kratos:ro
+      - ${MOUNTS_PATH}/kratos:/etc/config/kratos-dyn:ro
       - kratosm-home:/home/ory
       - kratosm-data:/var/lib/sqlite
     networks:
