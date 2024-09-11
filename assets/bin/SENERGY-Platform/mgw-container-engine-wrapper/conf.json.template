@@ -6,5 +6,6 @@
   "logger": {
     "path": "${LOG_PATH}",
     "file_name": "ce_wrapper"
-  }
+  },
+  "docker_host": "unix://${DOCKER_SOCKET_PATH}"
 }
