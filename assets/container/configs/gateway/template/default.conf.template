@@ -32,6 +32,12 @@ server {
         allow ${SUBNET_CORE}/16;
         deny all;
     }
+    location /host-manager {
+        rewrite /host-manager(.*) /$1 break;
+        proxy_pass http://h_manager_sock/restricted$1$is_args$args;
+        allow ${SUBNET_MODULE}/16;
+        deny all;
+    }
     location /host-info {
         proxy_pass http://h_manager_sock/host-info;
         allow ${SUBNET_MODULE}/16;
