@@ -3,7 +3,7 @@ version: "2"
 services:
   nginx:
     container_name: ${CORE_NAME}-nginx
-    image: nginx:1.27.0-alpine
+    image: nginx:1.27.1-alpine
     restart: unless-stopped
     environment:
       CORE_ID: "${CORE_ID}"
