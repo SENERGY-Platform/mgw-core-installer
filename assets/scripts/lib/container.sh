@@ -1,14 +1,6 @@
 #!/bin/sh
 
 copyContainerAssets() {
-  export \
-    NGINX_IMG="$nginx_img" \
-    MYSQLDB_IMG="$mysqldb_img" \
-    KRATOS_IMG="$kratos_img" \
-    AUTH_SERVICE_IMG="$auth_service_img" \
-    MODULE_MANAGER_IMG="$module_manager_img" \
-    SECRET_MANAGER_IMG="$secret_manager_img" \
-    WEB_UI_IMG="$web_ui_img"
   echo "copying container configs ..."
   if ! cp -r ./assets/container/configs $container_path
   then
@@ -29,6 +21,6 @@ copyContainerAssets() {
 parseImages() {
   for item in ${images}
   do
-    eval "$item"
+    eval "export ${item%%=*}=${item##*=}"
   done
 }
