@@ -3,7 +3,7 @@ version: "2"
 services:
   nginx:
     container_name: ${CORE_NAME}-nginx
-    image: nginx:1.27.1-alpine
+    image: ${NGINX_IMG}
     restart: unless-stopped
     environment:
       CORE_ID: "${CORE_ID}"
@@ -32,7 +32,7 @@ services:
           - core-api
   mysqldb:
     container_name: ${CORE_NAME}-mysqldb
-    image: mysql:8.4.2
+    image: ${MYSQLDB_IMG}
     restart: unless-stopped
     environment:
       MYSQL_USER: core_user
@@ -51,7 +51,7 @@ services:
           - core-db
   kratos:
     container_name: ${CORE_NAME}-kratos
-    image: oryd/kratos:v1.2.0
+    image: ${KRATOS_IMG}
     restart: unless-stopped
     depends_on:
       - mysqldb
@@ -76,7 +76,7 @@ services:
           - identity-server
   kratos-migrate:
     container_name: ${CORE_NAME}-kratos-migrate
-    image: oryd/kratos:v1.2.0
+    image: ${KRATOS_IMG}
     restart: on-failure
     depends_on:
       - mysqldb
@@ -96,7 +96,7 @@ services:
       c_net:
   auth-service:
     container_name: ${CORE_NAME}-auth-service
-    image: ghcr.io/senergy-platform/mgw-auth-service:0.2.10
+    image: ${AUTH_SERVICE_IMG}
     restart: unless-stopped
     depends_on:
       - kratos
@@ -114,7 +114,7 @@ services:
       c_net:
   module-manager:
     container_name: ${CORE_NAME}-module-manager
-    image: ghcr.io/senergy-platform/mgw-module-manager:0.26.2
+    image: ${MODULE_MANAGER_IMG}
     restart: unless-stopped
     depends_on:
       - mysqldb
@@ -143,7 +143,7 @@ services:
       c_net:
   secret-manager:
     container_name: ${CORE_NAME}-secret-manager
-    image: ghcr.io/senergy-platform/mgw-secret-manager:v0.3.0-beta2
+    image: ${SECRET_MANAGER_IMG}
     restart: unless-stopped
     depends_on:
       - mysqldb
@@ -166,7 +166,7 @@ services:
       c_net:
   web-ui:
     container_name: ${CORE_NAME}-web-ui
-    image: ghcr.io/senergy-platform/mgw-gui:v2.8.3
+    image: ${WEB_UI_IMG}
     restart: unless-stopped
     labels:
       mgw_cid: "${CORE_ID}"

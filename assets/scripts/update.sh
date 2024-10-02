@@ -681,6 +681,7 @@ printLnBr
 printColor "setting up updater ..." "$yellow"
 detectDockerCompose
 handleNew
+parseImages
 exportSettingsToEnv
 printColor "setting up updater done" "$yellow"
 printLnBr

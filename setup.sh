@@ -612,6 +612,7 @@ handleDatabasePasswords
 handleCoreUserPassword
 handleIntegration
 handleBetaRelease
+parseImages
 exportSettingsToEnv
 printColor "setting up installer done" "$yellow"
 printLnBr
