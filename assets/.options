@@ -6,7 +6,7 @@ NGINX_IMG=nginx:1.27.1-alpine
 MYSQLDB_IMG=mysql:8.4.2
 KRATOS_IMG=oryd/kratos:v1.2.0
 AUTH_SERVICE_IMG=ghcr.io/senergy-platform/mgw-auth-service:0.2.10
-MODULE_MANAGER_IMG=ghcr.io/senergy-platform/mgw-module-manager:0.26.2
+MODULE_MANAGER_IMG=ghcr.io/senergy-platform/mgw-module-manager:0.26.3
 SECRET_MANAGER_IMG=ghcr.io/senergy-platform/mgw-secret-manager:v0.3.0-beta2
 WEB_UI_IMG=ghcr.io/senergy-platform/mgw-gui:v2.8.3
 "
