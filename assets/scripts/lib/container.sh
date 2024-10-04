@@ -24,17 +24,3 @@ parseImages() {
     eval "export ${item%%=*}=${item##*=}"
   done
 }
-
-removePreviousImages() {
-  for item in ${images}
-  do
-    img="${item##*=}"
-    docker image ls -a --format json "${img%%:*}" | while read -r line
-    do
-      if [ "${img##*:}" != "$(echo "$line" | jq -r '.Tag')" ]
-      then
-        docker image rm "$(echo "$line" | jq -r '.ID')"
-      fi
-    done
-  done
-}

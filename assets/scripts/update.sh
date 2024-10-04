@@ -712,7 +712,6 @@ updateContainerImages
 handleMigration
 handleGatewayNet
 handleContainers
-removePreviousImages
 printColor "updating container environment done" "$yellow"
 updateVersion
 saveSettings
