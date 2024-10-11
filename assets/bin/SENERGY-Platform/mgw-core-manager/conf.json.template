@@ -19,5 +19,8 @@
   "kratos": {
     "version": "v1.2.0",
     "config_path": "${MOUNTS_PATH}/kratos/config.json"
+  },
+  "log_handler": {
+    "path": "${BIN_PATH}/SENERGY-Platform/mgw-core-manager/config/log_hdl.json"
   }
 }
