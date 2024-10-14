@@ -45,7 +45,7 @@ server {
     }
     location /core/web-ui {
         auth_request /validate-session;
-        error_page 401 403 = @errorAuth;
+        error_page 401 = @errorAuth;
         rewrite /core/web-ui(.*) /$1 break;
         proxy_pass http://$core_gui$1$is_args$args;
         location ~* ^/core/web-ui/(.+\.(js|css|ico))$ {
