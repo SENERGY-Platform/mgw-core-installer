@@ -3,7 +3,7 @@ install_pkg="curl: tar: gzip: jq: avahi-daemon:/usr/sbin/avahi-daemon openssl: g
 binaries="
 SENERGY-Platform/mgw-container-engine-wrapper:v0.12.2
 SENERGY-Platform/mgw-host-manager:v1.4.3
-SENERGY-Platform/mgw-core-manager:v0.14.3
+SENERGY-Platform/mgw-core-manager:v0.14.4
 "
 images="
 NGINX_IMG=nginx:1.27.2-alpine
