@@ -17,7 +17,7 @@
     "gateway_srv_name": "nginx"
   },
   "kratos": {
-    "version": "v1.2.0",
+    "version": "v1.3.0",
     "config_path": "${MOUNTS_PATH}/kratos/config.json"
   },
   "log_handler": {

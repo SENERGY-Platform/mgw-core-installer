@@ -1,5 +1,5 @@
 {
-  "version": "v1.2.0",
+  "version": "v1.3.0",
   "serve": {
     "public": {
       "base_url": "http://127.0.0.1:4433/",
