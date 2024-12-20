@@ -7,5 +7,10 @@
     "path": "${LOG_PATH}",
     "file_name": "ce_wrapper"
   },
-  "docker_host": "unix://${DOCKER_SOCKET_PATH}"
+  "docker": {
+    "host": "unix://${DOCKER_SOCKET_PATH}",
+    "ctr_log_driver": "local",
+    "ctr_log_max_size": "100m",
+    "ctr_log_max_file": 3
+  }
 }
