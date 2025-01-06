@@ -1,16 +1,16 @@
 require_pkg="systemd: apt:"
 install_pkg="curl: tar: gzip: jq: avahi-daemon:/usr/sbin/avahi-daemon openssl: gettext-base:envsubst logrotate:/usr/sbin/logrotate"
 binaries="
-SENERGY-Platform/mgw-host-manager:v1.4.4
-SENERGY-Platform/mgw-core-manager:v0.14.5
 SENERGY-Platform/mgw-container-engine-wrapper:v0.13.1
+SENERGY-Platform/mgw-host-manager:v1.4.5
+SENERGY-Platform/mgw-core-manager:v0.14.6
 "
 images="
-NGINX_IMG=nginx:1.27.2-alpine
+NGINX_IMG=nginx:1.27.3-alpine
 MYSQLDB_IMG=mysql:8.4.3
-KRATOS_IMG=oryd/kratos:v1.3.0
-AUTH_SERVICE_IMG=ghcr.io/senergy-platform/mgw-auth-service:0.2.12
-MODULE_MANAGER_IMG=ghcr.io/senergy-platform/mgw-module-manager:0.27.2
-SECRET_MANAGER_IMG=ghcr.io/senergy-platform/mgw-secret-manager:0.3.2
+KRATOS_IMG=oryd/kratos:v1.3.1
+AUTH_SERVICE_IMG=ghcr.io/senergy-platform/mgw-auth-service:0.2.13
+MODULE_MANAGER_IMG=ghcr.io/senergy-platform/mgw-module-manager:0.27.3
+SECRET_MANAGER_IMG=ghcr.io/senergy-platform/mgw-secret-manager:0.3.3
 WEB_UI_IMG=ghcr.io/senergy-platform/mgw-gui:v2.10.0
 "
