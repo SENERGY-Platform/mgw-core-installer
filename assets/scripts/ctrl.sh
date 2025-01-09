@@ -160,6 +160,14 @@ handleBetaRelease() {
   saveSettings
 }
 
+checkSystemd() {
+    if [ "$systemd" = "true" ]
+    then
+      echo "systemd integration enabled, operation not allowed"
+      exit 1
+    fi
+}
+
 if ! [ "$(id -u)" = "0" ]
 then
   echo "root privileges required"
@@ -168,40 +176,50 @@ fi
 detectDockerCompose
 case $1 in
 start)
+  checkSystemd
   startBin
   mountTmpfs
   startContainers
   ;;
 stop)
+  checkSystemd
   stopContainers
   unmountTmpfs
   stopBin
   ;;
 prc-start)
+  checkSystemd
   startBin
   ;;
 prc-stop)
+  checkSystemd
   stopBin
   ;;
 ctr-start)
+  checkSystemd
   mountTmpfs
   startContainers
   ;;
 ctr-stop)
+  checkSystemd
   stopContainers
   unmountTmpfs
   ;;
 ctr-create)
+  checkSystemd
   createContainers
   ;;
 ctr-remove)
+  checkSystemd
   removeContainers
   ;;
 ctr-recreate)
+  checkSystemd
   removeContainers
   createContainers
   ;;
 ctr-purge)
+  checkSystemd
   purgeContainers
   ;;
 beta-test)
