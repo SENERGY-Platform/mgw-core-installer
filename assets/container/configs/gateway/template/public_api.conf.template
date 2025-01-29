@@ -85,7 +85,7 @@ server {
         }
         location /core/api/secret-manager {
             rewrite /core/api/secret-manager(.*) /$1 break;
-            proxy_pass http://$secret_mngr$1$is_args$args;
+            proxy_pass http://$secret_mngr/restricted$1$is_args$args;
         }
         location /core/api/core-manager {
             rewrite /core/api/core-manager(.*) /$1 break;
