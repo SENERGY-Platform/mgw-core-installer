@@ -41,6 +41,22 @@ checkSystemd() {
     fi
 }
 
+printHelp() {
+  printf '%s\n' \
+  '' \
+  'available options:' \
+  '' \
+  'start          start the mgw core' \
+  'stop           stop the mgw core' \
+  'enable         enable systemd units' \
+  'disable        disable systemd units' \
+  'ctr-recreate   recreate containers' \
+  'ctr-purge      recreate containers and volumes' \
+  'beta-test      toggle beta releases' \
+  'help           display this help page' \
+  ''
+}
+
 if ! [ "$(id -u)" = "0" ]
 then
   echo "root privileges required"
@@ -88,7 +104,11 @@ ctr-purge)
 beta-test)
   handleBetaRelease
   ;;
+help)
+  printHelp
+  ;;
 *)
-  echo "unknown option"
+  printHelp
   exit 1
+  ;;
 esac
