@@ -97,6 +97,18 @@ prepareInstallDir() {
   then
     exit 1
   fi
+  if ! cp ./assets/scripts/lib/bin_ctrl.sh $base_path/scripts/bin_ctrl.sh
+  then
+    exit 1
+  fi
+  if ! cp ./assets/scripts/lib/sysd_ctrl.sh $base_path/scripts/sysd_ctrl.sh
+  then
+    exit 1
+  fi
+  if ! cp ./assets/scripts/lib/ctr_ctrl.sh $base_path/scripts/ctr_ctrl.sh
+  then
+    exit 1
+  fi
   if ! cp ./assets/scripts/lib/sem_ver.sh $base_path/scripts/sem_ver.sh
   then
     exit 1
