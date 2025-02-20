@@ -1,14 +1,14 @@
 [
   {
-    "name": "Container Engine Wrapper",
+    "name": "ce-wrapper",
     "path": "${LOG_PATH}/ce_wrapper.log"
   },
   {
-    "name": "Core Manager",
+    "name": "core-manager",
     "path": "${LOG_PATH}/c_manager.log"
   },
   {
-    "name": "Host Manager",
+    "name": "host-manager",
     "path": "${LOG_PATH}/h_manager.log"
   }
 ]
