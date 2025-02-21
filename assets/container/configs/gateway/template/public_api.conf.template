@@ -100,6 +100,59 @@ server {
             proxy_pass http://ce_wrapper_sock/restricted$1$is_args$args;
         }
     }
+    location /core/swagger {
+        auth_request /validate-session;
+        location /core/swagger/public {
+            location /core/swagger/public/auth-service {
+                rewrite /core/swagger/public/auth-service(.*) /$1 break;
+                proxy_pass http://$auth_srv/swagger$1$is_args$args;
+            }
+            location /core/swagger/public/module-manager {
+                rewrite /core/swagger/public/module-manager(.*) /$1 break;
+                proxy_pass http://$module_mngr/swagger$1$is_args$args;
+            }
+            location /core/swagger/public/secret-manager {
+                rewrite /core/swagger/public/secret-manager(.*) /$1 break;
+                proxy_pass http://$secret_mngr/restricted/swagger$1$is_args$args;
+            }
+            location /core/swagger/public/core-manager {
+                rewrite /core/swagger/public/core-manager(.*) /$1 break;
+                proxy_pass http://c_manager_sock/restricted/swagger$1$is_args$args;
+            }
+            location /core/swagger/public/host-manager {
+                rewrite /core/swagger/public/host-manager(.*) /$1 break;
+                proxy_pass http://h_manager_sock/swagger$1$is_args$args;
+            }
+            location /core/swagger/public/ce-wrapper {
+                rewrite /core/swagger/public/ce-wrapper(.*) /$1 break;
+                proxy_pass http://ce_wrapper_sock/restricted/swagger$1$is_args$args;
+            }
+        }
+        location /core/swagger/module {
+            location /core/swagger/module/module-manager {
+                rewrite /core/swagger/module/module-manager(.*) /$1 break;
+                proxy_pass http://$module_mngr/restricted/swagger$1$is_args$args;
+            }
+            location /core/swagger/module/host-manager {
+                rewrite /core/swagger/module/host-manager(.*) /$1 break;
+                proxy_pass http://h_manager_sock/restricted/swagger$1$is_args$args;
+            }
+        }
+        location /core/swagger/internal {
+            location /core/swagger/internal/c-manager {
+                rewrite /core/swagger/internal/c-manager(.*) /$1 break;
+                proxy_pass http://c_manager_sock/swagger$1$is_args$args;
+            }
+            location /core/swagger/internal/ce-wrapper {
+                rewrite /core/swagger/internal/ce-wrapper(.*) /$1 break;
+                proxy_pass http://ce_wrapper_sock/swagger$1$is_args$args;
+            }
+            location /core/swagger/internal/h-manager {
+                rewrite /core/swagger/internal/h-manager(.*) /$1 break;
+                proxy_pass http://h_manager_sock/swagger$1$is_args$args;
+            }
+        }
+    }
     location /core/discovery {
         rewrite /core/discovery(.*) /$1 break;
         proxy_pass http://$module_mngr/discovery$1$is_args$args;
