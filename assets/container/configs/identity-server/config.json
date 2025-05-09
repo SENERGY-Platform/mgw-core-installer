@@ -69,5 +69,11 @@
     "smtp": {
       "connection_uri": "smtps://127.0.0.1:12346"
     }
+  },
+  "session": {
+    "lifespan": "168h",
+    "cookie": {
+      "persistent": true
+    }
   }
 }
