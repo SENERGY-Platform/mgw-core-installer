@@ -1,4 +1,4 @@
-require_pkg="systemd: apt:"
+require_pkg="systemctl: apt:"
 install_pkg="curl: tar: gzip: jq: avahi-daemon:/usr/sbin/avahi-daemon openssl: gettext-base:envsubst logrotate:/usr/sbin/logrotate"
 binaries="
 SENERGY-Platform/mgw-container-engine-wrapper:v0.15.2
