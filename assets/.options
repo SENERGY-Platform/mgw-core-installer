@@ -12,5 +12,5 @@ KRATOS_IMG=oryd/kratos:v1.3.1
 AUTH_SERVICE_IMG=ghcr.io/senergy-platform/mgw-auth-service:0.3.2
 MODULE_MANAGER_IMG=ghcr.io/senergy-platform/mgw-module-manager:0.30.2
 SECRET_MANAGER_IMG=ghcr.io/senergy-platform/mgw-secret-manager:0.6.1
-WEB_UI_IMG=ghcr.io/senergy-platform/mgw-gui:v2.13.1
+WEB_UI_IMG=ghcr.io/senergy-platform/mgw-gui:v2.13.2
 "

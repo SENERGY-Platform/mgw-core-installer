@@ -6,8 +6,31 @@ then
   exit 1
 fi
 
-. ./assets/.options
 . ./assets/scripts/lib/settings.sh
+
+read_config=false
+while getopts ':c:h' opt; do
+  case "$opt" in
+    c)
+      echo "Reading config from '${OPTARG}'"
+      . ${OPTARG}
+      read_config=true
+      ;;
+
+    h)
+      echo "Usage: $(basename $0) [-c configfile]\n If a config file is given, the installer will run non-interactive mode."
+      exit 0
+      ;;
+
+    ?)
+      echo "Invalid command option.\nUsage: $(basename $0) [-c configfile]"
+      exit 1
+      ;;
+  esac
+done
+shift "$(($OPTIND -1))"
+
+. ./assets/.options
 . ./assets/scripts/lib/util.sh
 . ./assets/scripts/lib/os.sh
 . ./assets/scripts/lib/package.sh
@@ -52,8 +75,13 @@ handlePackages() {
     echo "$missing"
     while :
     do
-      printColor "continue? (y/n): " "$blue" "nb"
-      read -r choice
+      if [ "$skip_pgk_install_confirm" != "true" ]
+      then
+        printColor "continue? (y/n): " "$blue" "nb"
+        read -r choice
+      else
+        choice=y
+      fi
       case "$choice" in
       y)
         if ! installPkg "$missing"
@@ -291,8 +319,13 @@ handleAvahi() {
 handleDefaultSettings() {
   while :
   do
-    printColor "change default settings? (y/n): " "$blue" "nb"
-    read -r choice
+    if [ "$read_config" = "true" ]
+    then
+      choice=n
+    else
+      printColor "change default settings? (y/n): " "$blue" "nb"
+      read -r choice
+    fi
     case "$choice" in
       y)
         printf "install directory [%s]: " "$base_path"
@@ -421,95 +454,101 @@ handleStackName() {
 }
 
 handleBetaRelease() {
-  while :
-  do
-    printColor "allow beta releases? (y/n): " "$blue" "nb"
-    read -r choice
-    case "$choice" in
-    y)
-      allow_beta=true
-      break
-      ;;
-    n)
-      allow_beta=false
-      break
-      ;;
-    *)
-      echo "unknown option"
-    esac
-  done
+  if [ "$read_config" != "true" ]
+  then
+    while :
+    do
+      printColor "allow beta releases? (y/n): " "$blue" "nb"
+      read -r choice
+      case "$choice" in
+      y)
+        allow_beta=true
+        break
+        ;;
+      n)
+        allow_beta=false
+        break
+        ;;
+      *)
+        echo "unknown option"
+      esac
+    done
+  fi
 }
 
 handleIntegration() {
-  while :
-  do
-    printColor "enable OS startup integration? (y/n): " "$blue" "nb"
-    read -r choice
-    case "$choice" in
-    y)
-      systemd=true
-      break
-      ;;
-    n)
-      systemd=false
-      echo "please use 'ctrl.sh' for manual control"
-      break
-      ;;
-    *)
-      echo "unknown option"
-    esac
-  done
-  while :
-  do
-    printColor "enable log rotation? (y/n): " "$blue" "nb"
-    read -r choice
-    case "$choice" in
-    y)
-      logrotate=true
-      break
-      ;;
-    n)
-      logrotate=false
-      break
-      ;;
-    *)
-      echo "unknown option"
-    esac
-  done
-  while :
-  do
-    printColor "enable automatic updates? (y/n): " "$blue" "nb"
-    read -r choice
-    case "$choice" in
-    y)
-      cron=true
-      break
-      ;;
-    n)
-      cron=false
-      break
-      ;;
-    *)
-      echo "unknown option"
-    esac
-  done
-  while :
-  do
-    printColor "enable mDNS advertisement? (y/n): " "$blue" "nb"
-    read -r choice
-    case "$choice" in
-    y)
-      advertise=true
-      break
-      ;;
-    n)
-      advertise=false
-      break
-      ;;
-    *)
-      echo "unknown option"
-    esac
-  done
+  if [ "$read_config" != "true" ]
+  then
+    while :
+    do
+      printColor "enable OS startup integration? (y/n): " "$blue" "nb"
+      read -r choice
+      case "$choice" in
+      y)
+        systemd=true
+        break
+        ;;
+      n)
+        systemd=false
+        echo "please use 'ctrl.sh' for manual control"
+        break
+        ;;
+      *)
+        echo "unknown option"
+      esac
+    done
+    while :
+    do
+      printColor "enable log rotation? (y/n): " "$blue" "nb"
+      read -r choice
+      case "$choice" in
+      y)
+        logrotate=true
+        break
+        ;;
+      n)
+        logrotate=false
+        break
+        ;;
+      *)
+        echo "unknown option"
+      esac
+    done
+    while :
+    do
+      printColor "enable automatic updates? (y/n): " "$blue" "nb"
+      read -r choice
+      case "$choice" in
+      y)
+        cron=true
+        break
+        ;;
+      n)
+        cron=false
+        break
+        ;;
+      *)
+        echo "unknown option"
+      esac
+    done
+    while :
+    do
+      printColor "enable mDNS advertisement? (y/n): " "$blue" "nb"
+      read -r choice
+      case "$choice" in
+      y)
+        advertise=true
+        break
+        ;;
+      n)
+        advertise=false
+        break
+        ;;
+      *)
+        echo "unknown option"
+      esac
+    done
+  fi
 }
 
 handleDocker() {
@@ -526,8 +565,18 @@ handleDocker() {
   then
     while :
     do
-      printColor "start containers? (y/n): " "$blue" "nb"
-      read -r choice
+      if [ "$read_config" = "true" ]
+      then
+        if [ "$start_containers" = "true" ]
+        then
+          choice=y
+        else
+          choice=n
+        fi
+      else
+        printColor "start containers? (y/n): " "$blue" "nb"
+        read -r choice
+      fi
       case $choice in
       y)
         if ! dockerCompose start
@@ -597,21 +646,24 @@ checkRoot() {
 
 handleOptions
 checkRoot
-while :
-do
-  printColor "install multi-gateway core $version? (y/n): " "$blue" "nb"
-  read -r choice
-  case $choice in
-  y)
-    break
-    ;;
-  n)
-    exit 0
-    ;;
-  *)
-    echo "unknown option"
-  esac
-done
+if [ "$read_config" != "true" ]
+then
+  while :
+  do
+    printColor "install multi-gateway core $version? (y/n): " "$blue" "nb"
+    read -r choice
+    case $choice in
+    y)
+      break
+      ;;
+    n)
+      exit 0
+      ;;
+    *)
+      echo "unknown option"
+    esac
+  done
+fi
 printLnBr
 printColor "setting up installer ..." "$yellow"
 detectDockerCompose
