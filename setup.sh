@@ -702,7 +702,6 @@ printColor "setting up integration done" "$yellow"
 printLnBr
 printColor "setting up container environment ..." "$yellow"
 copyContainerAssets
-handleGatewayUserFile
 handleDocker
 printColor "setting up container environment done" "$yellow"
 saveSettings
