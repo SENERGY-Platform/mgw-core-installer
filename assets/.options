@@ -6,8 +6,8 @@ SENERGY-Platform/mgw-host-manager:v1.5.5
 SENERGY-Platform/mgw-core-manager:v0.17.2
 "
 images="
-NGINX_IMG=nginx:1.27.3-alpine
-MYSQLDB_IMG=mysql:8.4.3
+NGINX_IMG=nginx:1.31.1-alpine
+MYSQLDB_IMG=mysql:8.4.9
 KRATOS_IMG=oryd/kratos:v1.3.1
 AUTH_SERVICE_IMG=ghcr.io/senergy-platform/mgw-auth-service:0.3.2
 MODULE_MANAGER_IMG=ghcr.io/senergy-platform/mgw-module-manager:0.31.1
