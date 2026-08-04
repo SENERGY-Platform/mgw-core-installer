@@ -6,6 +6,7 @@ avahi_path=/etc/avahi/services
 cron_path=/etc/cron.daily
 docker_socket_path=/var/run/docker.sock
 base_path=/opt/mgw
+host_dir_repository_path="$base_path/repositories/host_dir"
 secrets_path=""
 deployments_path=""
 sockets_path=""
@@ -38,6 +39,7 @@ saveSettings() {
 secrets_path=$secrets_path
 deployments_path=$deployments_path
 sockets_path=$sockets_path
+host_dir_repository_path=$host_dir_repository_path
 bin_path=$bin_path
 container_path=$container_path
 log_path=$log_path
@@ -80,6 +82,7 @@ exportSettingsToEnv() {
     CONTAINER_PATH="$container_path" \
     DOCKER_SOCKET_PATH="$docker_socket_path" \
     LOG_PATH="$log_path" \
+    HOST_DIR_REPOSITORY_PATH="$host_dir_repository_path" \
     SUBNET_CORE="$subnet_core" \
     SUBNET_MODULE="$subnet_module" \
     SUBNET_GATEWAY="$subnet_gateway" \

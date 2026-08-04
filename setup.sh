@@ -380,6 +380,11 @@ handleDefaultSettings() {
         if [ "$input" != "" ]; then
           subnet_gateway="$input"
         fi
+        printf "host dir repository path [%s]: " "$host_dir_repository_path"
+        read -r input
+        if [ "$input" != "" ]; then
+          host_dir_repository_path="$input"
+        fi
         break
         ;;
       n)

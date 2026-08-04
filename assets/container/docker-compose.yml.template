@@ -121,24 +121,31 @@ services:
       - nginx
       - secret-manager
     environment:
-      LOGGER_LEVEL: ${MODULE_MANAGER_LOG_LEVEL}
-      LOGGER_TERMINAL: "true"
       CORE_ID: "${CORE_ID}"
-      DB_USER: core_user
-      DB_PASSWD: ${CORE_DB_PW}
-      DH_HOST_DEP_PATH: ${DEPLOYMENTS_PATH}
-      DH_HOST_SEC_PATH: ${SECRETS_PATH}
-      DH_MODULE_NET: ${CORE_NAME}-2-module-net
+      MODULE_CONTAINER_NETWORK: ${CORE_NAME}-2-module-net
+      IMAGE_NAME_ESCAPE_DEPTH: 2
+      HOST_DEPLOYMENTS_PATH: ${DEPLOYMENTS_PATH}
+      HOST_SECRETS_PATH: ${SECRETS_PATH}
+      LOGGER_LEVEL: ${MODULE_MANAGER_LOG_LEVEL}
+      HTTP_ACCESS_LOG: ${MODULE_MANGER_HTTP_ACCESS_LOG}
+      MGW_CEW_BASE_URL: "http://core-api/ce-wrapper"
+      MGW_CM_BASE_URL: "http://core-api/c-manager"
+      MGW_HM_BASE_URL: "http://core-api/h-manager"
+      MGW_SM_BASE_URL: "http://secret-manager"
+      DATABASE_ADDRESS: "core-db:3306"
+      DATABASE_USER: core_user
+      DATABASE_PASSWORD: ${CORE_DB_PW}
+      DEPLOYMENTS_HANDLER_RUNTIME_MONITOR_STARTUP_DELAY: ${MODULE_MANAGER_DEP_STARTUP_DELAY}
+      AUX_DEPLOYMENTS_HANDLER_RUNTIME_MONITOR_STARTUP_DELAY: ${MODULE_MANAGER_AUX_DEP_STARTUP_DELAY}
     labels:
       mgw_cid: "${CORE_ID}"
       core_srv: "true"
     volumes:
-      - mm-data:/opt/module-manager/data
+      - mm-service:/opt/module-manager/service
       - mm-modules:/opt/module-manager/modules
+      - mm-repo-github:/opt/module-manager/repositories/github
+      - ${HOST_DIR_REPOSITORY_PATH}:/opt/module-manager/repositories/host_dir
       - ${DEPLOYMENTS_PATH}:/opt/module-manager/deployments
-    tmpfs:
-      - /opt/module-manager/transfer
-      - /opt/module-manager/staging
     networks:
       c_net:
   secret-manager:
@@ -180,8 +187,9 @@ services:
       m_net:
 
 volumes:
-  mm-data:
+  mm-service:
   mm-modules:
+  mm-repo-github:
   sm-data:
   mysqldb-data:
   kratos-home:
