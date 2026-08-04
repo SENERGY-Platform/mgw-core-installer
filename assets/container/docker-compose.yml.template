@@ -114,7 +114,9 @@ services:
       c_net:
   module-manager:
     container_name: ${CORE_NAME}-module-manager
-    image: ${MODULE_MANAGER_IMG}
+#    image: ${MODULE_MANAGER_IMG}
+    build: https://github.com/SENERGY-Platform/mgw-module-manager.git
+    image: mgw-module-manager:dev
     restart: unless-stopped
     depends_on:
       - mysqldb
