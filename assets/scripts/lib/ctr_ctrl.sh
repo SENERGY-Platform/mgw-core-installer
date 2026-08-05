@@ -79,3 +79,20 @@ purgeContainers() {
     exit 1
   fi
 }
+
+# TODO remove
+buildModuleManager() {
+  echo "building module-manager ..."
+  if ! cd $container_path
+  then
+    exit 1
+  fi
+  if ! dockerCompose build --build-arg VERSION="dev-$(date +%s)" module-manager
+  then
+    exit 1
+  fi
+  if ! cd $script_path
+  then
+    exit 1
+  fi
+}

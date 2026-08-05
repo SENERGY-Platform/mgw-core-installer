@@ -115,7 +115,10 @@ services:
   module-manager:
     container_name: ${CORE_NAME}-module-manager
 #    image: ${MODULE_MANAGER_IMG}
-    build: https://github.com/SENERGY-Platform/mgw-module-manager.git
+    build:
+      context: https://github.com/SENERGY-Platform/mgw-module-manager.git
+      args:
+        - VERSION
     image: mgw-module-manager:dev
     restart: unless-stopped
     depends_on:

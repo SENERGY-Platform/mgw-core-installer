@@ -373,13 +373,14 @@ stopContainers() {
   cd ../..
 }
 
+# TODO remove --ignore-buildable
 updateContainerImages() {
   echo "updating container images ..."
   if ! cd $container_path
   then
     exit 1
   fi
-  if ! dockerCompose pull
+  if ! dockerCompose pull --ignore-buildable
   then
     exit 1
   fi
