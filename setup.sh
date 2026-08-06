@@ -40,8 +40,9 @@ shift "$(($OPTIND -1))"
 . ./assets/scripts/lib/sem_ver.sh
 
 setup_path=$(pwd)
-# TODO change
+# TODO change and remove
 version="dev" #"$(cat .version)"
+echo $version > .version
 bin_started=false
 
 if ! platform="$(getPlatform)"
