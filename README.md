@@ -30,6 +30,8 @@ container stack via Docker Compose.
     * [Containers](#containers)
     * [Networks and how the services interact](#networks-and-how-the-services-interact)
 
+---
+
 ## Installing the mgw-core
 
 ### Requirements
