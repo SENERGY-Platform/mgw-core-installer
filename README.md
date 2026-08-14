@@ -1,8 +1,6 @@
 mgw-core-installer
 =======
 
-## Overview
-
 The multi-gateway (MGW) core is the base layer of a edge gateway. It is not a
 single application but a set of host processes and containers that together provide
 container orchestration, module (application) lifecycle management, secret storage,
@@ -13,15 +11,24 @@ assembles a core on a host: it fetches the release binaries from GitHub, renders
 configuration files from templates, wires up systemd/cron/logrotate/avahi and creates the
 container stack via Docker Compose.
 
-Three scripts make up the whole lifecycle:
+## Table of contents
 
-| Script | Lives in | Purpose |
-| --- | --- | --- |
-| `setup.sh` | release archive / repo checkout | one-time installation of a core |
-| `update.sh` | `<base_path>/update.sh` after install | updates an existing core to a newer release |
-| `ctrl.sh` | `<base_path>/ctrl.sh` after install | day-to-day control of the installed core |
-
----
+* [Installing the mgw-core](#installing-the-mgw-core)
+    * [Requirements](#requirements)
+    * [Interactive installation](#interactive-installation)
+    * [Non-interactive installation](#non-interactive-installation)
+    * [What the installer does](#what-the-installer-does)
+    * [Resulting layout](#resulting-layout)
+    * [After the installation](#after-the-installation)
+* [Updating](#updating)
+    * [Manual update](#manual-update)
+    * [Automatic updates](#automatic-updates)
+    * [Beta and alpha releases](#beta-and-alpha-releases)
+* [Using `ctrl.sh`](#using-ctrlsh)
+* [Services in the core](#services-in-the-core)
+    * [Host binaries](#host-binaries)
+    * [Containers](#containers)
+    * [Networks and how the services interact](#networks-and-how-the-services-interact)
 
 ## Installing the mgw-core
 
