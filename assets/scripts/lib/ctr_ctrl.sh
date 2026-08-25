@@ -96,3 +96,20 @@ buildModuleManager() {
     exit 1
   fi
 }
+
+# TODO remove
+buildWebUI() {
+    echo "building web-ui ..."
+    if ! cd $container_path
+    then
+      exit 1
+    fi
+    if ! dockerCompose build --build-arg VERSION="dev-$(date +%s)" web-ui
+    then
+      exit 1
+    fi
+    if ! cd $script_path
+    then
+      exit 1
+    fi
+}

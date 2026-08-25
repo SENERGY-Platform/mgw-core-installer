@@ -55,6 +55,7 @@ printHelp() {
   'ctr-purge      recreate containers and volumes' \
   'beta-test      toggle beta releases' \
   'build-mm       build module-manager' \
+  'build-ui       build web-ui' \
   'help           display this help page' \
   ''
 }
@@ -109,6 +110,9 @@ beta-test)
   ;;
 build-mm)
   buildModuleManager
+  ;;
+build-ui)
+  buildWebUI
   ;;
 help)
   printHelp

@@ -177,7 +177,13 @@ services:
       c_net:
   web-ui:
     container_name: ${CORE_NAME}-web-ui
-    image: ${WEB_UI_IMG}
+#    image: ${WEB_UI_IMG}
+    build:
+      context: https://github.com/SENERGY-Platform/mgw-gui.git#next-gen
+      dockerfile: build/Dockerfile
+      args:
+        - VERSION
+    image: mgw-gui:dev
     restart: unless-stopped
     labels:
       mgw_cid: "${CORE_ID}"
