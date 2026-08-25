@@ -316,3 +316,9 @@ The typical flows are:
 * **Persistence** — the module-manager, secret-manager and Kratos share the `mysqldb`
   instance with one schema each; everything else lives in named volumes or in the secrets tmpfs (which is intentionally volatile and
   is repopulated by the secret-manager).
+
+## Further documentation
+
+`docs/` holds the failure modes met while running a core on a dev machine with
+`systemd=false` — none of them visible from the outside. See
+[dev install pitfalls](docs/dev-install-pitfalls.md).
