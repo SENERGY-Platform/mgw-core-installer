@@ -116,12 +116,18 @@ points elsewhere. Remove it, recreate it with `-p`, and delete the stray
   `Accept: application/json` for the flow and CSRF token, then
   `POST /core/auth/login?flow=<id>` with
   `{method: "password", identifier, password, csrf_token}`.
-- **The GitHub module repository reference is `refs/heads/main`**, not `master`,
-  and channels map to directories in that repo. A wrong reference **fails
-  silently**: the refresh reports success and the repository contributes no
-  modules. Because deleting repositories is currently broken, a wrong source has
-  to be fixed in the module-manager container under
-  `repositories/github/sources/` followed by a container restart.
+- **The GitHub module repository reference is `main-validated`** (as of
+  2026-08-26), and it is a **tag**, not a branch — `refs/heads/main-validated`
+  does not resolve. Channels map to directories in that repo: `main`, `testing`
+  and `legacy`. A wrong reference **fails silently**: the refresh reports
+  success and the repository contributes no modules, which is indistinguishable
+  from an empty repository. Verified against a running core: with the reference
+  above the catalogue holds 25 modules from `main`, 3 from `testing` and 4 from
+  `legacy`; the repository contributes nothing when the reference is wrong.
+  A wrong source can be removed with `DELETE /repositories/{SOURCE}` (the source
+  URL-encoded) — verified for a `github.com` repository on 2026-08-26. Whether
+  it works for a `host-dir` repository was not retested here; that path was
+  fixed separately and is the one earlier notes described as broken.
 
 ## Side-loading a module for testing
 
