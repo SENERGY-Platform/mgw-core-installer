@@ -71,6 +71,43 @@ deployment container** to shortcut it — that bypasses the manager's state.
 
 This recurs after every reboot with `systemd=false`.
 
+## `ctrl.sh start` does not create a missing container
+
+`startContainers()` runs `docker compose start`, which starts containers that
+exist. It does not create ones that do not. Remove a core container — to pick up
+a rebuilt image, say — and `ctrl.sh start` brings up everything else and stays
+silent about the gap. The core then runs without it.
+
+Recreate it with `up`, and **pass the project name**:
+
+```sh
+docker compose -p mgw_<core-id> up -d --no-deps <service>
+```
+
+The `-p` is not optional. Compose otherwise derives the project name from the
+directory, which is `container`, and a container created under a different
+project name gets **fresh, empty volumes** instead of the existing
+`mgw_<core-id>_*` ones. For the module-manager that means its modules,
+deployments and repository data appear to be gone — the container is healthy,
+the API answers, and everything it should know is missing.
+
+Nothing fails while this happens. The tell is one line in compose's own output:
+
+```
+Volume container_mysqldb-data  Created
+```
+
+A `Created` line for a volume that should have existed says the project name was
+wrong. Check what the container actually attached to before going further:
+
+```sh
+docker inspect <container> -f '{{range .Mounts}}{{.Name}} {{end}}'
+```
+
+The original volumes are untouched in that case — the new container simply
+points elsewhere. Remove it, recreate it with `-p`, and delete the stray
+`container_*` volumes.
+
 ## Two values that are easy to get wrong
 
 - **First login** uses the Kratos identity `core-user` with the generated
