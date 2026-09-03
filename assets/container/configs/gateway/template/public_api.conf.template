@@ -155,7 +155,7 @@ server {
     }
     location /core/discovery {
         rewrite /core/discovery(.*) /$1 break;
-        proxy_pass http://$module_mngr/discovery$1$is_args$args;
+        proxy_pass http://$module_mngr/deployment-advertisements$1$is_args$args;
     }
     location /endpoints {
         auth_request /validate-session;
