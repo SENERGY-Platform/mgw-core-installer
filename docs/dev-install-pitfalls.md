@@ -83,6 +83,35 @@ reporting success: stdout and stderr of each binary go to
 config or a missing binary shows up. **The web UI answering proves only
 nginx** — verify the host layer with `ps aux | grep 'bin/SENERGY-Platform'`.
 
+## An update no longer aborts on a stale `.pid` (fixed)
+
+`update.sh` had its own copy of the stop logic that signalled every pid in
+`/opt/mgw/.pid` without checking what it belonged to. After a reboot — the state
+a `systemd=false` core is in every morning — the first pid is dead and the
+update stops at:
+
+```
+./assets/scripts/update.sh: 264: kill: No such process
+```
+
+The place it stops at is what makes this expensive: the containers have already
+been removed by then, so the core is down, half updated, and the binaries are
+whatever the reboot left. Running the update again works, because the second run
+finds no containers to stop.
+
+The teardown now delegates to `stopBin()` from `bin_ctrl.sh` and uses the same
+`/proc/<pid>/cmdline` matching as `ctrl.sh` — a stale file is reported as
+`no processes to stop` and removed, and pids that belong to no host binary are
+never signalled. The secrets tmpfs is also unmounted now when there is no `.pid`
+at all; before, a tmpfs left mounted by `ctrl.sh` survived the update.
+
+**This one does not need the core to be updated first.** The two fixes above
+live in `bin_ctrl.sh`, which runs from `/opt/mgw/scripts/`, so a core installed
+before them keeps the old behaviour until an update replaces that file. Stage
+two of an update is the opposite case: it always runs the **new release's**
+`update.sh` from the extracted archive, never the installed copy. The first
+update onto a release that carries this fix already uses the fixed version.
+
 ## After a host reboot, nothing comes back, this is by design
 
 None of the three layers of a `systemd=false` core returns on its own:
