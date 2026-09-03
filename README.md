@@ -25,8 +25,6 @@ container stack via Docker Compose.
     * [Automatic updates](#automatic-updates)
     * [Beta and alpha releases](#beta-and-alpha-releases)
 * [Uninstalling](#uninstalling)
-    * [What is removed](#what-is-removed)
-    * [What is kept](#what-is-kept)
 * [Using `ctrl.sh`](#using-ctrlsh)
 * [Services in the core](#services-in-the-core)
     * [Host binaries](#host-binaries)
