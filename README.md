@@ -211,9 +211,15 @@ Automatic updates can be enabled or disabled later by adding or removing that cr
 
 ## Using `ctrl.sh`
 
-`ctrl.sh` is the operator interface to an installed core. It must be run as root from the
-install directory (`/opt/mgw/ctrl.sh`), reads `.settings` and adapts its behaviour to
+**WARNING: The `ctrl.sh` script is meant to be used by developers for development and manual testing purposes only!**
+
+`ctrl.sh` must be run as root from the installation directory (`/opt/mgw/ctrl.sh`), reads `.settings` and adapts its behaviour to
 whether systemd integration is active.
+
+When a core is installed without systemd integration `ctrl.sh start` and `ctrl.sh stop` must be used
+to start and stop the host binaries and docker containers. Failing to stop a core before a host restrat will lead to an
+inconsistent state where the containers are running but the host binaries are not. Calling `ctrl.sh stop` and 
+`ctrl.sh start` in succession will fix it.
 
 ```
 sudo /opt/mgw/ctrl.sh <command>

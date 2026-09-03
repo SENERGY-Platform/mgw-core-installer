@@ -15,7 +15,8 @@ with a minimal-footprint config: `systemd=false`, `logrotate=false`,
 
 **Not this if**: the installer's systemd units are enabled. Every pitfall below
 is a consequence of `systemd=false` — enabling the units is the way to avoid all
-of them at once.
+of them at once. Installing a core with `systemd=false` is intended for development
+and manual testing purposes only. Developers can then use `ctrl.sh` to manage the core.
 
 ## The config path needs a slash
 
@@ -43,6 +44,12 @@ CI step or an agent session appears to work and leaves nothing running.
 
 ## A stale `.pid` makes the binary start silently skip
 
+---
+
+**Quickfix:** Call `ctrl.sh stop` and `ctrl.sh start` in succession to fix a stale `.pid` file and get a running core.
+
+---
+
 `startBin()` skips starting the binaries when `/opt/mgw/.pid` still lists PIDs.
 Containers come up, the web UI answers on `:8080`, and the gateway cannot reach
 the unix sockets — which looks like a broken core rather than a leftover file.
@@ -51,7 +58,7 @@ Check whether the PIDs in the file are alive; if not, delete it and start again.
 **The web UI answering proves only nginx** — verify with
 `ps aux | grep 'bin/SENERGY-Platform'`.
 
-## After a host reboot, two things do not come back
+## After a host reboot, two things do not come back, this is by design
 
 The symptom: the web UI shows a raw `502 Bad Gateway` from nginx where module or
 deployment status should be, and the module-manager logs `get deployments` /
@@ -72,6 +79,15 @@ deployment container** to shortcut it — that bypasses the manager's state.
 This recurs after every reboot with `systemd=false`.
 
 ## `ctrl.sh start` does not create a missing container
+
+---
+
+**Quickfix:** `ctrl.sh ctr-recreate` recreates all containers and thus recreates a missing container. Run `ctrl.sh start`
+afterward to get a running core.
+
+---
+
+**WARNING:** Using docker compose to recreate a missing container is possible but not recommended!
 
 `startContainers()` runs `docker compose start`, which starts containers that
 exist. It does not create ones that do not. Remove a core container — to pick up
