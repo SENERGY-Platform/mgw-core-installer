@@ -172,7 +172,9 @@ services:
     volumes:
       - mm-service:/opt/module-manager/service
       - mm-modules:/opt/module-manager/modules
-      - mm-repo-github:/opt/module-manager/repositories/github
+      - mm-repo-github-user-sources:/opt/module-manager/repositories/github/user_sources
+      - ${CONTAINER_PATH}/configs/module-manager/repo-github-default-sources:/opt/module-manager/repositories/github/default_sources
+      - mm-repo-github-repositories:/opt/module-manager/repositories/github/repositories
       - ${HOST_DIR_REPOSITORY_PATH}:/opt/module-manager/repositories/host_dir
       - ${DEPLOYMENTS_PATH}:/opt/module-manager/deployments
     networks:
@@ -225,7 +227,8 @@ volumes:
   mm-data:
   mm-service:
   mm-modules:
-  mm-repo-github:
+  mm-repo-github-user-sources:
+  mm-repo-github-repositories:
   sm-data:
   mysqldb-data:
   kratos-home:

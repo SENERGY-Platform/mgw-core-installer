@@ -1,0 +1,23 @@
+{
+	"owner": "SENERGY-Platform",
+	"repository": "mgw-module-repository",
+	"reference": "main-validated",
+	"priority": 1000,
+	"channels": [
+		{
+			"name": "main",
+			"priority": 2,
+			"blacklist": null
+		},
+		{
+			"name": "testing",
+			"priority": 1,
+			"blacklist": null
+		},
+		{
+			"name": "legacy",
+			"priority": 0,
+			"blacklist": null
+		}
+	]
+}
