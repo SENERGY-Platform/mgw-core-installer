@@ -683,7 +683,7 @@ printAccessInfo() {
   printLnBr
   if [ "$read_config" != "true" ]
   then
-    echo "the credentials are also stored in '$base_path/.settings'"
+    echo "the credentials are also stored in '.settings' under '$base_path'"
   fi
 }
 
