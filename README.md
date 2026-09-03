@@ -132,7 +132,7 @@ In order, `setup.sh`:
 ├── mounts/nginx/             gateway config fragments written by the core-manager
 ├── mounts/kratos/            identity-server config written by the core-manager
 ├── repositories/host_dir     host-directory module repository
-├── log/                      logs of the host binaries and the updater
+├── log/                      logs of the host binaries (incl. their *_out.log) and the updater
 └── scripts/                  shared shell library
 /mnt/<core_name>/secrets      tmpfs, shared between secret-manager and modules
 ```
@@ -218,8 +218,10 @@ whether systemd integration is active.
 
 When a core is installed without systemd integration `ctrl.sh start` and `ctrl.sh stop` must be used
 to start and stop the host binaries and docker containers. Failing to stop a core before a host restrat will lead to an
-inconsistent state where the containers are running but the host binaries are not. Calling `ctrl.sh stop` and 
-`ctrl.sh start` in succession will fix it.
+inconsistent state where the containers are running but the host binaries are not. Calling `ctrl.sh start` will fix it.
+
+`start` and `stop` may be called from a non-interactive context (a script, a cron job, a CI step). The host binaries
+are detached into their own session, so they are not killed when the calling shell or ssh session ends.
 
 ```
 sudo /opt/mgw/ctrl.sh <command>
@@ -227,8 +229,8 @@ sudo /opt/mgw/ctrl.sh <command>
 
 | Command | Effect | When to use |
 | --- | --- | --- |
-| `start` | With systemd: starts the units. Without: starts the three host binaries, records their PIDs in `.pid` and mounts the secrets tmpfs. Then starts the containers. | Bringing the core up on a host without startup integration, or after a manual `stop`. |
-| `stop` | Stops the containers, then the units (or kills the recorded PIDs and unmounts the tmpfs). | Maintenance on the host, backups, before changing the Docker setup. |
+| `start` | With systemd: starts the units. Without: starts the three host binaries detached from the calling session, records their PIDs in `.pid` and mounts the secrets tmpfs. Then starts the containers. Fails if a binary does not stay alive; a leftover `.pid` from a crash or a reboot is cleaned up. | Bringing the core up on a host without startup integration, after a reboot, or after a manual `stop`. |
+| `stop` | Stops the containers, then the units (or kills the processes recorded in `.pid` that are still running as host binaries and unmounts the tmpfs). Does nothing if the binaries are not running. | Maintenance on the host, backups, before changing the Docker setup. |
 | `enable` | Enables the installed systemd units. | Re-enabling startup integration after `disable`. Requires systemd integration. |
 | `disable` | Disables the installed systemd units. | Keeping the core from starting on boot without uninstalling it. Requires systemd integration. |
 | `ctr-recreate` | Removes and recreates the containers. Volumes are kept. | After editing `container/.env` (for example to raise a log level), or when a container is in a broken state. |

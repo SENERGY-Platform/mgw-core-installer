@@ -32,31 +32,56 @@ file and sends you looking in the wrong place.
 then auto-starts. To keep the host clean, remove it from `install_pkg` in a local
 clone.
 
-## Start from a non-interactive shell with `setsid`
+## Starting from a non-interactive shell (fixed)
+
+`ctrl.sh start` can be called from a script, a cron job, a CI step or an agent
+session as it is:
+
+```sh
+sudo /opt/mgw/ctrl.sh start
+```
+
+`bin_ctrl.sh` used to start the three host binaries with a plain `&` and no
+`nohup`, which left them in the caller's session, process group and controlling
+terminal. When that session ended they died on SIGHUP — a start appeared to
+work, the containers stayed up because Docker owns them, and nothing of the
+core's host layer was left running. `startBin()` now starts each binary through
+`setsid` with its file descriptors redirected, so each one is a session leader
+without a controlling terminal and cannot be reached by that SIGHUP.
+
+**On a core installed before that change** the old `startBin()` is still in
+`/opt/mgw/scripts/bin_ctrl.sh` — either run `update.sh` or keep using the
+workaround:
 
 ```sh
 sudo setsid sh -c '/opt/mgw/ctrl.sh start > /tmp/mgw-start.log 2>&1'
 ```
 
-`bin_ctrl.sh` starts the three host binaries with a plain `&` and no `nohup`.
-When the calling session ends they die on SIGHUP — so a start from a script, a
-CI step or an agent session appears to work and leaves nothing running.
+## A stale `.pid` no longer makes the binary start skip
 
-## A stale `.pid` makes the binary start silently skip
+`startBin()` used to skip starting the binaries whenever `/opt/mgw/.pid`
+existed. Containers came up, the web UI answered on `:8080`, and the gateway
+could not reach the unix sockets — which looks like a broken core rather than a
+leftover file. `ctrl.sh stop` on the same state failed outright, because
+`stopBin()` treated a missing or unreadable `.pid` as an error.
 
----
+Both are gone. `.pid` is now checked against `/proc/<pid>/cmdline` instead of
+being trusted:
 
-**Quickfix:** Call `ctrl.sh stop` and `ctrl.sh start` in succession to fix a stale `.pid` file and get a running core.
+- every binary accounted for → `processes already running`, nothing to do
+- some accounted for → the survivors are stopped and all three start again
+- none → the file is stale, it is removed and all three start
+- pids that belong to no host binary are never signalled, which matters after a
+  reboot, where they may well have been reused by unrelated processes
 
----
+`stop` uses the same matching and is a no-op when nothing runs, so
+`stop`-then-`start` is always safe.
 
-`startBin()` skips starting the binaries when `/opt/mgw/.pid` still lists PIDs.
-Containers come up, the web UI answers on `:8080`, and the gateway cannot reach
-the unix sockets — which looks like a broken core rather than a leftover file.
-
-Check whether the PIDs in the file are alive; if not, delete it and start again.
-**The web UI answering proves only nginx** — verify with
-`ps aux | grep 'bin/SENERGY-Platform'`.
+A start that does not produce three living processes now fails loudly instead of
+reporting success: stdout and stderr of each binary go to
+`/opt/mgw/log/{ce_wrapper,h_manager,c_manager}_out.log`, which is where a bad
+config or a missing binary shows up. **The web UI answering proves only
+nginx** — verify the host layer with `ps aux | grep 'bin/SENERGY-Platform'`.
 
 ## After a host reboot, two things do not come back, this is by design
 
@@ -66,15 +91,16 @@ deployment status should be, and the module-manager logs `get deployments` /
 
 Docker restarts the core containers by itself. These do not:
 
-- **The three host binaries** — the `&`-without-`nohup` pitfall above. Without
+- **The three host binaries** — nothing starts them without systemd. Without
   the container-engine wrapper the module-manager can neither see nor start any
   container.
 - **Module deployment containers**, which carry `RestartPolicy=no` by design;
   their lifecycle belongs to the module-manager.
 
-Fix: clear a stale `.pid`, then start via `setsid` as above. That brings the
-binaries back and the deployment containers with them. **Do not `docker start` a
-deployment container** to shortcut it — that bypasses the manager's state.
+Fix: `sudo /opt/mgw/ctrl.sh start`. The stale `.pid` the reboot left behind is
+handled, and the binaries bring the deployment containers with them. **Do not
+`docker start` a deployment container** to shortcut it — that bypasses the
+manager's state.
 
 This recurs after every reboot with `systemd=false`.
 
