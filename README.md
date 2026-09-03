@@ -175,9 +175,8 @@ The update runs in two stages:
       are no longer part of the release and re-renders their configs,
     * re-renders the systemd units, logrotate config, cron job and avahi service, removing
       units that no longer exist,
-    * replaces the container assets, pulls the new images, runs the database migration and
-      the gateway-network fix if needed, recreates the containers and — with systemd
-      integration — starts them again,
+    * replaces the container assets, pulls the new images, recreates the containers and —
+      with systemd integration — starts them again,
     * writes the new `.version` and `.settings`.
 
 Because the second stage always comes from the *new* release, migration steps ship with the
