@@ -4,7 +4,7 @@ services:
   nginx:
     container_name: ${CORE_NAME}-nginx
     image: ${NGINX_IMG}
-    restart: unless-stopped
+    restart: "${CTR_RESTART_POLICY}"
     environment:
       CORE_ID: "${CORE_ID}"
       SUBNET_CORE: ${SUBNET_CORE}
@@ -33,7 +33,7 @@ services:
   mysqldb:
     container_name: ${CORE_NAME}-mysqldb
     image: ${MYSQLDB_IMG}
-    restart: unless-stopped
+    restart: "${CTR_RESTART_POLICY}"
     environment:
       MYSQL_USER: core_user
       MYSQL_PASSWORD: ${CORE_DB_PW}
@@ -52,7 +52,7 @@ services:
   kratos:
     container_name: ${CORE_NAME}-kratos
     image: ${KRATOS_IMG}
-    restart: unless-stopped
+    restart: "${CTR_RESTART_POLICY}"
     depends_on:
       - mysqldb
       - kratos-migrate
@@ -97,7 +97,7 @@ services:
   auth-service:
     container_name: ${CORE_NAME}-auth-service
     image: ${AUTH_SERVICE_IMG}
-    restart: unless-stopped
+    restart: "${CTR_RESTART_POLICY}"
     depends_on:
       - kratos
     environment:
@@ -142,7 +142,7 @@ services:
       args:
         - VERSION
     image: mgw-module-manager:dev
-    restart: unless-stopped
+    restart: "${CTR_RESTART_POLICY}"
     depends_on:
       module-manager-migration:
         condition: service_completed_successfully
@@ -182,7 +182,7 @@ services:
   secret-manager:
     container_name: ${CORE_NAME}-secret-manager
     image: ${SECRET_MANAGER_IMG}
-    restart: unless-stopped
+    restart: "${CTR_RESTART_POLICY}"
     depends_on:
       - mysqldb
     environment:
@@ -211,7 +211,7 @@ services:
       args:
         - VERSION
     image: mgw-gui:dev
-    restart: unless-stopped
+    restart: "${CTR_RESTART_POLICY}"
     labels:
       mgw_cid: "${CORE_ID}"
       core_srv: "true"

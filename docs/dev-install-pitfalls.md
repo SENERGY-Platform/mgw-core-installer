@@ -83,14 +83,13 @@ reporting success: stdout and stderr of each binary go to
 config or a missing binary shows up. **The web UI answering proves only
 nginx** — verify the host layer with `ps aux | grep 'bin/SENERGY-Platform'`.
 
-## After a host reboot, two things do not come back, this is by design
+## After a host reboot, nothing comes back, this is by design
 
-The symptom: the web UI shows a raw `502 Bad Gateway` from nginx where module or
-deployment status should be, and the module-manager logs `get deployments` /
-`get containers` errors whose error body is that same 502 HTML page.
+None of the three layers of a `systemd=false` core returns on its own:
 
-Docker restarts the core containers by itself. These do not:
-
+- **The core containers.** On an install without systemd the seven long-running
+  services get the restart policy `no` instead of `unless-stopped`
+  (`ctr_restart_policy` in `.settings`), so Docker leaves them down.
 - **The three host binaries** — nothing starts them without systemd. Without
   the container-engine wrapper the module-manager can neither see nor start any
   container.
@@ -102,7 +101,14 @@ handled, and the binaries bring the deployment containers with them. **Do not
 `docker start` a deployment container** to shortcut it — that bypasses the
 manager's state.
 
-This recurs after every reboot with `systemd=false`.
+The whole core being down is the *wanted* outcome. The state to avoid is the
+mixed one — containers up, host binaries down — and its symptom is the one to
+recognise: the web UI shows a raw `502 Bad Gateway` from nginx where module or
+deployment status should be, and the module-manager logs `get deployments` /
+`get containers` errors whose error body is that same 502 HTML page. Two ways to
+still land in it: a core installed before the restart policy became a setting,
+whose containers keep `unless-stopped` until an update recreates them, and
+starting containers by hand with `docker start`.
 
 ## `ctrl.sh start` does not create a missing container
 

@@ -147,6 +147,14 @@ prepareInstallDir() {
   then
     exit 1
   fi
+  if ! cp ./assets/scripts/lib/container.sh $base_path/scripts/container.sh
+  then
+    exit 1
+  fi
+  if ! cp ./assets/.options $base_path/.options
+  then
+    exit 1
+  fi
   if ! cp .version $base_path/.version
   then
     exit 1
@@ -682,6 +690,7 @@ handleStackName
 handleDatabasePasswords
 handleCoreUserPassword
 handleIntegration
+handleRestartPolicy
 handleBetaRelease
 parseImages
 exportSettingsToEnv

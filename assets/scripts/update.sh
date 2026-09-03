@@ -216,6 +216,14 @@ updateInstallDir() {
   then
     exit 1
   fi
+  if ! cp ./assets/scripts/lib/container.sh $base_path/scripts/container.sh
+  then
+    exit 1
+  fi
+  if ! cp ./assets/.options $base_path/.options
+  then
+    exit 1
+  fi
 }
 
 updateVersion() {
@@ -580,6 +588,7 @@ handleNew() {
   then
     advertise=true
   fi
+  handleRestartPolicy
   if [ "$mounts_path" = "" ]
   then
     mounts_path=$base_path/mounts

@@ -22,6 +22,7 @@ subnet_core="10.0.0.0"
 subnet_module="10.1.0.0"
 subnet_gateway="10.10.0.0"
 systemd=""
+ctr_restart_policy=""
 logrotate=""
 cron=""
 advertise=""
@@ -32,6 +33,22 @@ core_name=""
 gateway_port="8080"
 allow_beta=""
 core_usr_pw=""
+
+# derives the restart policy of the core containers from the startup
+# integration. without systemd nothing stops the containers on shutdown, so a
+# policy that survives a reboot brings them back while the host binaries stay
+# down - the state a user lands in whenever they forget 'ctrl.sh stop'
+handleRestartPolicy() {
+  if [ "$ctr_restart_policy" = "" ]
+  then
+    if [ "$systemd" = "true" ]
+    then
+      ctr_restart_policy="unless-stopped"
+    else
+      ctr_restart_policy="no"
+    fi
+  fi
+}
 
 saveSettings() {
   echo \
@@ -57,6 +74,7 @@ avahi_path=$avahi_path
 cron_path=$cron_path
 docker_socket_path=$docker_socket_path
 systemd=$systemd
+ctr_restart_policy=$ctr_restart_policy
 logrotate=$logrotate
 cron=$cron
 advertise=$advertise
@@ -92,5 +110,6 @@ exportSettingsToEnv() {
     CORE_ID="$core_id" \
     CORE_NAME="$core_name" \
     GATEWAY_PORT="$gateway_port" \
-    CORE_USR_PW="$core_usr_pw"
+    CORE_USR_PW="$core_usr_pw" \
+    CTR_RESTART_POLICY="$ctr_restart_policy"
 }

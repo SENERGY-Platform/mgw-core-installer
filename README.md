@@ -109,8 +109,10 @@ In order, `setup.sh`:
 6. Renders and installs the systemd mount/service units (prefixed with the core name),
    the logrotate config, the cron job and the avahi service. Installed units are recorded
    in `<base_path>/.units`, then enabled and started.
-7. Renders `docker-compose.yml` and copies the container configs, creates the containers
-   with `docker compose up --no-start` and optionally starts them.
+7. Copies the container configs and the compose template, renders `docker-compose.yml` from
+   the installed template, creates the containers with `docker compose up --no-start` and
+   optionally starts them. The template is kept in `container/` so that `ctrl.sh` can
+   re-render without the release archive.
 8. Writes `<base_path>/.settings`, which is the single source of truth for all later
    `ctrl.sh` and `update.sh` runs.
 
@@ -125,8 +127,9 @@ In order, `setup.sh`:
 ├── .binaries                 installed host binaries and their versions
 ├── .units                    installed systemd units
 ├── .pid                      PIDs of the host binaries (only without systemd)
+├── .options                  image and binary pins of the installed release
 ├── bin/SENERGY-Platform/     host binaries + rendered configs
-├── container/                docker-compose.yml, .env, container configs
+├── container/                docker-compose.yml + its template, .env, container configs
 ├── deployments/              module deployment data (shared with module-manager)
 ├── sockets/                  unix sockets of the host binaries
 ├── mounts/nginx/             gateway config fragments written by the core-manager
@@ -216,8 +219,10 @@ Automatic updates can be enabled or disabled later by adding or removing that cr
 whether systemd integration is active.
 
 When a core is installed without systemd integration `ctrl.sh start` and `ctrl.sh stop` must be used
-to start and stop the host binaries and docker containers. Failing to stop a core before a host restrat will lead to an
-inconsistent state where the containers are running but the host binaries are not. Calling `ctrl.sh start` will fix it.
+to start and stop the host binaries and docker containers. Such a core comes up with the container
+restart policy `no`, so a host restart without a preceding `ctrl.sh stop` leaves the whole core
+down rather than the containers running without their host binaries. Calling `ctrl.sh start`
+brings it back.
 
 `start` and `stop` may be called from a non-interactive context (a script, a cron job, a CI step). The host binaries
 are detached into their own session, so they are not killed when the calling shell or ssh session ends.
@@ -230,8 +235,8 @@ sudo /opt/mgw/ctrl.sh <command>
 | --- | --- | --- |
 | `start` | With systemd: starts the units. Without: starts the three host binaries detached from the calling session, records their PIDs in `.pid` and mounts the secrets tmpfs. Then starts the containers. Fails if a binary does not stay alive; a leftover `.pid` from a crash or a reboot is cleaned up. | Bringing the core up on a host without startup integration, after a reboot, or after a manual `stop`. |
 | `stop` | Stops the containers, then the units (or kills the processes recorded in `.pid` that are still running as host binaries and unmounts the tmpfs). Does nothing if the binaries are not running. | Maintenance on the host, backups, before changing the Docker setup. |
-| `enable` | Enables the installed systemd units. | Re-enabling startup integration after `disable`. Requires systemd integration. |
-| `disable` | Disables the installed systemd units. | Keeping the core from starting on boot without uninstalling it. Requires systemd integration. |
+| `enable` | Enables the installed systemd units and sets the container restart policy back to `unless-stopped`, re-rendering `docker-compose.yml` and recreating the containers. A running core keeps running. | Re-enabling startup integration after `disable`. Requires systemd integration. |
+| `disable` | Disables the installed systemd units and sets the container restart policy to `no`, re-rendering `docker-compose.yml` and recreating the containers. A running core keeps running. | Keeping the core from starting on boot without uninstalling it. Requires systemd integration. |
 | `ctr-recreate` | Removes and recreates the containers. Volumes are kept. | After editing `container/.env` (for example to raise a log level), or when a container is in a broken state. |
 | `ctr-purge` | Removes the containers **and their volumes**, then recreates them. | Last resort / factory reset of the container layer. **Destroys the databases, the module-manager data and the secret-manager master key.** |
 | `beta-test` | Toggles `allow_beta` in `.settings`. | Opting in to or out of beta releases for future updates. |
