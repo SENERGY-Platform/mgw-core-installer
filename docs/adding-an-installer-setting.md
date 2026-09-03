@@ -19,7 +19,9 @@ version pins in `assets/.options`.
 1. **Declare it with a default** in the variable block at the top of
    `assets/scripts/lib/settings.sh`. An empty default (`name=""`) is what marks
    the setting as "not resolved yet" and is what step 5 tests for. Put it next
-   to the setting it belongs with, not at the end.
+   to the setting it belongs with, not at the end. A setting whose default is a
+   real value cannot use that marker — see
+   [Settings with a non-empty default](#settings-with-a-non-empty-default).
 
 2. **Add it to `saveSettings()`** in the same file, as a `name=$name` line.
    Without this the value is resolved on every run and never persisted, which
@@ -71,6 +73,76 @@ tests. The same rule gives a `-c` config file precedence over the defaults in
 
 This is also why `update.sh` sources the **new** release's `settings.sh`: it has
 to know about settings the installed core has never heard of.
+
+## Settings with a non-empty default
+
+`gateway_port`, the three `subnet_*` values and `core_usr` carry a real default
+instead of an empty one, and that breaks the marker step 1 rests on: for these,
+an empty value does not mean "not resolved yet", it means somebody emptied it.
+A `-c` config file with `core_usr=""` in it, or a prompt answered with a bare
+line where the current value is already empty, therefore reaches the templates
+as an empty string, and nothing on the way there objects.
+
+Write the default into its own variable and initialise the setting from it:
+
+```sh
+core_usr_default="core-user"
+core_usr="$core_usr_default"
+```
+
+then add a `handle*` function that restores it, called from the main flow of
+`setup.sh` and from `handleNew()` in `update.sh` like any other resolver:
+
+```sh
+handleCoreUser() {
+  if [ "$core_usr" = "" ]
+  then
+    core_usr="$core_usr_default"
+  fi
+}
+```
+
+The extra variable is what keeps the literal in one place. Restating it inside
+the `handle*` function works and reads more directly, but the declared default
+and the fallback then drift apart on the next change to either. The `*_default`
+variables deliberately stay out of `saveSettings()`: they belong to the release,
+not to the install, and every entry point sources `settings.sh` before
+`.settings` anyway (see below).
+
+What an emptied value produces — each one confirmed by rendering the templates,
+not by starting anything:
+
+* `core_usr` → `II_USER:` with no value. This is the dangerous one: the compose
+  file stays valid YAML and the container starts, the auth service simply has no
+  identity to log into the identity server with.
+* `gateway_port` → `- :/tcp` in the nginx service's `ports:` and `listen ;` in
+  the public api config, so the gateway cannot come up.
+* `subnet_core` / `subnet_module` / `subnet_gateway` → `subnet: /28` in a compose
+  network's ipam config, `allow /16;` in the internal api config, and `"/28"` in
+  the host manager's `net_range_list`.
+
+## Settings a container renders itself
+
+Step 4 covers the templates the *installer* renders. The gateway configs are not
+among them. `assets/container/configs/gateway/template/*.template` is copied
+verbatim by `copyContainerAssets`, mounted into the nginx container at
+`/etc/nginx/templates`, and rendered by the nginx image's own entrypoint when
+the container starts.
+
+A setting a gateway config uses is therefore substituted twice, by two different
+mechanisms:
+
+1. the installer's `envsubst` fills `${GATEWAY_PORT}` and the `${SUBNET_*}` into
+   `docker-compose.yml`, where they sit in the nginx service's `environment:`
+   block;
+2. the nginx entrypoint substitutes the same names again, from the container's
+   own environment, into `/etc/nginx/conf.d/*.conf`.
+
+Such a setting has a sixth place, then: the `environment:` block of the nginx
+service. Leaving it out means the name stays unsubstituted in the rendered nginx
+config rather than in the compose file — the entrypoint only replaces names that
+are actually set in the container's environment — which shows up in the
+container's log and nowhere else.
 
 ## Derived settings
 

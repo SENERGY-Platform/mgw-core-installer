@@ -187,8 +187,10 @@ points elsewhere. Remove it, recreate it with `-p`, and delete the stray
 
 ## Two values that are easy to get wrong
 
-- **First login** uses the Kratos identity `core-user` with the generated
-  password from `core_usr_pw` in `/opt/mgw/.settings`. Through the gateway the
+- **First login** uses a Kratos identity whose name is `core_usr` in
+  `/opt/mgw/.settings` — `core-user` unless the install set something else — with
+  the generated password from `core_usr_pw` in the same file. Both are also
+  printed by `setup.sh` at the end of an interactive install. Through the gateway the
   flow is two requests: `GET /core/auth/login/browser` with
   `Accept: application/json` for the flow and CSRF token, then
   `POST /core/auth/login?flow=<id>` with
