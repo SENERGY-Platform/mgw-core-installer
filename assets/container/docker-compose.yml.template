@@ -112,6 +112,28 @@ services:
       core_srv: "true"
     networks:
       c_net:
+  module-manager-migration:
+    container_name: ${CORE_NAME}-module-manager-migration
+    image: ${MODULE_MANAGER_MIGRATION_IMG}
+    restart: on-failure
+    depends_on:
+      - mysqldb
+      - nginx
+    environment:
+      CEW_BASE_URL: "http://core-api/ce-wrapper"
+      DATABASE_ADDRESS: "core-db:3306"
+      DATABASE_USER: core_user
+      DATABASE_PASSWORD: ${CORE_DB_PW}
+    labels:
+      mgw_cid: "${CORE_ID}"
+      core_srv: "true"
+    volumes:
+      - mm-data:/opt/module-manager/data
+      - mm-service:/opt/module-manager/service
+      - mm-modules:/opt/module-manager/modules
+      - ${DEPLOYMENTS_PATH}:/opt/module-manager/deployments
+    networks:
+      c_net:
   module-manager:
     container_name: ${CORE_NAME}-module-manager
 #    image: ${MODULE_MANAGER_IMG}
@@ -122,9 +144,14 @@ services:
     image: mgw-module-manager:dev
     restart: unless-stopped
     depends_on:
-      - mysqldb
-      - nginx
-      - secret-manager
+      module-manager-migration:
+        condition: service_completed_successfully
+      mysqldb:
+        condition: service_started
+      nginx:
+        condition: service_started
+      secret-manager:
+        condition: service_started
     environment:
       CORE_ID: "${CORE_ID}"
       MODULE_CONTAINER_NETWORK: ${CORE_NAME}-2-module-net
@@ -197,6 +224,7 @@ services:
       m_net:
 
 volumes:
+  mm-data:
   mm-service:
   mm-modules:
   mm-repo-github:
