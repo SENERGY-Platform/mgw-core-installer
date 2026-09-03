@@ -213,7 +213,7 @@ Automatic updates can be enabled or disabled later by adding or removing that cr
 
 ## Using `ctrl.sh`
 
-**WARNING: The `ctrl.sh` script is meant to be used by developers for development and manual testing purposes only!**
+**WARNING: The `ctrl.sh` script is meant to be used for development and manual testing purposes only!**
 
 `ctrl.sh` must be run as root from the installation directory (`/opt/mgw/ctrl.sh`), reads `.settings` and adapts its behaviour to
 whether systemd integration is active.
