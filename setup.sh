@@ -364,6 +364,11 @@ handleDefaultSettings() {
         if [ "$input" != "" ]; then
           core_id="$input"
         fi
+        printf "core user [%s]: " "$core_usr"
+        read -r input
+        if [ "$input" != "" ]; then
+          core_usr="$input"
+        fi
         printf "core database password [%s]: " "$core_db_pw"
         read -r input
         if [ "$input" != "" ]; then

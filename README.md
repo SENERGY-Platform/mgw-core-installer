@@ -64,10 +64,10 @@ sudo ./setup.sh
 The installer asks for confirmation and then walks through a number of prompts:
 
 1. **Change default settings?** — install directory (`base_path`, default `/opt/mgw`),
-   Compose stack name, core ID, database and database-root passwords, gateway port
-   (default `8080`), the three subnets and the host-directory module repository path.
-   Anything left empty keeps its default; passwords, core ID and core name are generated
-   if unset.
+   Compose stack name, core ID, core user (for web ui), database and
+   database-root passwords, gateway port (default `8080`), the three subnets and the
+   host-directory module repository path. Anything left empty keeps its default; passwords,
+   core ID and core name are generated if unset.
 2. **OS startup integration** — installs and enables the systemd units so the core starts
    with the host. If declined, the core has to be started manually with `ctrl.sh`.
 3. **Log rotation** — installs a `logrotate.d` config for `<base_path>/log/*.log`.
