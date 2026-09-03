@@ -580,6 +580,9 @@ handleNew() {
   then
     advertise=true
   fi
+  handleCoreUser
+  handleGatewayPort
+  handleSubnets
   handleRestartPolicy
   if [ "$mounts_path" = "" ]
   then

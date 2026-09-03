@@ -18,9 +18,12 @@ mounts_path=""
 stack_name=""
 core_db_pw=""
 core_db_root_pw=""
-subnet_core="10.0.0.0"
-subnet_module="10.1.0.0"
-subnet_gateway="10.10.0.0"
+subnet_core_default="10.0.0.0"
+subnet_core="$subnet_core_default"
+subnet_module_default="10.1.0.0"
+subnet_module="$subnet_module_default"
+subnet_gateway_default="10.10.0.0"
+subnet_gateway="$subnet_gateway_default"
 systemd=""
 ctr_restart_policy=""
 logrotate=""
@@ -30,10 +33,50 @@ platform=""
 arch=""
 core_id=""
 core_name=""
-gateway_port="8080"
+gateway_port_default="8080"
+gateway_port="$gateway_port_default"
 allow_beta=""
-core_usr="core-user"
+core_usr_default="core-user"
+core_usr="$core_usr_default"
 core_usr_pw=""
+
+# the core user can be emptied from a config file or a setup prompt. an empty
+# II_USER leaves the auth service without an identity to log into the identity
+# server with, which no template rendering complains about, so an empty value
+# falls back to the default instead of reaching the compose file
+handleCoreUser() {
+  if [ "$core_usr" = "" ]
+  then
+    core_usr="$core_usr_default"
+  fi
+}
+
+# an empty gateway port leaves the compose port mapping without a port and the
+# public api config with a bare 'listen ;', so the gateway never comes up
+handleGatewayPort() {
+  if [ "$gateway_port" = "" ]
+  then
+    gateway_port="$gateway_port_default"
+  fi
+}
+
+# an empty subnet reaches the ipam config of a compose network, the nginx
+# allow/deny rules of the internal api and the net ranges of the host manager,
+# none of which mean anything without an address
+handleSubnets() {
+  if [ "$subnet_core" = "" ]
+  then
+    subnet_core="$subnet_core_default"
+  fi
+  if [ "$subnet_module" = "" ]
+  then
+    subnet_module="$subnet_module_default"
+  fi
+  if [ "$subnet_gateway" = "" ]
+  then
+    subnet_gateway="$subnet_gateway_default"
+  fi
+}
 
 # derives the restart policy of the core containers from the startup
 # integration. without systemd nothing stops the containers on shutdown, so a

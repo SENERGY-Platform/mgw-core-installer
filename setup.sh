@@ -716,7 +716,10 @@ handleCoreName
 handleSecretsPath
 handleStackName
 handleDatabasePasswords
+handleCoreUser
 handleCoreUserPassword
+handleGatewayPort
+handleSubnets
 handleIntegration
 handleRestartPolicy
 handleBetaRelease
