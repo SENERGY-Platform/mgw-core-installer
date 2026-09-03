@@ -24,6 +24,9 @@ container stack via Docker Compose.
     * [Manual update](#manual-update)
     * [Automatic updates](#automatic-updates)
     * [Beta and alpha releases](#beta-and-alpha-releases)
+* [Uninstalling](#uninstalling)
+    * [What is removed](#what-is-removed)
+    * [What is kept](#what-is-kept)
 * [Using `ctrl.sh`](#using-ctrlsh)
 * [Services in the core](#services-in-the-core)
     * [Host binaries](#host-binaries)
@@ -101,8 +104,8 @@ In order, `setup.sh`:
 2. Resolves all settings, generates missing IDs and passwords and exports them as
    environment variables for template rendering.
 3. Verifies the required packages and installs the missing optional ones.
-4. Creates the directory layout and copies `ctrl.sh`, `update.sh` and the script library
-   into the install directory.
+4. Creates the directory layout and copies `ctrl.sh`, `update.sh`, `uninstall.sh` and the
+   script library into the install directory.
 5. Downloads the host binaries listed in `assets/.options` from their GitHub releases,
    extracts the archive matching the host architecture and renders their `conf.json`
    templates. Installed binary versions are recorded in `<base_path>/.binaries`.
@@ -122,6 +125,7 @@ In order, `setup.sh`:
 /opt/mgw                      <- base_path
 ├── ctrl.sh                   control script
 ├── update.sh                 update script
+├── uninstall.sh              uninstall script
 ├── .settings                 all resolved settings (sourced by ctrl.sh/update.sh)
 ├── .version                  installed release
 ├── .binaries                 installed host binaries and their versions
@@ -171,7 +175,8 @@ The update runs in two stages:
 2. **The new release's `update.sh`** (invoked with `-path=<base_path>`) performs the actual
    update:
     * installs newly required packages,
-    * refreshes `ctrl.sh`, `update.sh` and the script library in the install directory,
+    * refreshes `ctrl.sh`, `update.sh`, `uninstall.sh` and the script library in the install
+      directory,
     * stops the containers, then the systemd units (or the raw processes and the secrets
       tmpfs when running without systemd) and clears the secrets tmpfs,
     * downloads only those host binaries whose pinned version changed, removes binaries that
@@ -208,6 +213,44 @@ Automatic updates can be enabled or disabled later by adding or removing that cr
 * Alpha releases are never picked up automatically. An installed alpha version cannot be
   updated at all — `update.sh` exits with *"alpha versions must be updated manually"*, so a
   new release has to be installed by running its `setup.sh`.
+
+---
+
+## Uninstalling
+
+```sh
+sudo /opt/mgw/uninstall.sh
+```
+
+`uninstall.sh` is installed next to `ctrl.sh` and `update.sh` and takes everything the
+installer put on the host back off it. It reads `.settings`, `.units` and `.options` from
+the install directory, prints what it is about to remove and asks for confirmation.
+
+| Option | Effect |
+| --- | --- |
+| `-path=<install path>` | Uninstall the core in that directory instead of the one the script lives in. Only needed when the script is run from an extracted release archive, for example to uninstall a core whose release did not ship `uninstall.sh` yet. |
+| `-y` | Do not ask for confirmation. |
+| `-i` | Also remove the container images pinned in `.options`. |
+| `-h` | Print the usage. |
+
+### What is removed
+
+* **Containers, volumes and networks** — everything labelled `mgw_cid=<core_id>`, which
+  includes the containers and volumes of **deployed modules**, plus everything belonging to
+  the Compose project (`com.docker.compose.project=<stack_name>`), which is where the core's
+  own volumes and networks are found. Both sets are read from the container engine rather
+  than from `docker-compose.yml`, so the uninstall also works on an installation whose
+  container assets are broken or gone.
+* **The host binaries** — the systemd units are stopped, disabled and deleted, or, without
+  systemd integration, the processes recorded in `.pid` are terminated. The secrets tmpfs is
+  unmounted and `/mnt/<core_name>` removed.
+* **The integration files** — `logrotate.d`, `cron.daily` and the avahi service, regardless
+  of whether the corresponding setting is still enabled.
+* **The install directory** — `<base_path>` with all binaries, configs, logs, deployment
+  data and the scripts themselves.
+* **The container images** of the core, but only with `-i`. Images a module brought with it
+  are not tracked anywhere and are always kept; an image another core on the same host still
+  uses cannot be removed by Docker and is reported and skipped.
 
 ---
 

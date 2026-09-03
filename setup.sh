@@ -115,6 +115,10 @@ prepareInstallDir() {
   then
     exit 1
   fi
+  if ! cp ./assets/scripts/uninstall.sh $base_path/uninstall.sh
+  then
+    exit 1
+  fi
   if ! cp ./assets/scripts/lib/util.sh $base_path/scripts/util.sh
   then
     exit 1
