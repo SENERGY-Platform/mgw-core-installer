@@ -179,3 +179,9 @@ $RECYCLE.BIN/
 /.claude
 /.devcontainer
 .version
+
+# The install config a user writes for their own machine. setup.sh takes it
+# with -c, and it names paths, ports and subnets specific to that host - the
+# shipped template is assets/config.suggestion.ini. Anchored to the root so
+# that template stays tracked.
+/config*.ini
