@@ -663,6 +663,25 @@ checkRoot() {
   fi
 }
 
+# closes the installation with the credentials needed for the first login. the
+# values get a line each and no color, so they survive being copied out of the
+# terminal
+printAccessInfo() {
+  printColor "log into the web ui with:" "$yellow"
+  printf "  user:     %s\n" "$core_usr"
+  # the output of a non-interactive install usually ends up in a log file, so
+  # there the password is only pointed at, never printed
+  if [ "$read_config" != "true" ]
+  then
+    printf "  password: %s\n" "$core_usr_pw"
+  fi
+  printLnBr
+  if [ "$read_config" != "true" ]
+  then
+    echo "the credentials are also stored in '$base_path/.settings'"
+  fi
+}
+
 handleOptions
 checkRoot
 if [ "$read_config" != "true" ]
@@ -727,4 +746,6 @@ printColor "setting up container environment done" "$yellow"
 saveSettings
 printLnBr
 printColor "installation successful" "$yellow"
+printLnBr
+printAccessInfo
 printLnBr

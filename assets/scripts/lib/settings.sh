@@ -32,6 +32,7 @@ core_id=""
 core_name=""
 gateway_port="8080"
 allow_beta=""
+core_usr="core-user"
 core_usr_pw=""
 
 # derives the restart policy of the core containers from the startup
@@ -84,6 +85,7 @@ core_id=$core_id
 core_name=$core_name
 gateway_port=$gateway_port
 allow_beta=$allow_beta
+core_usr=$core_usr
 core_usr_pw=$core_usr_pw" \
   > $base_path/.settings
 }
@@ -110,6 +112,7 @@ exportSettingsToEnv() {
     CORE_ID="$core_id" \
     CORE_NAME="$core_name" \
     GATEWAY_PORT="$gateway_port" \
+    CORE_USR="$core_usr" \
     CORE_USR_PW="$core_usr_pw" \
     CTR_RESTART_POLICY="$ctr_restart_policy"
 }
