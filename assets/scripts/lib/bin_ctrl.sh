@@ -19,6 +19,10 @@ mountTmpfs() {
 }
 
 unmountTmpfs() {
+  if [ "$(stat -f -c '%T' $secrets_path 2> /dev/null)" != "tmpfs" ]
+  then
+    return
+  fi
   echo "unmounting tmpfs ..."
   umount -f $secrets_path
 }

@@ -233,7 +233,11 @@ updateVersion() {
   fi
 }
 
-stopBin() {
+# stopping the host binaries is left to stopBin from lib/bin_ctrl.sh, which
+# checks that a pid in .pid still runs the binary it was recorded for. the pids
+# are meaningless after a host reboot and a stale pid file must not abort the
+# update
+stopComponents() {
   if [ "$systemd" = "true" ]
   then
     installed_units="$(readFileToArray $base_path/.units)"
@@ -251,24 +255,8 @@ stopBin() {
       fi
     done
   else
-    if stat $base_path/.pid > /dev/null 2>& 1
-    then
-      pids="$(cat $base_path/.pid)"
-      echo "stopping processes ..."
-      for pid in ${pids}
-      do
-        if ! kill $pid
-        then
-          exit 1
-        fi
-      done
-      if ! rm $base_path/.pid
-      then
-        exit 1
-      fi
-      echo "unmounting secrets tmpfs ..."
-      umount -f $secrets_path
-    fi
+    stopBin
+    unmountTmpfs
   fi
   rm -r $secrets_path/* > /dev/null 2>& 1
 }
@@ -652,6 +640,7 @@ cd ../..
 . ./assets/scripts/lib/github.sh
 . ./assets/scripts/lib/docker.sh
 . ./assets/scripts/lib/container.sh
+. ./assets/scripts/lib/bin_ctrl.sh
 . $install_path/.settings
 
 checkRoot
@@ -672,7 +661,7 @@ printColor "updating done" "$yellow"
 printLnBr
 printColor "stopping components ..." "$yellow"
 stopContainers
-stopBin
+stopComponents
 printColor "stopping components done" "$yellow"
 printLnBr
 printColor "updating binaries ..." "$yellow"
