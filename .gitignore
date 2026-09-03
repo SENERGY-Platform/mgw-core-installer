@@ -185,3 +185,4 @@ $RECYCLE.BIN/
 # shipped template is assets/config.suggestion.ini. Anchored to the root so
 # that template stays tracked.
 /config*.ini
+.idea
