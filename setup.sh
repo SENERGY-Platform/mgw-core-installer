@@ -103,7 +103,7 @@ handlePackages() {
 }
 
 prepareInstallDir() {
-  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $log_path $scripts_path $mounts_path $mounts_path/nginx $mounts_path/kratos
+  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $log_path $mounts_path $mounts_path/nginx $mounts_path/kratos
   then
     exit 1
   fi
@@ -119,39 +119,14 @@ prepareInstallDir() {
   then
     exit 1
   fi
-  if ! cp ./assets/scripts/lib/util.sh $base_path/scripts/util.sh
+  if [ -d $scripts_path ]
   then
-    exit 1
+    if ! rm -r $scripts_path
+    then
+      exit 1
+    fi
   fi
-  if ! cp ./assets/scripts/lib/github.sh $base_path/scripts/github.sh
-  then
-    exit 1
-  fi
-  if ! cp ./assets/scripts/lib/docker.sh $base_path/scripts/docker.sh
-  then
-    exit 1
-  fi
-  if ! cp ./assets/scripts/lib/bin_ctrl.sh $base_path/scripts/bin_ctrl.sh
-  then
-    exit 1
-  fi
-  if ! cp ./assets/scripts/lib/sysd_ctrl.sh $base_path/scripts/sysd_ctrl.sh
-  then
-    exit 1
-  fi
-  if ! cp ./assets/scripts/lib/ctr_ctrl.sh $base_path/scripts/ctr_ctrl.sh
-  then
-    exit 1
-  fi
-  if ! cp ./assets/scripts/lib/sem_ver.sh $base_path/scripts/sem_ver.sh
-  then
-    exit 1
-  fi
-  if ! cp ./assets/scripts/lib/settings.sh $base_path/scripts/settings.sh
-  then
-    exit 1
-  fi
-  if ! cp ./assets/scripts/lib/container.sh $base_path/scripts/container.sh
+  if ! cp -r ./assets/scripts/lib $scripts_path
   then
     exit 1
   fi
