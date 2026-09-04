@@ -89,7 +89,7 @@ handleRestartPolicy() {
     then
       ctr_restart_policy="unless-stopped"
     else
-      ctr_restart_policy="no"
+      ctr_restart_policy="on-failure"
     fi
   fi
 }
