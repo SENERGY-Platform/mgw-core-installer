@@ -56,8 +56,10 @@ then
   exit 1
 fi
 
+# runs after the settings are resolved, so the package lists it works on are the
+# ones the chosen options actually need - see getRequiredPkg/getInstallPkg
 handlePackages() {
-  missing=$(getMissingPkg "$require_pkg")
+  missing=$(getMissingPkg "$(getRequiredPkg)")
   if [ "$missing" != "" ]
   then
     echo "missing required packages: $missing"
@@ -70,7 +72,7 @@ handlePackages() {
    echo "please follow instructions at 'https://docs.docker.com/engine/install' and run setup again"
    exit 1
   fi
-  missing=$(getMissingPkg "$install_pkg")
+  missing=$(getMissingPkg "$(getInstallPkg)")
   if [ "$missing" != "" ]
   then
     printColor "the following new packages will be installed: " "$blue" "nb"

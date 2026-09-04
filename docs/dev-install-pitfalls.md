@@ -25,12 +25,20 @@ and manual testing purposes only. Developers can then use `ctrl.sh` to manage th
 directory. The error is `.: config.ini: not found`, which reads like a missing
 file and sends you looking in the wrong place.
 
-## `install_pkg` cannot be overridden from the config
+## `install_pkg` cannot be overridden from the config (no longer needed)
 
-`assets/.options` is sourced **after** the config file. So with
-`advertise=false` the installer still `apt install`s `avahi-daemon`, which Ubuntu
-then auto-starts. To keep the host clean, remove it from `install_pkg` in a local
-clone.
+`assets/.options` is sourced **after** the config file, so a package list cannot
+be replaced from a config — and it used to be one flat list, which meant
+`advertise=false` still `apt install`ed `avahi-daemon`, which Ubuntu then
+auto-starts. The workaround was to strip it from `install_pkg` in a local clone.
+
+The conditional packages now live in their own lists in `assets/.options`
+(`require_pkg_systemd`, `install_pkg_logrotate`, `install_pkg_advertise`) and are
+appended by `getRequiredPkg`/`getInstallPkg` in `lib/package.sh` only when the
+setting that needs them is `true`. A minimal-footprint config therefore installs
+neither `avahi-daemon` nor `logrotate` and does not require `systemctl`, without
+any local edit. Sourcing order is unchanged: overriding a list from a config file
+is still impossible, it just no longer matters.
 
 ## Starting from a non-interactive shell (fixed)
 

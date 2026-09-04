@@ -39,13 +39,16 @@ container stack via Docker Compose.
 
 * **OS:** Linux, Debian/Ubuntu based distribution.
 * **Privileges:** root.
-* **Must already be present:** `systemctl`, `apt`, and Docker with Compose
+* **Must already be present:** `apt`, and Docker with Compose
   (`docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-compose-plugin`). If Docker is
   missing the installer stops and points to <https://docs.docker.com/engine/install>.
   Both `docker compose` and the legacy `docker-compose` binary are supported — the
-  installer detects which one is available.
+  installer detects which one is available. `systemctl` is additionally required when the
+  OS startup integration is enabled.
 * **Installed automatically (after confirmation):** `curl`, `tar`, `gzip`, `jq`,
-  `avahi-daemon`, `openssl`, `gettext-base` (for `envsubst`), `logrotate`.
+  `openssl`, `gettext-base` (for `envsubst`) — plus `logrotate` if log rotation is
+  enabled and `avahi-daemon` if mDNS advertisement is. The package lists are resolved
+  after the prompts, so an option left off never pulls in its package.
 * **Network:** outbound HTTPS to GitHub (release binaries) and to the container registries
   (Docker Hub, `ghcr.io`).
 
@@ -101,7 +104,8 @@ In order, `setup.sh`:
 1. Detects platform/architecture and the available Compose command.
 2. Resolves all settings, generates missing IDs and passwords and exports them as
    environment variables for template rendering.
-3. Verifies the required packages and installs the missing optional ones.
+3. Verifies the required packages and installs the missing optional ones, both narrowed
+   to what the resolved settings need.
 4. Creates the directory layout and copies `ctrl.sh`, `update.sh`, `uninstall.sh` and the
    script library into the install directory.
 5. Downloads the host binaries listed in `assets/.options` from their GitHub releases,
@@ -172,6 +176,8 @@ The update runs in two stages:
    extracts the new release archive to `/tmp/mgw-update` and hands over to stage two.
 2. **The new release's `update.sh`** (invoked with `-path=<base_path>`) performs the actual
    update:
+    * resolves the settings the new release introduced (`handleNew`), so the package step
+      below sees the integrations the updated core will actually run,
     * installs newly required packages,
     * refreshes `ctrl.sh`, `update.sh`, `uninstall.sh` and the script library in the install
       directory,

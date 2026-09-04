@@ -144,6 +144,22 @@ config rather than in the compose file — the entrypoint only replaces names th
 are actually set in the container's environment — which shows up in the
 container's log and nowhere else.
 
+## Settings that gate a package
+
+A setting whose feature needs a command that is not needed otherwise gets its
+package list of its own in `assets/.options` — `require_pkg_systemd`,
+`install_pkg_logrotate` and `install_pkg_advertise` are the existing ones — which
+`getRequiredPkg()` / `getInstallPkg()` in `assets/scripts/lib/package.sh` append
+when the setting is `true`. Adding an entry to the unconditional `require_pkg` or
+`install_pkg` instead makes every install carry it, including the ones that
+declined the feature.
+
+Both composers read the settings from the surrounding scope, so `handlePackages`
+has to run *after* they are resolved. It does in `setup.sh` (after
+`handleIntegration`) and in `assets/scripts/update.sh` (after `handleNew`, which
+can still switch `advertise` on for an install predating that setting). A new
+gating setting must therefore be resolved before that point in both scripts.
+
 ## Derived settings
 
 A setting computed from another one (rather than asked for) is best written as a

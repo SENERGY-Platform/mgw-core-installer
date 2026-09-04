@@ -1,5 +1,33 @@
 #!/bin/sh
 
+# not every package a release names is needed by every install: a core without
+# startup integration never calls systemctl, the logrotate config is only
+# written when log rotation is on and the avahi service only when mDNS
+# advertisement is. those packages therefore sit in their own lists in .options
+# and are appended here from the setting that makes them necessary, which is why
+# both callers have to resolve their settings before asking for a list
+getRequiredPkg() {
+  pkg="$require_pkg"
+  if [ "$systemd" = "true" ]
+  then
+    pkg="$pkg $require_pkg_systemd"
+  fi
+  echo "$pkg"
+}
+
+getInstallPkg() {
+  pkg="$install_pkg"
+  if [ "$logrotate" = "true" ]
+  then
+    pkg="$pkg $install_pkg_logrotate"
+  fi
+  if [ "$advertise" = "true" ]
+  then
+    pkg="$pkg $install_pkg_advertise"
+  fi
+  echo "$pkg"
+}
+
 getMissingPkg() {
   missing=""
   for item in ${1}

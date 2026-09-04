@@ -140,8 +140,11 @@ handleRelease() {
   fi
 }
 
+# runs after handleNew, because the lists it works on depend on settings that
+# handleNew can still resolve - an install predating the advertise setting only
+# learns there that it wants avahi
 handlePackages() {
-  missing=$(getMissingPkg "$install_pkg")
+  missing=$(getMissingPkg "$(getInstallPkg)")
   if [ "$missing" != "" ]
   then
     printColor "the following new packages will be installed: " "$blue" "nb"
@@ -626,16 +629,16 @@ cd ../..
 . $install_path/.settings
 
 checkRoot
-printColor "setting up required packages ..." "$yellow"
-handlePackages
-printColor "setting up required packages done" "$yellow"
-printLnBr
 printColor "setting up updater ..." "$yellow"
 detectDockerCompose
 handleNew
 parseImages
 exportSettingsToEnv
 printColor "setting up updater done" "$yellow"
+printLnBr
+printColor "setting up required packages ..." "$yellow"
+handlePackages
+printColor "setting up required packages done" "$yellow"
 printLnBr
 printColor "updating files ..." "$yellow"
 updateInstallDir
