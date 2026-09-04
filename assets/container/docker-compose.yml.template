@@ -43,6 +43,11 @@ services:
       - mysqldb-data:/var/lib/mysql
       - ${CONTAINER_PATH}/configs/db/init:/docker-entrypoint-initdb.d:ro
       - ${CONTAINER_PATH}/configs/db/conf:/etc/mysql/conf.d:ro
+    healthcheck:
+      test: mysql --user=root --password=${CORE_DB_ROOT_PW} --execute="SHOW DATABASES;"
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       c_net:
         aliases:
