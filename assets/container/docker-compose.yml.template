@@ -47,7 +47,7 @@ services:
       test: mysql --user=root --password=${CORE_DB_ROOT_PW} --execute="SHOW DATABASES;"
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
     networks:
       c_net:
         aliases:
