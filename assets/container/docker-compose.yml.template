@@ -57,8 +57,10 @@ services:
     image: ${KRATOS_IMG}
     restart: "${CTR_RESTART_POLICY}"
     depends_on:
-      - mysqldb
-      - kratos-migrate
+      kratos-migrate:
+        condition: service_completed_successfully
+      mysqldb:
+        condition: service_healthy
     environment:
       DSN: mysql://core_user:${CORE_DB_PW}@tcp(core-db:3306)/kratos?max_conns=20&max_idle_conns=4
       LOG_LEVEL: ${KRATOS_LOG_LEVEL}
@@ -82,7 +84,8 @@ services:
     image: ${KRATOS_IMG}
     restart: on-failure
     depends_on:
-      - mysqldb
+      mysqldb:
+        condition: service_healthy
     environment:
       DSN: mysql://core_user:${CORE_DB_PW}@tcp(core-db:3306)/kratos?max_conns=20&max_idle_conns=4
       LOG_LEVEL: ${KRATOS_MIGRATE_LOG_LEVEL}
@@ -102,7 +105,8 @@ services:
     image: ${AUTH_SERVICE_IMG}
     restart: "${CTR_RESTART_POLICY}"
     depends_on:
-      - kratos
+      kratos:
+        condition: service_started
     environment:
       LOGGER_LEVEL: ${AUTH_SERVICE_LOG_LEVEL}
       LOGGER_TERMINAL: "true"
@@ -120,8 +124,10 @@ services:
     image: ${MODULE_MANAGER_MIGRATION_IMG}
     restart: on-failure
     depends_on:
-      - mysqldb
-      - nginx
+      mysqldb:
+        condition: service_healthy
+      nginx:
+        condition: service_started
     environment:
       CEW_BASE_URL: "http://core-api/ce-wrapper"
       DATABASE_ADDRESS: "core-db:3306"
@@ -150,11 +156,11 @@ services:
       module-manager-migration:
         condition: service_completed_successfully
       mysqldb:
-        condition: service_started
+        condition: service_healthy
       nginx:
         condition: service_started
       secret-manager:
-        condition: service_started
+        condition: service_healthy
     environment:
       CORE_ID: "${CORE_ID}"
       MODULE_CONTAINER_NETWORK: ${CORE_NAME}-2-module-net
@@ -189,7 +195,8 @@ services:
     image: ${SECRET_MANAGER_IMG}
     restart: "${CTR_RESTART_POLICY}"
     depends_on:
-      - mysqldb
+      mysqldb:
+        condition: service_healthy
     environment:
       TMPFS_PATH: /tmp
       ENABLE_ENCRYPTION: "false"
@@ -222,11 +229,8 @@ services:
       core_srv: "true"
     depends_on:
       - nginx
-      - auth-service
-      - module-manager
-      - secret-manager
     networks:
-      m_net:
+      g_net:
 
 volumes:
   mm-data:
