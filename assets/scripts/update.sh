@@ -650,7 +650,6 @@ cd ../..
 . ./assets/scripts/lib/os.sh
 . ./assets/scripts/lib/package.sh
 . ./assets/scripts/lib/github.sh
-. ./assets/scripts/lib/docker.sh
 . ./assets/scripts/lib/container.sh
 . ./assets/scripts/lib/bin_ctrl.sh
 . $install_path/.settings

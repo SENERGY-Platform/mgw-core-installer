@@ -35,7 +35,6 @@ shift "$(($OPTIND -1))"
 . ./assets/scripts/lib/os.sh
 . ./assets/scripts/lib/package.sh
 . ./assets/scripts/lib/github.sh
-. ./assets/scripts/lib/docker.sh
 . ./assets/scripts/lib/container.sh
 . ./assets/scripts/lib/sem_ver.sh
 

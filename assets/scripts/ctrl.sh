@@ -6,7 +6,6 @@ then
   exit 1
 fi
 
-. ./scripts/docker.sh
 . ./scripts/util.sh
 . ./scripts/bin_ctrl.sh
 . ./scripts/sysd_ctrl.sh
