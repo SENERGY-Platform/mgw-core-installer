@@ -33,12 +33,16 @@ be replaced from a config — and it used to be one flat list, which meant
 auto-starts. The workaround was to strip it from `install_pkg` in a local clone.
 
 The conditional packages now live in their own lists in `assets/.options`
-(`require_pkg_systemd`, `install_pkg_logrotate`, `install_pkg_advertise`) and are
-appended by `getRequiredPkg`/`getInstallPkg` in `lib/package.sh` only when the
-setting that needs them is `true`. A minimal-footprint config therefore installs
-neither `avahi-daemon` nor `logrotate` and does not require `systemctl`, without
-any local edit. Sourcing order is unchanged: overriding a list from a config file
-is still impossible, it just no longer matters.
+(`require_pkg_systemd`, `install_pkg_logrotate`, `install_pkg_cron`,
+`install_pkg_advertise`) and are appended by `getRequiredPkg`/`getInstallPkg` in
+`lib/package.sh` only when the setting that needs them is `true`. The
+minimal-footprint config above therefore installs none of `avahi-daemon`,
+`logrotate` and `cron`, and does not require `systemctl`, without any local edit.
+Sourcing order is unchanged: overriding a list from a config file is still
+impossible, it just no longer matters.
+
+`cron` is new to the lists — `cron=true` writes a `cron.daily` file, which needs
+a cron daemon to run it and never checked for one before.
 
 ## Starting from a non-interactive shell (fixed)
 

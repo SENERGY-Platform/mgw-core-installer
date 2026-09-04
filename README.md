@@ -47,8 +47,9 @@ container stack via Docker Compose.
   OS startup integration is enabled.
 * **Installed automatically (after confirmation):** `curl`, `tar`, `gzip`, `jq`,
   `openssl`, `gettext-base` (for `envsubst`) — plus `logrotate` if log rotation is
-  enabled and `avahi-daemon` if mDNS advertisement is. The package lists are resolved
-  after the prompts, so an option left off never pulls in its package.
+  enabled, `cron` if automatic updates are, and `avahi-daemon` if mDNS advertisement
+  is. The package lists are resolved from the answers to the prompts, so an option
+  left off never pulls in its package.
 * **Network:** outbound HTTPS to GitHub (release binaries) and to the container registries
   (Docker Hub, `ghcr.io`).
 
@@ -102,23 +103,26 @@ must be absolute: `SYSTEMD_PATH`, `LOGROTATED_PATH`, `CRON_PATH`.
 In order, `setup.sh`:
 
 1. Detects platform/architecture and the available Compose command.
-2. Resolves all settings, generates missing IDs and passwords and exports them as
-   environment variables for template rendering.
+2. Asks everything it is going to ask — the settings, the integrations and the beta
+   channel — before touching the host.
 3. Verifies the required packages and installs the missing optional ones, both narrowed
-   to what the resolved settings need.
-4. Creates the directory layout and copies `ctrl.sh`, `update.sh`, `uninstall.sh` and the
+   to what those answers need.
+4. Resolves the remaining settings, generates missing IDs and passwords and exports them
+   as environment variables for template rendering. This comes after the package step
+   because the generating is done with `openssl`, which that step installs.
+5. Creates the directory layout and copies `ctrl.sh`, `update.sh`, `uninstall.sh` and the
    script library into the install directory.
-5. Downloads the host binaries listed in `assets/.options` from their GitHub releases,
+6. Downloads the host binaries listed in `assets/.options` from their GitHub releases,
    extracts the archive matching the host architecture and renders their `conf.json`
    templates. Installed binary versions are recorded in `<base_path>/.binaries`.
-6. Renders and installs the systemd mount/service units (prefixed with the core name),
+7. Renders and installs the systemd mount/service units (prefixed with the core name),
    the logrotate config, the cron job and the avahi service. Installed units are recorded
    in `<base_path>/.units`, then enabled and started.
-7. Copies the container configs and the compose template, renders `docker-compose.yml` from
+8. Copies the container configs and the compose template, renders `docker-compose.yml` from
    the installed template, creates the containers with `docker compose up --no-start` and
    optionally starts them. The template is kept in `container/` so that `ctrl.sh` can
    re-render without the release archive.
-8. Writes `<base_path>/.settings`, which is the single source of truth for all later
+9. Writes `<base_path>/.settings`, which is the single source of truth for all later
    `ctrl.sh` and `update.sh` runs.
 
 ### Resulting layout
@@ -176,9 +180,15 @@ The update runs in two stages:
    extracts the new release archive to `/tmp/mgw-update` and hands over to stage two.
 2. **The new release's `update.sh`** (invoked with `-path=<base_path>`) performs the actual
    update:
-    * resolves the settings the new release introduced (`handleNew`), so the package step
-      below sees the integrations the updated core will actually run,
+    * asks about the integrations a release introduced that decide which packages are
+      needed — `cron` and `advertise` on a core installed before automatic updates and
+      mDNS advertisement were settings. An automatic update (`-a`) cannot ask: it aborts
+      on an unanswered `cron`, which no automatic update can encounter since the cron job
+      only exists when `cron=true`, and keeps `advertise=true` for the core's lifetime,
+      which is what such an install had anyway,
     * installs newly required packages,
+    * resolves the remaining new settings (`handleNew`), which generates missing ids and
+      passwords with the `openssl` the step above installs,
     * refreshes `ctrl.sh`, `update.sh`, `uninstall.sh` and the script library in the install
       directory,
     * stops the containers, then the systemd units (or the raw processes and the secrets

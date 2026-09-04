@@ -56,8 +56,8 @@ then
   exit 1
 fi
 
-# runs after the settings are resolved, so the package lists it works on are the
-# ones the chosen options actually need - see getRequiredPkg/getInstallPkg
+# runs after everything the user is asked, so the package lists it works on are
+# the ones the chosen options actually need - see getRequiredPkg/getInstallPkg
 handlePackages() {
   missing=$(getMissingPkg "$(getRequiredPkg)")
   if [ "$missing" != "" ]
@@ -685,9 +685,22 @@ then
   done
 fi
 printLnBr
+# the flow is deliberately in three parts: everything the user is asked runs
+# first, the packages those answers need are installed second, and only then are
+# the settings resolved - the ids and passwords are generated with openssl,
+# which is one of the packages the second part installs
 printColor "setting up installer ..." "$yellow"
 detectDockerCompose
 handleDefaultSettings
+handleIntegration
+handleBetaRelease
+printColor "setting up installer done" "$yellow"
+printLnBr
+printColor "setting up required packages ..." "$yellow"
+handlePackages
+printColor "setting up required packages done" "$yellow"
+printLnBr
+printColor "resolving settings ..." "$yellow"
 handleCoreID
 handleCoreName
 handleSecretsPath
@@ -697,16 +710,10 @@ handleCoreUser
 handleCoreUserPassword
 handleGatewayPort
 handleSubnets
-handleIntegration
 handleRestartPolicy
-handleBetaRelease
 parseImages
 exportSettingsToEnv
-printColor "setting up installer done" "$yellow"
-printLnBr
-printColor "setting up required packages ..." "$yellow"
-handlePackages
-printColor "setting up required packages done" "$yellow"
+printColor "resolving settings done" "$yellow"
 printLnBr
 printColor "setting up install directory ..." "$yellow"
 prepareInstallDir

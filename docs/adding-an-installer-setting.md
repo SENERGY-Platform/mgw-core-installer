@@ -48,11 +48,13 @@ version pins in `assets/.options`.
    `assets/scripts/update.sh`, in the same `if [ "$name" = "" ]` shape the other
    settings use there. `handleNew` is the hook for everything a release
    introduces; without it, a core installed before the setting existed runs with
-   the empty default.
+   the empty default. A setting that decides which packages an install needs is
+   the exception and goes in `handleIntegrationSettings()` instead — see
+   [Settings that gate a package](#settings-that-gate-a-package).
 
 Then call whatever resolves the value from `setup.sh` as well — the `handle*`
-functions run between `handleDefaultSettings` and `exportSettingsToEnv` in the
-main flow at the bottom of the file.
+functions run between `handlePackages` and `exportSettingsToEnv` in the main flow
+at the bottom of the file.
 
 ## Why `handleNew` can test for an empty value
 
@@ -146,19 +148,47 @@ container's log and nowhere else.
 
 ## Settings that gate a package
 
-A setting whose feature needs a command that is not needed otherwise gets its
+A setting whose feature needs a command that is not needed otherwise gets a
 package list of its own in `assets/.options` — `require_pkg_systemd`,
-`install_pkg_logrotate` and `install_pkg_advertise` are the existing ones — which
-`getRequiredPkg()` / `getInstallPkg()` in `assets/scripts/lib/package.sh` append
-when the setting is `true`. Adding an entry to the unconditional `require_pkg` or
-`install_pkg` instead makes every install carry it, including the ones that
-declined the feature.
+`install_pkg_logrotate`, `install_pkg_cron` and `install_pkg_advertise` are the
+existing ones — which `getRequiredPkg()` / `getInstallPkg()` in
+`assets/scripts/lib/package.sh` append when the setting is `true`. Adding an
+entry to the unconditional `require_pkg` or `install_pkg` instead makes every
+install carry it, including the ones that declined the feature.
 
-Both composers read the settings from the surrounding scope, so `handlePackages`
-has to run *after* they are resolved. It does in `setup.sh` (after
-`handleIntegration`) and in `assets/scripts/update.sh` (after `handleNew`, which
-can still switch `advertise` on for an install predating that setting). A new
-gating setting must therefore be resolved before that point in both scripts.
+Both composers read the settings from the surrounding scope, which puts the
+package step between two halves of the setting resolution. Both entry points are
+therefore in three parts:
+
+| | `setup.sh` | `update.sh` |
+| --- | --- | --- |
+| what the user is asked | `handleDefaultSettings`, `handleIntegration`, `handleBetaRelease` | `handleIntegrationSettings` |
+| the packages those answers need | `handlePackages` | `handlePackages` |
+| everything derived from them | `handleCoreID` … `exportSettingsToEnv` | `handleNew`, `parseImages`, `exportSettingsToEnv` |
+
+The third part cannot move up: it generates the ids and passwords with `openssl`,
+which is one of the packages the second part installs. So a **new gating setting
+belongs in the first part** — in `update.sh` that means `handleIntegrationSettings`
+rather than `handleNew`, which is the one exception to step 5 above. A gating
+setting resolved in `handleNew` is read by `handlePackages` before it has a value,
+and its package silently never gets installed.
+
+A gating setting in `update.sh` therefore has to be resolvable without asking,
+because an automatic update (`-a`, from the cron job) has nobody to ask. Whether
+it may call `requireUser` and abort depends on one thing: whether an automatic
+update can reach it at all.
+
+* `cron` may abort. The cron job that passes `-a` is only written when
+  `cron=true`, so a `cron` that is still empty means no automatic update exists
+  to break.
+* `advertise` may not. A core installed before that setting existed can have
+  automatic updates on, so `requireUser` would abort its nightly update and leave
+  it on the old release — silently, since the output goes to
+  `<log_path>/core_update.log`. It falls back to the value such an install
+  effectively had instead, and only asks when `auto` is false.
+
+Assume the second case for anything new. The first only holds for `cron` because
+it is the setting the automatic update itself depends on.
 
 ## Derived settings
 

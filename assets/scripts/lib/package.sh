@@ -1,11 +1,12 @@
 #!/bin/sh
 
 # not every package a release names is needed by every install: a core without
-# startup integration never calls systemctl, the logrotate config is only
-# written when log rotation is on and the avahi service only when mDNS
-# advertisement is. those packages therefore sit in their own lists in .options
-# and are appended here from the setting that makes them necessary, which is why
-# both callers have to resolve their settings before asking for a list
+# startup integration never calls systemctl, and the logrotate config, the cron
+# job and the avahi service are only written when their setting is on - a
+# cron.daily file being useless without a cron daemon to run it. those packages
+# therefore sit in their own lists in .options and are appended here from the
+# setting that makes them necessary, which is why both callers have to resolve
+# their settings before asking for a list
 getRequiredPkg() {
   pkg="$require_pkg"
   if [ "$systemd" = "true" ]
@@ -20,6 +21,10 @@ getInstallPkg() {
   if [ "$logrotate" = "true" ]
   then
     pkg="$pkg $install_pkg_logrotate"
+  fi
+  if [ "$cron" = "true" ]
+  then
+    pkg="$pkg $install_pkg_cron"
   fi
   if [ "$advertise" = "true" ]
   then

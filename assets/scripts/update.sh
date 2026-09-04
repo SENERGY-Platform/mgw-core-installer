@@ -140,9 +140,9 @@ handleRelease() {
   fi
 }
 
-# runs after handleNew, because the lists it works on depend on settings that
-# handleNew can still resolve - an install predating the advertise setting only
-# learns there that it wants avahi
+# runs after handleIntegrationSettings, because the lists it works on depend on
+# settings a release can still introduce - an install predating the advertise
+# setting only learns there that it wants avahi
 handlePackages() {
   missing=$(getMissingPkg "$(getInstallPkg)")
   if [ "$missing" != "" ]
@@ -504,7 +504,10 @@ handleBinConfigs() {
   done
 }
 
-handleNew() {
+# the settings a release introduced that decide which packages the update needs.
+# they are resolved here instead of in handleNew, whose own openssl calls need
+# the packages to be installed already - see the three-part flow at the bottom
+handleIntegrationSettings() {
   if [ "$cron" = "" ]
   then
     requireUser
@@ -526,6 +529,34 @@ handleNew() {
       esac
     done
   fi
+  if [ "$advertise" = "" ]
+  then
+    if [ "$auto" = "true" ]
+    then
+      advertise=true
+    else
+      while :
+      do
+        printColor "enable mDNS advertisement? (y/n): " "$blue" "nb"
+        read -r choice
+        case "$choice" in
+        y)
+          advertise=true
+          break
+          ;;
+        n)
+          advertise=false
+          break
+          ;;
+        *)
+          echo "unknown option"
+        esac
+      done
+    fi
+  fi
+}
+
+handleNew() {
   if [ "$core_id" = "" ]
   then
     if ! core_id="$(openssl rand -hex 4)"
@@ -553,10 +584,6 @@ handleNew() {
     then
       exit 1
     fi
-  fi
-  if [ "$advertise" = "" ]
-  then
-    advertise=true
   fi
   handleCoreUser
   handleGatewayPort
@@ -629,16 +656,23 @@ cd ../..
 . $install_path/.settings
 
 checkRoot
+# same three-part flow as setup.sh: what the user is asked first, the packages
+# those answers need second, the remaining settings last - handleNew generates
+# ids and passwords with openssl, which the second part installs
 printColor "setting up updater ..." "$yellow"
 detectDockerCompose
-handleNew
-parseImages
-exportSettingsToEnv
+handleIntegrationSettings
 printColor "setting up updater done" "$yellow"
 printLnBr
 printColor "setting up required packages ..." "$yellow"
 handlePackages
 printColor "setting up required packages done" "$yellow"
+printLnBr
+printColor "resolving settings ..." "$yellow"
+handleNew
+parseImages
+exportSettingsToEnv
+printColor "resolving settings done" "$yellow"
 printLnBr
 printColor "updating files ..." "$yellow"
 updateInstallDir
