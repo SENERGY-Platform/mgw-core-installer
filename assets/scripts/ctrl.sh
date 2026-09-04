@@ -68,7 +68,7 @@ checkSystemd() {
     fi
 }
 
-# TODO remove build-mm
+# TODO remove build-ui
 printHelp() {
   printf '%s\n' \
   '' \
@@ -81,13 +81,12 @@ printHelp() {
   'ctr-recreate   recreate containers' \
   'ctr-purge      recreate containers and volumes' \
   'beta-test      toggle beta releases' \
-  'build-mm       build module-manager' \
   'build-ui       build web-ui' \
   'help           display this help page' \
   ''
 }
 
-# TODO remove build-mm
+# TODO remove build-ui
 if ! [ "$(id -u)" = "0" ]
 then
   echo "root privileges required"
@@ -136,9 +135,6 @@ ctr-purge)
   ;;
 beta-test)
   handleBetaRelease
-  ;;
-build-mm)
-  buildModuleManager
   ;;
 build-ui)
   buildWebUI
