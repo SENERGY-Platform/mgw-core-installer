@@ -117,13 +117,21 @@ In order, `setup.sh`:
    templates. Installed binary versions are recorded in `<base_path>/.binaries`.
 7. Renders and installs the systemd mount/service units (prefixed with the core name),
    the logrotate config, the cron job and the avahi service. Installed units are recorded
-   in `<base_path>/.units`, then enabled and started.
+   in `<base_path>/.units` and enabled, but not started yet.
 8. Copies the container configs and the compose template, renders `docker-compose.yml` from
-   the installed template, creates the containers with `docker compose up --no-start` and
-   optionally starts them. The template is kept in `container/` so that `ctrl.sh` can
-   re-render without the release archive.
+   the installed template and creates the containers with `docker compose up --no-start`.
+   The template is kept in `container/` so that `ctrl.sh` can re-render without the release
+   archive.
 9. Writes `<base_path>/.settings`, which is the single source of truth for all later
    `ctrl.sh` and `update.sh` runs.
+10. Starts the core: the systemd units first, then — after the prompt — the containers.
+
+Steps 5 to 9 write the whole installation before step 10 starts any part of it, because a
+component may read any of those files at startup — the core-manager reads the rendered
+`docker-compose.yml`. Step 10 then follows the order the core itself needs: the host
+binaries write the identity-server and gateway configs the containers mount, so they go up
+first (see [the note on the order of operations](#using-ctrlsh)). Without systemd
+integration step 10 is skipped entirely and `ctrl.sh start` takes its place.
 
 ### Resulting layout
 
@@ -196,10 +204,17 @@ The update runs in two stages:
     * downloads only those host binaries whose pinned version changed, removes binaries that
       are no longer part of the release and re-renders their configs,
     * re-renders the systemd units, logrotate config, cron job and avahi service, removing
-      units that no longer exist,
-    * replaces the container assets, pulls the new images, recreates the containers and —
-      with systemd integration — starts them again,
-    * writes the new `.version` and `.settings`.
+      units that no longer exist, and enables them without starting them,
+    * replaces the container assets, re-renders `docker-compose.yml`, pulls the new images
+      and recreates the containers,
+    * writes the new `.version` and `.settings`,
+    * with systemd integration, starts the core again — the units first, then the
+      containers. Without it the core stays down and `ctrl.sh start` brings it back.
+
+The whole installation is replaced before anything is started again, for the same reason as
+in the installation: the core-manager reads the rendered `docker-compose.yml` when it
+starts, so an update that started the host binaries before replacing the container assets
+would hand it the pre-update file.
 
 Because the second stage always comes from the *new* release, migration steps ship with the
 release that needs them.
@@ -300,9 +315,13 @@ sudo /opt/mgw/ctrl.sh <command>
 | `help` | Prints the command list. | |
 
 Notes on the order of operations: the host binaries must run before the containers, because
-the gateway proxies to their unix sockets and the module-manager talks to the container
-engine wrapper through the gateway. `start` therefore always brings up the binaries (or
+the gateway proxies to their unix sockets, the module-manager talks to the container engine
+wrapper through the gateway, and the identity-server and gateway configs the containers
+mount are written by the core-manager. `start` therefore always brings up the binaries (or
 units) first and waits a second before starting the containers; `stop` reverses that order.
+`setup.sh` and `update.sh` follow the same order, and both render everything the core reads
+at startup — the core-manager reads `docker-compose.yml` — before they start any part of
+it.
 
 ---
 

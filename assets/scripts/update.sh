@@ -243,6 +243,10 @@ stopComponents() {
   rm -r $secrets_path/* > /dev/null 2>& 1
 }
 
+# installs and enables the units, but leaves starting them to startComponents.
+# the host binaries read files the update renders - the core-manager reads the
+# compose file at startup - so nothing may run before every one of them has been
+# replaced
 handleSystemd() {
   if [ "$systemd" = "true" ]
   then
@@ -283,11 +287,6 @@ handleSystemd() {
       do
         echo "enabling $unit ..."
         if ! systemctl enable "$unit"
-        then
-          exit 1
-        fi
-        echo "starting $unit ..."
-        if ! systemctl start "$unit"
         then
           exit 1
         fi
@@ -369,7 +368,7 @@ updateContainerImages() {
   cd ../..
 }
 
-handleContainers() {
+createContainers() {
   if ! cd $container_path
   then
     exit 1
@@ -379,13 +378,28 @@ handleContainers() {
   then
     exit 1
   fi
-  if [ "$systemd" = "true" ]
+  if ! cd $script_path
   then
-    echo "starting containers ..."
-    if ! dockerCompose start
-    then
-      exit 1
-    fi
+    exit 1
+  fi
+  cd ../..
+}
+
+# brings the core back up in the order its parts depend on each other: the host
+# binaries first, because the containers reach the core through their unix
+# sockets and mount the gateway and identity-server configs the core-manager
+# writes, then the containers. only called with systemd integration - without it
+# the core is started by 'ctrl.sh', which keeps the same order
+startComponents() {
+  startUnits
+  if ! cd $container_path
+  then
+    exit 1
+  fi
+  echo "starting containers ..."
+  if ! dockerCompose start
+  then
+    exit 1
   fi
   if ! cd $script_path
   then
@@ -652,12 +666,16 @@ cd ../..
 . ./assets/scripts/lib/github.sh
 . ./assets/scripts/lib/container.sh
 . ./assets/scripts/lib/bin_ctrl.sh
+. ./assets/scripts/lib/sysd_ctrl.sh
 . $install_path/.settings
 
 checkRoot
 # same three-part flow as setup.sh: what the user is asked first, the packages
 # those answers need second, the remaining settings last - handleNew generates
-# ids and passwords with openssl, which the second part installs
+# ids and passwords with openssl, which the second part installs.
+# from the stop onwards the whole installation is replaced before a single
+# component of the core is started again, because a component may read any of
+# those files at startup - starting is the last step, see startComponents
 printColor "setting up updater ..." "$yellow"
 detectDockerCompose
 handleIntegrationSettings
@@ -697,11 +715,23 @@ printLnBr
 printColor "updating container environment ..." "$yellow"
 handleContainerAssets
 updateContainerImages
-handleContainers
+createContainers
 printColor "updating container environment done" "$yellow"
+printLnBr
+# the installation is complete by now, '.version' and '.settings' included -
+# 'ctrl.sh' and 'update.sh' source them, so they must not wait for a start that
+# can still fail
 updateVersion
 saveSettings
+if [ "$systemd" = "true" ]
+then
+  printColor "starting components ..." "$yellow"
+  startComponents
+  printColor "starting components done" "$yellow"
+  printLnBr
+fi
+# removes the extracted release this script runs from, so nothing may need the
+# working space afterwards
 rm -r $wrk_spc
-printLnBr
 printColor "update successful" "$yellow"
 printLnBr

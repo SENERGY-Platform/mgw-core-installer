@@ -36,13 +36,13 @@ shift "$(($OPTIND -1))"
 . ./assets/scripts/lib/package.sh
 . ./assets/scripts/lib/github.sh
 . ./assets/scripts/lib/container.sh
+. ./assets/scripts/lib/sysd_ctrl.sh
 . ./assets/scripts/lib/sem_ver.sh
 
 setup_path=$(pwd)
 # TODO remove
 echo "dev" > .version
 version="$(cat .version)"
-bin_started=false
 
 if ! platform="$(getPlatform)"
 then
@@ -229,6 +229,10 @@ handleBinConfigs() {
   done
 }
 
+# installs and enables the units, but leaves starting them to startComponents.
+# the host binaries read files the installation renders - the core-manager reads
+# the compose file at startup - so nothing may run before every one of them is
+# in place
 handleSystemd() {
   if [ "$systemd" = "true" ]
   then
@@ -257,14 +261,8 @@ handleSystemd() {
         then
           exit 1
         fi
-        echo "starting $unit ..."
-        if ! systemctl start "$unit"
-        then
-          exit 1
-        fi
         echo "$unit" >> $base_path/.units
       done
-      bin_started=true
     fi
   fi
 }
@@ -551,53 +549,67 @@ handleIntegration() {
   fi
 }
 
-handleDocker() {
+createContainers() {
   echo "creating containers ..."
   if ! cd $container_path
   then
-    exit
+    exit 1
   fi
   if ! dockerCompose up --no-start
   then
     exit 1
   fi
-  if [ "$bin_started" = "true" ]
-  then
-    while :
-    do
-      if [ "$read_config" = "true" ]
-      then
-        if [ "$start_containers" = "true" ]
-        then
-          choice=y
-        else
-          choice=n
-        fi
-      else
-        printColor "start containers? (y/n): " "$blue" "nb"
-        read -r choice
-      fi
-      case $choice in
-      y)
-        if ! dockerCompose start
-        then
-          exit 1
-        fi
-        break
-        ;;
-      n)
-        echo "please use 'ctrl.sh' for manual control or reboot your system"
-        break
-        ;;
-      *)
-        echo "unknown option"
-      esac
-    done
-  fi
   if ! cd $setup_path
   then
     exit 1
   fi
+}
+
+# brings the core up in the order its parts depend on each other: the host
+# binaries first, because the containers reach the core through their unix
+# sockets and mount the gateway and identity-server configs the core-manager
+# writes, then the containers. only called with systemd integration - without
+# it the core is started by 'ctrl.sh', which keeps the same order
+startComponents() {
+  startUnits
+  while :
+  do
+    if [ "$read_config" = "true" ]
+    then
+      if [ "$start_containers" = "true" ]
+      then
+        choice=y
+      else
+        choice=n
+      fi
+    else
+      printColor "start containers? (y/n): " "$blue" "nb"
+      read -r choice
+    fi
+    case $choice in
+    y)
+      if ! cd $container_path
+      then
+        exit 1
+      fi
+      if ! dockerCompose start
+      then
+        exit 1
+      fi
+      if ! cd $setup_path
+      then
+        exit 1
+      fi
+      break
+      ;;
+    n)
+      echo "please use 'ctrl.sh' for manual control or reboot your system"
+      break
+      ;;
+    *)
+      echo "unknown option"
+    esac
+  done
 }
 
 handleOptions() {
@@ -687,7 +699,10 @@ printLnBr
 # the flow is deliberately in three parts: everything the user is asked runs
 # first, the packages those answers need are installed second, and only then are
 # the settings resolved - the ids and passwords are generated with openssl,
-# which is one of the packages the second part installs
+# which is one of the packages the second part installs.
+# what follows writes the whole installation before a single component of the
+# core is started, because a component may read any of those files at startup -
+# starting is the last step, see startComponents
 printColor "setting up installer ..." "$yellow"
 detectDockerCompose
 handleDefaultSettings
@@ -732,10 +747,20 @@ printColor "setting up integration done" "$yellow"
 printLnBr
 printColor "setting up container environment ..." "$yellow"
 copyContainerAssets
-handleDocker
+createContainers
 printColor "setting up container environment done" "$yellow"
-saveSettings
 printLnBr
+# everything the core reads at startup is rendered by now, '.settings' included -
+# 'ctrl.sh' and 'update.sh' source it, so it must not wait for a start that can
+# still fail
+saveSettings
+if [ "$systemd" = "true" ]
+then
+  printColor "starting core ..." "$yellow"
+  startComponents
+  printColor "starting core done" "$yellow"
+  printLnBr
+fi
 printColor "installation successful" "$yellow"
 printLnBr
 printAccessInfo
