@@ -565,6 +565,33 @@ createContainers() {
   fi
 }
 
+# the core is started as a whole or not at all, which is why the question covers
+# the units as well as the containers: starting the units alone leaves the
+# gateway proxying to services that are not there, a core the user has to repair
+# with 'ctrl.sh' before it has ever been up
+handleCoreStart() {
+  if [ "$read_config" != "true" ]
+  then
+    while :
+    do
+      printColor "start core? (y/n): " "$blue" "nb"
+      read -r choice
+      case "$choice" in
+      y)
+        start_core=true
+        break
+        ;;
+      n)
+        start_core=false
+        break
+        ;;
+      *)
+        echo "unknown option"
+      esac
+    done
+  fi
+}
+
 # brings the core up in the order its parts depend on each other: the host
 # binaries first, because the containers reach the core through their unix
 # sockets and mount the gateway and identity-server configs the core-manager
@@ -572,44 +599,19 @@ createContainers() {
 # it the core is started by 'ctrl.sh', which keeps the same order
 startComponents() {
   startUnits
-  while :
-  do
-    if [ "$read_config" = "true" ]
-    then
-      if [ "$start_containers" = "true" ]
-      then
-        choice=y
-      else
-        choice=n
-      fi
-    else
-      printColor "start containers? (y/n): " "$blue" "nb"
-      read -r choice
-    fi
-    case $choice in
-    y)
-      if ! cd $container_path
-      then
-        exit 1
-      fi
-      if ! dockerCompose start
-      then
-        exit 1
-      fi
-      if ! cd $setup_path
-      then
-        exit 1
-      fi
-      break
-      ;;
-    n)
-      echo "please use 'ctrl.sh' for manual control or reboot your system"
-      break
-      ;;
-    *)
-      echo "unknown option"
-    esac
-  done
+  echo "starting containers ..."
+  if ! cd $container_path
+  then
+    exit 1
+  fi
+  if ! dockerCompose start
+  then
+    exit 1
+  fi
+  if ! cd $setup_path
+  then
+    exit 1
+  fi
 }
 
 handleOptions() {
@@ -754,11 +756,19 @@ printLnBr
 # 'ctrl.sh' and 'update.sh' source it, so it must not wait for a start that can
 # still fail
 saveSettings
+# a core without startup integration is never started here, it is left to
+# 'ctrl.sh' - see handleIntegration
 if [ "$systemd" = "true" ]
 then
-  printColor "starting core ..." "$yellow"
-  startComponents
-  printColor "starting core done" "$yellow"
+  handleCoreStart
+  if [ "$start_core" = "true" ]
+  then
+    printColor "starting core ..." "$yellow"
+    startComponents
+    printColor "starting core done" "$yellow"
+  else
+    echo "please use 'ctrl.sh' for manual control or reboot your system"
+  fi
   printLnBr
 fi
 printColor "installation successful" "$yellow"

@@ -79,8 +79,11 @@ The installer asks for confirmation and then walks through a number of prompts:
 5. **mDNS advertisement** — publishes an avahi service so the core is discoverable in the
    local network.
 6. **Allow beta releases** — whether `update.sh` may pick up `-beta` tags.
-7. **Start containers** — only asked when systemd integration is enabled, since the
-   container stack needs the host binaries to be running.
+7. **Start core** — asked last, and only when systemd integration is enabled, since a core
+   without it is started with `ctrl.sh` anyway. It covers the whole core, units and
+   containers: the two are of no use without each other, so they are started together or
+   not at all. Declining leaves the installed core down until the next reboot or a
+   `ctrl.sh start`.
 
 ### Non-interactive installation
 
@@ -92,8 +95,15 @@ sudo ./setup.sh -c /path/to/config.ini
 ```
 
 In this mode no questions are asked. `skip_pgk_install_confirm=true` also suppresses the
-package-installation prompt, and `start_containers=true` starts the stack at the end of the
-installation. `./setup.sh -h` prints the usage.
+package-installation prompt, and `start_core=true` starts the core — units and containers —
+at the end of the installation, the same thing prompt 7 above asks for. It needs
+`systemd=true`; anything else leaves the core down. `./setup.sh -h` prints the usage.
+
+**BREAKING CHANGE: `start_containers` was renamed to `start_core`.** It now starts the
+systemd units together with the containers instead of the containers alone. A config file
+that still says `start_containers=true` is not an error and not reported — the setting is
+simply unknown, so the installation completes with the core left down, to be started with
+`ctrl.sh start` or by the next reboot.
 
 Three paths can additionally be overridden through environment variables, each of which
 must be absolute: `SYSTEMD_PATH`, `LOGROTATED_PATH`, `CRON_PATH`.
@@ -124,7 +134,8 @@ In order, `setup.sh`:
    archive.
 9. Writes `<base_path>/.settings`, which is the single source of truth for all later
    `ctrl.sh` and `update.sh` runs.
-10. Starts the core: the systemd units first, then — after the prompt — the containers.
+10. Asks whether to start the core and, if so, starts it: the systemd units first, then the
+    containers.
 
 Steps 5 to 9 write the whole installation before step 10 starts any part of it, because a
 component may read any of those files at startup — the core-manager reads the rendered
