@@ -48,7 +48,7 @@ server {
         error_page 401 = @errorAuth;
         rewrite /core/web-ui(.*) /$1 break;
         proxy_pass http://$core_gui$1$is_args$args;
-        location ~* ^/core/web-ui/(.+\.(js|css|ico))$ {
+        location ~* ^/core/web-ui/((?:assets|media)/.+|.+\.(js|css|ico|svg))$ {
             auth_request off;
             proxy_pass http://$core_gui/$1;
         }
