@@ -17,5 +17,5 @@ AUTH_SERVICE_IMG=ghcr.io/senergy-platform/mgw-auth-service:0.3.2
 MODULE_MANAGER_IMG=ghcr.io/senergy-platform/mgw-module-manager:0.52.0
 MODULE_MANAGER_MIGRATION_IMG=ghcr.io/senergy-platform/mgw-module-manager-migration:0.2.2
 SECRET_MANAGER_IMG=ghcr.io/senergy-platform/mgw-secret-manager:0.6.1
-WEB_UI_IMG=ghcr.io/senergy-platform/mgw-gui:v2.13.2
+WEB_UI_IMG=ghcr.io/senergy-platform/mgw-gui:v3.0.0
 "
