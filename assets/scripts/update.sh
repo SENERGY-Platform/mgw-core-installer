@@ -208,10 +208,21 @@ updateInstallDir() {
   fi
 }
 
+# the '.version' of the release this script was extracted from is the version
+# being installed. a clone has none, so it falls back to a generated one the
+# same way setup.sh does
 updateVersion() {
-  if ! cp .version $base_path/.version
+  if [ -f .version ]
   then
-    exit 1
+    if ! cp .version $base_path/.version
+    then
+      exit 1
+    fi
+  else
+    if ! echo "dev-$(date +%s)" > $base_path/.version
+    then
+      exit 1
+    fi
   fi
 }
 
@@ -427,17 +438,17 @@ handleBin() {
   for item in ${binaries}
   do
     repo="${item%%:*}"
-    new_version="${item##*:}"
-    if version="$(inMap "$installed_bin" "$repo")"
+    bin_version="${item##*:}"
+    if installed_bin_version="$(inMap "$installed_bin" "$repo")"
     then
-      if [ "$new_version" = "$version" ]
+      if [ "$bin_version" = "$installed_bin_version" ]
       then
         echo "$item" >> $base_path/.binaries
         continue
       fi
     fi
-    echo "getting $repo release $new_version ..."
-    if ! release="$(getGitHubRelease "$repo" "$new_version")"
+    echo "getting $repo release $bin_version ..."
+    if ! release="$(getGitHubRelease "$repo" "$bin_version")"
     then
       exit 1
     fi

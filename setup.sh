@@ -40,9 +40,15 @@ shift "$(($OPTIND -1))"
 . ./assets/scripts/lib/sem_ver.sh
 
 setup_path=$(pwd)
-# TODO remove
-echo "dev" > .version
-version="$(cat .version)"
+# '.version' ships with a release archive but is not part of the repository, so
+# running the installer from a git clone has to fall back to a version of its own.
+# only the install directory gets a '.version' written, see prepareInstallDir
+if [ -f .version ]
+then
+  version="$(cat .version)"
+else
+  version="dev-$(date +%s)"
+fi
 
 if ! platform="$(getPlatform)"
 then
@@ -135,7 +141,8 @@ prepareInstallDir() {
   then
     exit 1
   fi
-  if ! cp .version $base_path/.version
+  # the version resolved at startup, which a git clone has no '.version' for
+  if ! echo "$version" > $base_path/.version
   then
     exit 1
   fi
@@ -151,9 +158,9 @@ handleBin() {
   for item in ${binaries}
   do
     repo="${item%%:*}"
-    version="${item##*:}"
-    echo "getting $repo release $version ..."
-    if ! release="$(getGitHubRelease "$repo" "$version")"
+    bin_version="${item##*:}"
+    echo "getting $repo release $bin_version ..."
+    if ! release="$(getGitHubRelease "$repo" "$bin_version")"
     then
       rm -r $wrk_spc
       exit 1
