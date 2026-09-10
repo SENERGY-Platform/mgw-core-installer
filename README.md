@@ -22,6 +22,7 @@ container stack via Docker Compose.
     * [After the installation](#after-the-installation)
 * [Updating](#updating)
     * [Manual update](#manual-update)
+    * [Manual update from a downloaded release](#manual-update-from-a-downloaded-release)
     * [Automatic updates](#automatic-updates)
     * [Beta and alpha releases](#beta-and-alpha-releases)
 * [Uninstalling](#uninstalling)
@@ -64,6 +65,11 @@ tar -xzf mgw_core_installer_<version>.tar.gz
 cd mgw_core_installer_<version>
 sudo ./setup.sh
 ```
+
+The release archive carries the version the core reports as installed. Running `setup.sh`
+from a clone of this repository works as well — there is no version to take from, so the
+install is labelled `dev-<unix timestamp>` and cannot be updated by
+[the release check](#updating).
 
 The installer asks for confirmation and then walks through a number of prompts:
 
@@ -152,7 +158,7 @@ integration step 10 is skipped entirely and `ctrl.sh start` takes its place.
 ├── update.sh                 update script
 ├── uninstall.sh              uninstall script
 ├── .settings                 all resolved settings (sourced by ctrl.sh/update.sh)
-├── .version                  installed release
+├── .version                  installed release ('dev-<timestamp>' when installed from a clone)
 ├── .binaries                 installed host binaries and their versions
 ├── .units                    installed systemd units
 ├── .pid                      PIDs of the host binaries (only without systemd)
@@ -182,6 +188,12 @@ TXT records.
 
 Updating is driven by GitHub releases of this repository. The installed release is stored
 in `<base_path>/.version` and compared against the release tags.
+
+A core installed from a git clone has no release to record and is labelled
+`dev-<unix timestamp>` instead. No tag compares against that: the version comparison feeds
+it to the shell's `[`, which rejects it as a number, so the search ends without a candidate
+and the update exits without saying why. Such a core can only be updated
+[from a downloaded release](#manual-update-from-a-downloaded-release).
 
 ### Manual update
 
@@ -230,6 +242,37 @@ would hand it the pre-update file.
 Because the second stage always comes from the *new* release, migration steps ship with the
 release that needs them.
 
+### Manual update from a downloaded release
+
+An update can also be driven from a release archive already on the host, or from a clone of
+this repository. Doing so means running **stage two directly** — the same invocation stage
+one would perform — with the install directory as `-path`:
+
+```sh
+tar -xzf mgw_core_installer_<version>.tar.gz
+sudo ./mgw_core_installer_<version>/assets/scripts/update.sh -path=/opt/mgw
+```
+
+This is the way to update a core whose version stage one cannot work with: an installed
+alpha release, a `dev-<timestamp>` install from a clone, or a host without access to the
+GitHub release list. Points worth knowing:
+
+* **No version comparison happens in stage two.** Stage one is the only part that reads the
+  release list, so stage two installs whatever release it belongs to — including the release
+  already installed, an older one, or an alpha.
+* **Call the script through a path**, as above. It derives its own location from `$0`, so
+  `sh update.sh` from inside `assets/scripts` fails immediately.
+* `-a` works here too and has the same meaning as in an automatic update: no prompts, and
+  an abort if the release introduces a setting that would need an answer.
+* A clone carries no `.version`, so the version written to the install directory is a
+  generated `dev-<unix timestamp>`, exactly as an install from a clone gets one.
+
+**Do not use `setup.sh` for this.** It installs a *new* core and never reads the existing
+`<base_path>/.settings`: the core ID, core name and all passwords are generated afresh,
+which leaves the new configuration pointing at database volumes that still hold the old
+credentials. It also neither stops the running core nor removes the units and binaries a
+new release dropped.
+
 ### Automatic updates
 
 If enabled during installation, `/etc/cron.daily/<core_name>_update` runs
@@ -250,9 +293,10 @@ Automatic updates can be enabled or disabled later by adding or removing that cr
 
 * Beta releases are only considered when `allow_beta=true`; toggle it with
   `sudo /opt/mgw/ctrl.sh beta-test`.
-* Alpha releases are never picked up automatically. An installed alpha version cannot be
-  updated at all — `update.sh` exits with *"alpha versions must be updated manually"*, so a
-  new release has to be installed by running its `setup.sh`.
+* Alpha releases are never picked up automatically, and an installed alpha version stops
+  stage one with *"alpha versions must be updated manually"*. Manually means the stage-two
+  invocation described [above](#manual-update-from-a-downloaded-release), which has no such
+  check — not `setup.sh`, which would install a new core beside the existing one's data.
 
 ---
 
