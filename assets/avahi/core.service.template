@@ -3,7 +3,7 @@
 <service-group>
   <name replace-wildcards="no">MGW-Core-${CORE_ID}</name>
   <service protocol="ipv4">
-    <type>_mgwcore_${CORE_ID}._tcp</type>
+    <type>_snrgy-mgwcore._tcp</type>
     <port>${GATEWAY_PORT}</port>
     <txt-record value-format="text">api_path=/core/api</txt-record>
     <txt-record value-format="text">auth_path=/core/auth</txt-record>
