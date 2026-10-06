@@ -18,6 +18,9 @@
     "methods": {
       "password": {
         "enabled": true
+      },
+      "profile": {
+        "enabled": false
       }
     },
     "flows": {
@@ -35,8 +38,17 @@
         "after": {
           "password": {
             "default_browser_return_url": "/core/web-ui"
+          },
+          "oidc": {
+            "default_browser_return_url": "/core/web-ui"
           }
         }
+      },
+      "registration": {
+        "enabled": false
+      },
+      "settings": {
+        "ui_url": "/core/web-ui/account"
       }
     }
   },
