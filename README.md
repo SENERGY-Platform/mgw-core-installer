@@ -25,6 +25,7 @@ container stack via Docker Compose.
     * [Manual update from a downloaded release](#manual-update-from-a-downloaded-release)
     * [Automatic updates](#automatic-updates)
     * [Beta and alpha releases](#beta-and-alpha-releases)
+* [Single sign-on](#single-sign-on)
 * [Uninstalling](#uninstalling)
 * [Using `ctrl.sh`](#using-ctrlsh)
 * [Services in the core](#services-in-the-core)
@@ -297,6 +298,32 @@ Automatic updates can be enabled or disabled later by adding or removing that cr
   stage one with *"alpha versions must be updated manually"*. Manually means the stage-two
   invocation described [above](#manual-update-from-a-downloaded-release), which has no such
   check — not `setup.sh`, which would install a new core beside the existing one's data.
+
+---
+
+## Single sign-on
+
+The web UI can offer sign-in through an external OpenID Connect provider such as Authentik
+or Keycloak, in addition to the password. It is set up in the web UI under
+*System > Configuration > Single sign-on*; the setting lives in the dynamic Kratos config
+under `mounts/kratos` and survives updates. What the provider side needs:
+
+* **Callback URL**: `<external URL>/core/auth/self-service/methods/oidc/callback/<provider id>`.
+  The provider id is `sso-` followed by the first 12 hex digits of the SHA-256 of the issuer
+  URL exactly as entered; the configuration page shows the full URL after saving. A
+  different issuer, including one that differs only by a trailing slash, gives a different
+  id and needs a new client registration — and a new client secret.
+* **Existing accounts only**: the gateway never creates an account from a provider login.
+  A user signs in with their password once and links the provider account under
+  *Account settings*; a provider account that is not linked is refused.
+* **External URL**: the address the browser uses. Single sign-on works only from that
+  address; under any other address of the gateway the login page links to it.
+* **Plain HTTP**: Kratos runs with `--dev`, which drops the `Secure` flag from its session,
+  CSRF and continuity cookies. That is what makes sign-in work over `http://`, and it
+  applies over HTTPS as well.
+
+The client secret is stored in plain text in that config file, readable only by the
+Kratos user; the API never returns it.
 
 ---
 

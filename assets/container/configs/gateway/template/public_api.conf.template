@@ -68,6 +68,19 @@ server {
             rewrite /core/auth/logout(.*) /$1 break;
             proxy_pass http://$identity_server/self-service/logout$1$is_args$args;
         }
+        # Kratos answers 401 without a session cookie; the UI reads the signed-in identity here.
+        location = /core/auth/whoami {
+            proxy_pass http://$identity_server/sessions/whoami;
+        }
+        location /core/auth/settings {
+            rewrite /core/auth/settings(.*) /$1 break;
+            proxy_pass http://$identity_server/self-service/settings$1$is_args$args;
+        }
+        # The identity provider returns here without a session; Kratos checks the flow itself.
+        location /core/auth/self-service/methods/oidc {
+            rewrite /core/auth/self-service/methods/oidc(.*) /$1 break;
+            proxy_pass http://$identity_server/self-service/methods/oidc$1$is_args$args;
+        }
     }
     location /core/api {
         auth_request /validate-session;
