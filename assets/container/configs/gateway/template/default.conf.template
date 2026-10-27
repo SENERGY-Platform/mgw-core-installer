@@ -14,6 +14,12 @@ server {
     location ~ ^(.*)/$ {
         return 301 $1$is_args$args;
     }
+    location = /core-manager/health {
+        limit_except GET { deny all; }
+        proxy_pass http://c_manager_sock/restricted/health;
+        allow ${SUBNET_MODULE}/16;
+        deny all;
+    }
     location /c-manager {
         rewrite /c-manager(.*) /$1 break;
         proxy_pass http://c_manager_sock$1$is_args$args;

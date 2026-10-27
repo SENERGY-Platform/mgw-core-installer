@@ -12,6 +12,7 @@
   },
   "endpoints_conf_path": "${MOUNTS_PATH}/nginx/dep_endpoints.location",
   "compose_file_path": "${CONTAINER_PATH}/docker-compose.yml",
+  "install_path": "${BASE_PATH}",
   "core_id": "${CORE_ID}",
   "core_service": {
     "gateway_srv_name": "nginx"

@@ -92,3 +92,10 @@ that will not come up, an image that will not run — and what is left behind th
 has to be an installation `ctrl.sh` and `update.sh` can still drive. Both source
 `<base_path>/.settings`; a core whose files are complete but whose `.settings`
 was never written cannot be started, stopped or updated by any of them.
+
+Because `.version` is written before the start, it does not prove the update
+worked. `<base_path>/.update_status` does: stage two of `update.sh` sets it to
+`running` before the first change and to `success` or `failed` from an EXIT trap,
+with the `update_step` the flow had reached. The trap is the one writer after the
+workspace is removed and uses absolute paths only. A record that stays `running`
+means the update was killed or the gateway lost power.

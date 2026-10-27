@@ -219,11 +219,60 @@ updateVersion() {
       exit 1
     fi
   else
-    if ! echo "dev-$(date +%s)" > $base_path/.version
+    if ! echo "$update_to_version" > $base_path/.version
     then
       exit 1
     fi
   fi
+}
+
+# runs from the EXIT trap of stage two, after the release workspace is gone, so
+# it uses absolute paths only and never alters the exit code. an exit 0 before
+# the end is a declined update that changed nothing, which is not recorded
+writeUpdateStatus() {
+  if [ "$1" = "0" ]
+  then
+    if [ "$update_completed" != "true" ]
+    then
+      return 0
+    fi
+    writeUpdateStatusRecord "success" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  else
+    writeUpdateStatusRecord "failed" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  fi
+  return 0
+}
+
+# writes result and finish time ($1, $2) of the current update atomically and
+# always returns 0, a failed write must not fail the update
+writeUpdateStatusRecord() {
+  if ! command -v jq > /dev/null 2>& 1
+  then
+    echo "warning: jq not found, update status not written"
+    return 0
+  fi
+  update_status_file="$update_status_dir/.update_status"
+  update_status_tmp="$update_status_file.tmp.$$"
+  if ! jq -n -c \
+    --arg from_version "$update_from_version" \
+    --arg to_version "$update_to_version" \
+    --arg started "$update_started" \
+    --arg finished "$2" \
+    --arg result "$1" \
+    --arg step "$update_step" \
+    '{from_version: $from_version, to_version: $to_version, started: $started, finished: $finished, result: $result, step: $step}' \
+    > "$update_status_tmp"
+  then
+    rm -f "$update_status_tmp" > /dev/null 2>& 1
+    echo "warning: writing update status failed"
+    return 0
+  fi
+  if ! mv -f "$update_status_tmp" "$update_status_file"
+  then
+    rm -f "$update_status_tmp" > /dev/null 2>& 1
+    echo "warning: writing update status failed"
+  fi
+  return 0
 }
 
 # stopping the host binaries is left to stopBin from lib/bin_ctrl.sh, which
@@ -668,6 +717,21 @@ fi
 
 cd ../..
 
+# stage two records its outcome in .update_status from here on. it goes next to
+# '.version', which is base_path once '.settings' is sourced, install_path before
+update_started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+update_from_version="$(cat "$install_path/.version" 2> /dev/null)"
+if [ -f .version ]
+then
+  update_to_version="$(cat .version)"
+else
+  update_to_version="dev-$(date +%s)"
+fi
+update_status_dir="$install_path"
+update_step="preparing update"
+update_completed=false
+trap 'update_rc=$?; writeUpdateStatus "$update_rc"; exit "$update_rc"' EXIT
+
 . ./assets/.options
 . ./assets/scripts/lib/settings.sh
 . ./assets/scripts/lib/util.sh
@@ -678,6 +742,7 @@ cd ../..
 . ./assets/scripts/lib/bin_ctrl.sh
 . ./assets/scripts/lib/sysd_ctrl.sh
 . $install_path/.settings
+update_status_dir="${base_path:-$install_path}"
 
 checkRoot
 # same three-part flow as setup.sh: what the user is asked first, the packages
@@ -686,35 +751,45 @@ checkRoot
 # from the stop onwards the whole installation is replaced before a single
 # component of the core is started again, because a component may read any of
 # those files at startup - starting is the last step, see startComponents
+update_step="setting up updater"
 printColor "setting up updater ..." "$yellow"
 detectDockerCompose
 handleIntegrationSettings
 printColor "setting up updater done" "$yellow"
 printLnBr
+update_step="setting up required packages"
 printColor "setting up required packages ..." "$yellow"
 handlePackages
 printColor "setting up required packages done" "$yellow"
 printLnBr
+update_step="resolving settings"
 printColor "resolving settings ..." "$yellow"
 handleNew
 parseImages
 exportSettingsToEnv
 printColor "resolving settings done" "$yellow"
 printLnBr
+update_step="updating files"
+# a signal or power loss skips the EXIT trap, so the record says 'running' from
+# the first change on instead of keeping the previous update's result
+writeUpdateStatusRecord "running" ""
 printColor "updating files ..." "$yellow"
 updateInstallDir
 printColor "updating done" "$yellow"
 printLnBr
+update_step="stopping components"
 printColor "stopping components ..." "$yellow"
 stopContainers
 stopComponents
 printColor "stopping components done" "$yellow"
 printLnBr
+update_step="updating binaries"
 printColor "updating binaries ..." "$yellow"
 handleBin
 handleBinConfigs
 printColor "updating binaries done" "$yellow"
 printLnBr
+update_step="updating integration"
 printColor "updating integration ..." "$yellow"
 handleSystemd
 handleLogrotate
@@ -722,6 +797,7 @@ handleCron
 handleAvahi
 printColor "updating integration done" "$yellow"
 printLnBr
+update_step="updating container environment"
 printColor "updating container environment ..." "$yellow"
 handleContainerAssets
 updateContainerImages
@@ -731,10 +807,12 @@ printLnBr
 # the installation is complete by now, '.version' and '.settings' included -
 # 'ctrl.sh' and 'update.sh' source them, so they must not wait for a start that
 # can still fail
+update_step="saving version and settings"
 updateVersion
 saveSettings
 if [ "$systemd" = "true" ]
 then
+  update_step="starting components"
   printColor "starting components ..." "$yellow"
   startComponents
   printColor "starting components done" "$yellow"
@@ -742,6 +820,7 @@ then
 fi
 # removes the extracted release this script runs from, so nothing may need the
 # working space afterwards
+update_completed=true
 rm -r $wrk_spc
 printColor "update successful" "$yellow"
 printLnBr
