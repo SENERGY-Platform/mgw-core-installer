@@ -10,6 +10,7 @@ auto=false
 install_path=""
 script_path=$(pwd)
 wrk_spc="/tmp/mgw-update"
+update_lock="/run/lock/mgw-update.lock"
 installed_units=""
 
 handleParam() {
@@ -709,6 +710,10 @@ then
   then
     date -u --rfc-3339=ns
   fi
+  if ! acquireUpdateLock
+  then
+    exit 1
+  fi
   echo "installed release: $version"
   printLnBr
   handleRelease
@@ -745,6 +750,20 @@ trap 'update_rc=$?; writeUpdateStatus "$update_rc"; exit "$update_rc"' EXIT
 update_status_dir="${base_path:-$install_path}"
 
 checkRoot
+# a run refused because another update holds the lock changed nothing and must
+# not record its exit in .update_status - that would mark the update which is
+# running as failed
+acquireUpdateLock
+case $? in
+0)
+  ;;
+2)
+  trap - EXIT
+  exit 1
+  ;;
+*)
+  exit 1
+esac
 # same three-part flow as setup.sh: what the user is asked first, the packages
 # those answers need second, the remaining settings last - handleNew generates
 # ids and passwords with openssl, which the second part installs.

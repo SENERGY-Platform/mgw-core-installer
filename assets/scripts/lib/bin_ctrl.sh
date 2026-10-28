@@ -126,12 +126,14 @@ killProcs() {
 # appends its pid to .pid. the wrapper shell reports its own pid and then
 # replaces itself with the binary, so the pid recorded is the pid of the
 # binary. setsid makes the binary a session leader without a controlling
-# terminal and the redirections drop every file descriptor of the caller, so
+# terminal and the redirections replace the standard streams of the caller, so
 # the binary outlives the shell, ssh session, cron job or ci step that called
-# ctrl.sh instead of dying on the SIGHUP that is sent when that session ends
+# ctrl.sh instead of dying on the SIGHUP that is sent when that session ends.
+# fd 9 is closed too - other descriptors are inherited, and a binary holding
+# fd 9 would hold the update lock for as long as it runs, see acquireUpdateLock
 startProc() {
   setsid sh -c 'echo $$ >> "$4"; exec "$1" -config="$2" < /dev/null >> "$3" 2>&1' \
-    sh "$1" "$2" "$3" "$base_path/.pid" &
+    sh "$1" "$2" "$3" "$base_path/.pid" 9>&- &
 }
 
 startBin() {

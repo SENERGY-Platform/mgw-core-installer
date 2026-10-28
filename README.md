@@ -288,6 +288,12 @@ interaction (for example a new setting introduced by the release that has no def
 run aborts with *"user interaction required, please run update manually"* — the update then
 has to be triggered by hand.
 
+Only one update runs at a time per host, automatic or manual. Both stages hold the lock
+`/run/lock/mgw-update.lock`, and a run that finds it held aborts with *"another update is
+running, aborting"*, without touching `.update_status` — an update that hangs therefore
+blocks later ones until it is killed, which the log shows. The lock is released when the
+update's processes exit, so a crashed run or a reboot leaves nothing to clean up.
+
 Automatic updates can be enabled or disabled later by adding or removing that cron file.
 
 ### Beta and alpha releases

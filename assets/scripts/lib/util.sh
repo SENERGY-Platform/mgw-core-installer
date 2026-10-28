@@ -130,3 +130,36 @@ printLnBr() {
     echo
   fi
 }
+
+# keeps a second update from running while one is still active - a hung
+# automatic update would otherwise be joined by the next cron run, which removes
+# the extracted release the first one installs from. the lock is host-wide like
+# the working space both share. it is held on fd 9 and released by the kernel
+# when the process holding it exits, so a crash or reboot leaves no stale lock.
+# stage one exports MGW_UPDATE_LOCKED for the stage two it starts, which
+# inherits fd 9 and only confirms it holds the lock - opening the lock file
+# anew would block against its own parent. a stage two run directly takes the
+# lock itself. anything started for good while it is held must close fd 9, see
+# startProc. returns 2 if another update holds the lock, 1 on any other failure
+acquireUpdateLock() {
+  if [ "$MGW_UPDATE_LOCKED" = "true" ] && flock -n 9 2> /dev/null
+  then
+    return 0
+  fi
+  if ! command -v flock > /dev/null
+  then
+    echo "flock not found"
+    return 1
+  fi
+  if ! mkdir -p "${update_lock%/*}"
+  then
+    return 1
+  fi
+  exec 9> "$update_lock"
+  if ! flock -n 9
+  then
+    echo "another update is running, aborting"
+    return 2
+  fi
+  export MGW_UPDATE_LOCKED=true
+}
