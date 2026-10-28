@@ -3,9 +3,12 @@
 yellow="\e[93;1m"
 blue="\e[96;1m"
 
+# a download has no overall limit, a slow link may well need long for a large
+# file. it fails once it cannot connect within 30s or stalls below 1 KiB/s for
+# 60s, which is what a connection that will never finish looks like
 downloadFile() {
   path="$2/$(basename "$1")"
-  if ! curl -L -s -o "$path" "$1"
+  if ! curl -L -s --connect-timeout 30 --speed-limit 1024 --speed-time 60 -o "$path" "$1"
   then
     return 1
   fi

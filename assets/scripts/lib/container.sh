@@ -40,6 +40,31 @@ dockerCompose() {
   return $?
 }
 
+# runs docker compose like dockerCompose, but kills it after $1 seconds, 0
+# meaning no limit. timeout starts it in a process group of its own and kills
+# the whole group, which includes the compose plugin the docker cli runs as a
+# child - --foreground would leave the plugin running. that group is out of
+# reach of Ctrl-C, so a limit only suits a run nobody watches, and without one
+# timeout is not involved at all
+dockerComposeTimeout() {
+  limit="$1"
+  shift
+  if [ "$limit" = "0" ]; then
+    dockerCompose "$@"
+    return $?
+  fi
+  cmd="docker compose"
+  if [ "$old_compose" = "true" ]; then
+    cmd="docker-compose"
+  fi
+  timeout -k 30 "$limit" $cmd "$@"
+  rc=$?
+  if [ $rc -eq 124 ] || [ $rc -eq 137 ]; then
+    echo "docker compose $1 timed out after ${limit}s"
+  fi
+  return $rc
+}
+
 # renders the compose file from the template installed next to it. reading the
 # installed copy instead of the one in the release archive is what lets ctrl.sh
 # re-render on a host that has no archive, when a setting the template uses

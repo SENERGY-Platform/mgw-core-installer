@@ -290,9 +290,22 @@ has to be triggered by hand.
 
 Only one update runs at a time per host, automatic or manual. Both stages hold the lock
 `/run/lock/mgw-update.lock`, and a run that finds it held aborts with *"another update is
-running, aborting"*, without touching `.update_status` — an update that hangs therefore
-blocks later ones until it is killed, which the log shows. The lock is released when the
+running, aborting"*, without touching `.update_status`. The lock is released when the
 update's processes exit, so a crashed run or a reboot leaves nothing to clean up.
+
+So that a hanging update cannot hold the lock for ever, the steps that wait on something
+outside the host are limited in time:
+
+* Requests to the GitHub release API fail after 120 s. Downloads have no overall limit, so
+  a slow link can still finish a large file. They fail if no connection is made within
+  30 s or if they stay below 1 KiB/s for 60 s.
+* In an automatic update, each `docker compose` call is limited: `pull` to 60 minutes,
+  removing, creating and starting the containers to 10 minutes each. A call that runs out
+  is killed and logged as *"docker compose <command> timed out after <n>s"*. A manual
+  update has no such limit and can be aborted with Ctrl-C instead.
+
+A step that times out ends the update like any other failure. By then the core may
+already be stopped, and it stays down until it is started again or an update succeeds.
 
 Automatic updates can be enabled or disabled later by adding or removing that cron file.
 

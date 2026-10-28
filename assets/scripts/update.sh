@@ -11,6 +11,8 @@ install_path=""
 script_path=$(pwd)
 wrk_spc="/tmp/mgw-update"
 update_lock="/run/lock/mgw-update.lock"
+compose_timeout=600
+compose_pull_timeout=3600
 installed_units=""
 
 handleParam() {
@@ -394,13 +396,26 @@ handleAvahi() {
   fi
 }
 
+# the time limit in seconds for a docker compose call. an automatic update runs
+# unattended, so a call that never returns would go unnoticed and block every
+# later update. a manual one gets no limit, someone is there to abort it with
+# Ctrl-C - which a limited call ignores, see dockerComposeTimeout
+composeLimit() {
+  if [ "$auto" = "true" ]
+  then
+    echo "$1"
+    return
+  fi
+  echo 0
+}
+
 stopContainers() {
   echo "stopping containers ..."
   if ! cd $container_path
   then
     exit 1
   fi
-  if ! dockerCompose rm -s -f
+  if ! dockerComposeTimeout "$(composeLimit $compose_timeout)" rm -s -f
   then
     exit 1
   fi
@@ -417,7 +432,7 @@ updateContainerImages() {
   then
     exit 1
   fi
-  if ! dockerCompose pull
+  if ! dockerComposeTimeout "$(composeLimit $compose_pull_timeout)" pull
   then
     exit 1
   fi
@@ -434,7 +449,7 @@ createContainers() {
     exit 1
   fi
   echo "creating containers ..."
-  if ! dockerCompose up --no-start
+  if ! dockerComposeTimeout "$(composeLimit $compose_timeout)" up --no-start
   then
     exit 1
   fi
@@ -457,7 +472,7 @@ startComponents() {
     exit 1
   fi
   echo "starting containers ..."
-  if ! dockerCompose start
+  if ! dockerComposeTimeout "$(composeLimit $compose_timeout)" start
   then
     exit 1
   fi

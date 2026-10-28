@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# the release metadata is small, so a request still running after this many
+# seconds is stuck rather than slow
+github_api_timeout=120
+
 getGitHubRelease() {
   url="https://api.github.com/repos/$1/releases"
   case "$2" in
@@ -9,7 +13,7 @@ getGitHubRelease() {
   *)
     url="$url/tags/$2"
   esac
-  if ! curl -L -s \
+  if ! curl -L -s --connect-timeout 30 --max-time $github_api_timeout \
       -H "Accept: application/vnd.github+json" \
       -H "X-GitHub-Api-Version: 2022-11-28" \
       "$url"
@@ -20,7 +24,7 @@ getGitHubRelease() {
 
 getGitHubReleases() {
   url="https://api.github.com/repos/$1/releases"
-  if ! curl -L -s \
+  if ! curl -L -s --connect-timeout 30 --max-time $github_api_timeout \
       -H "Accept: application/vnd.github+json" \
       -H "X-GitHub-Api-Version: 2022-11-28" \
       "$url"
