@@ -12,7 +12,7 @@ script_path=$(pwd)
 wrk_spc="/tmp/mgw-update"
 update_lock="/run/lock/mgw-update.lock"
 compose_timeout=600
-compose_pull_timeout=3600
+image_pull_timeout=1800
 installed_units=""
 
 handleParam() {
@@ -396,7 +396,7 @@ handleAvahi() {
   fi
 }
 
-# the time limit in seconds for a docker compose call. an automatic update runs
+# the time limit in seconds for a docker call. an automatic update runs
 # unattended, so a call that never returns would go unnoticed and block every
 # later update. a manual one gets no limit, someone is there to abort it with
 # Ctrl-C - which a limited call ignores, see dockerComposeTimeout
@@ -426,21 +426,14 @@ stopContainers() {
   cd ../..
 }
 
-updateContainerImages() {
-  echo "updating container images ..."
-  if ! cd $container_path
+# runs while the core is still up, so a pull that fails or times out ends the
+# update before anything was stopped. the containers are created later with
+# 'up --no-start', which finds every image already there and pulls nothing
+pullContainerImages() {
+  if ! pullImages "$(composeLimit $image_pull_timeout)"
   then
     exit 1
   fi
-  if ! dockerComposeTimeout "$(composeLimit $compose_pull_timeout)" pull
-  then
-    exit 1
-  fi
-  if ! cd $script_path
-  then
-    exit 1
-  fi
-  cd ../..
 }
 
 createContainers() {
@@ -803,6 +796,11 @@ parseImages
 exportSettingsToEnv
 printColor "resolving settings done" "$yellow"
 printLnBr
+update_step="pulling container images"
+printColor "pulling container images ..." "$yellow"
+pullContainerImages
+printColor "pulling container images done" "$yellow"
+printLnBr
 update_step="updating files"
 # a signal or power loss skips the EXIT trap, so the record says 'running' from
 # the first change on instead of keeping the previous update's result
@@ -834,7 +832,6 @@ printLnBr
 update_step="updating container environment"
 printColor "updating container environment ..." "$yellow"
 handleContainerAssets
-updateContainerImages
 createContainers
 printColor "updating container environment done" "$yellow"
 printLnBr

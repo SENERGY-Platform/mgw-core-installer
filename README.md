@@ -221,6 +221,8 @@ The update runs in two stages:
     * installs newly required packages,
     * resolves the remaining new settings (`handleNew`), which generates missing ids and
       passwords with the `openssl` the step above installs,
+    * pulls the release's container images while the core is still running, so a pull
+      that fails ends the update before anything was stopped,
     * refreshes `ctrl.sh`, `update.sh`, `uninstall.sh` and the script library in the install
       directory,
     * stops the containers, then the systemd units (or the raw processes and the secrets
@@ -229,8 +231,8 @@ The update runs in two stages:
       are no longer part of the release and re-renders their configs,
     * re-renders the systemd units, logrotate config, cron job and avahi service, removing
       units that no longer exist, and enables them without starting them,
-    * replaces the container assets, re-renders `docker-compose.yml`, pulls the new images
-      and recreates the containers,
+    * replaces the container assets, re-renders `docker-compose.yml` and recreates the
+      containers from the images pulled earlier,
     * writes the new `.version` and `.settings`,
     * with systemd integration, starts the core again — the units first, then the
       containers. Without it the core stays down and `ctrl.sh start` brings it back.
@@ -299,13 +301,16 @@ outside the host are limited in time:
 * Requests to the GitHub release API fail after 120 s. Downloads have no overall limit, so
   a slow link can still finish a large file. They fail if no connection is made within
   30 s or if they stay below 1 KiB/s for 60 s.
-* In an automatic update, each `docker compose` call is limited: `pull` to 60 minutes,
+* In an automatic update, the docker calls are limited: pulling to 30 minutes per image,
   removing, creating and starting the containers to 10 minutes each. A call that runs out
-  is killed and logged as *"docker compose <command> timed out after <n>s"*. A manual
-  update has no such limit and can be aborted with Ctrl-C instead.
+  is killed and logged as *"docker pull <image> timed out after <n>s"* or *"docker compose
+  <command> timed out after <n>s"*. A manual update has no such limit and can be aborted
+  with Ctrl-C instead.
 
-A step that times out ends the update like any other failure. By then the core may
-already be stopped, and it stays down until it is started again or an update succeeds.
+A step that times out ends the update like any other failure. The images are pulled
+before the core is stopped, so a slow or unreachable registry leaves the core running on
+the old release. A later step that times out, however, finds the core already stopped, and
+it stays down until it is started again or an update succeeds.
 
 Automatic updates can be enabled or disabled later by adding or removing that cron file.
 

@@ -96,6 +96,37 @@ copyContainerAssets() {
   renderCompose
 }
 
+# pulls the images of the release one by one, killing a pull after $1 seconds,
+# 0 meaning no limit - see dockerComposeTimeout for why a limit only suits a run
+# nobody watches. works from the images list in .options instead of the
+# rendered compose file, so it needs nothing of the installation and can run
+# while the core still does
+pullImages() {
+  for item in ${images}
+  do
+    image="${item##*=}"
+    echo "pulling $image ..."
+    if [ "$1" = "0" ]
+    then
+      if ! docker pull "$image"
+      then
+        return 1
+      fi
+      continue
+    fi
+    timeout -k 30 "$1" docker pull "$image"
+    rc=$?
+    if [ $rc -eq 124 ] || [ $rc -eq 137 ]
+    then
+      echo "docker pull $image timed out after ${1}s"
+    fi
+    if [ $rc -ne 0 ]
+    then
+      return 1
+    fi
+  done
+}
+
 parseImages() {
   for item in ${images}
   do

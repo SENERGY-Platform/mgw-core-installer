@@ -1,9 +1,9 @@
 # Order of the installer flow
 
 The main flows at the bottom of `setup.sh` and `assets/scripts/update.sh` are
-not a list of independent steps. Four constraints decide where a step may sit,
+not a list of independent steps. Five constraints decide where a step may sit,
 and none of them is visible from the step itself — moving one line produces a
-core that installs cleanly and runs wrong. This document names the four.
+core that installs cleanly and runs wrong. This document names the five.
 
 ## Applies when
 
@@ -99,3 +99,27 @@ worked. `<base_path>/.update_status` does: stage two of `update.sh` sets it to
 with the `update_step` the flow had reached. The trap is the one writer after the
 workspace is removed and uses absolute paths only. A record that stays `running`
 means the update was killed or the gateway lost power.
+
+## 5. The update pulls its images before the stop
+
+`pullContainerImages` in `update.sh` runs before `stopContainers`, while the
+old core is still up. Pulling is the step most likely to fail or take long - it
+depends on the registries and on the link - and everything from the stop
+onwards runs with the core down. A pull placed after the stop turns a registry
+outage into an outage of the core; placed before it, a failed pull ends the
+update with the old release still running.
+
+This only works because `pullImages` in `assets/scripts/lib/container.sh`
+reads the images from the `images` list in `.options` instead of from the
+rendered `docker-compose.yml`. Rendering the new compose file that early would
+replace a file the running core-manager reads (see constraint 1) before the
+core is stopped. `createContainers` then runs `up --no-start` on the new
+compose file, and since the template sets no `pull_policy`, compose pulls only
+what is missing, which is nothing. An image added to the compose template must
+therefore also be in the `images` list, as all of them already are, or it is
+pulled after the stop after all.
+
+The pull changes nothing, so it sits before the `running` record in
+`.update_status`; a failed pull is still recorded as `failed` with its step.
+
+`setup.sh` is not affected: there is no running core to keep up.
