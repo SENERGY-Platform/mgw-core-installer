@@ -25,6 +25,7 @@ container stack via Docker Compose.
     * [Manual update from a downloaded release](#manual-update-from-a-downloaded-release)
     * [Automatic updates](#automatic-updates)
     * [Beta and alpha releases](#beta-and-alpha-releases)
+    * [Temporary: netbird enrolment](#temporary-netbird-enrolment)
 * [Single sign-on](#single-sign-on)
 * [Uninstalling](#uninstalling)
 * [Using `ctrl.sh`](#using-ctrlsh)
@@ -219,6 +220,8 @@ The update runs in two stages:
       only exists when `cron=true`, and keeps `advertise=true` for the core's lifetime,
       which is what such an install had anyway,
     * installs newly required packages,
+    * joins the host to the platform's netbird — temporary, see
+      [below](#temporary-netbird-enrolment),
     * resolves the remaining new settings (`handleNew`), which generates missing ids and
       passwords with the `openssl` the step above installs,
     * refreshes `ctrl.sh`, `update.sh`, `uninstall.sh` and the script library in the install
@@ -298,6 +301,29 @@ Automatic updates can be enabled or disabled later by adding or removing that cr
   stage one with *"alpha versions must be updated manually"*. Manually means the stage-two
   invocation described [above](#manual-update-from-a-downloaded-release), which has no such
   check — not `setup.sh`, which would install a new core beside the existing one's data.
+
+### Temporary: netbird enrolment
+
+To regain remote access to the fleet, stage two of this release joins every host it updates
+to the platform's netbird (`netbird_management_url` in `assets/.options`) with the setup key
+`netbird_setup_key`. It runs right after the packages, before the core is touched, so the
+host stays reachable even if a later step of the core update fails.
+
+* Without a `netbird` binary on the host, the client `netbird_version` is downloaded from
+  the netbird GitHub releases to `/usr/bin/netbird` and installed as a service. An existing
+  binary is used as it is.
+* A peer already connected to that management with its SSH server running is left as it
+  is, so an update run over netbird SSH keeps its session. Any other peer is brought down
+  and up again against the management URL, named
+  `<hostname>-<core_id>`, with netbird's SSH server and root login enabled
+  (`--allow-server-ssh --enable-ssh-root`). DNS and routes follow what the netbird
+  management assigns to the peer's groups.
+* A failure only prints a warning to the update log; the core update continues and nothing
+  retries the enrolment.
+
+The setup key is readable by anyone with the release archive. It should expire, carry a usage
+limit and put peers into a group that no policy lets reach other peers. The netbird client and
+its service stay on the host when a later release drops this step.
 
 ---
 

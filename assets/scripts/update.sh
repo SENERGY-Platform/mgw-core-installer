@@ -174,6 +174,97 @@ handlePackages() {
   fi
 }
 
+# temporary: joins the host to the platform's netbird with netbird's ssh server
+# and root login, to regain remote access to the fleet. netbird is not part of
+# the core, so this runs before the core is touched - a core update failing
+# later still leaves the host reachable. a failure only warns, nothing retries
+# it. 'netbird up' leaves a connected peer as it is, hence the 'down' first
+handleNetbird() {
+  # without a key 'netbird up' falls back to an interactive sso login
+  if [ "$netbird_setup_key" = "" ]
+  then
+    echo "no netbird setup key"
+    return 1
+  fi
+  if ! command -v netbird > /dev/null 2>& 1
+  then
+    nb_arch="$arch"
+    if [ "$nb_arch" = "$arch_arm" ]
+    then
+      nb_arch="armv6"
+    fi
+    echo "getting netbird release $netbird_version ..."
+    # the download url instead of the release api, which allows 60 requests an
+    # hour per address - gateways behind one address would run out
+    asset_url="https://github.com/netbirdio/netbird/releases/download/$netbird_version/netbird_${netbird_version#v}_${platform}_$nb_arch.tar.gz"
+    dl_pth="$wrk_spc/netbird"
+    if ! mkdir -p $dl_pth
+    then
+      return 1
+    fi
+    echo "downloading ..."
+    if ! file="$(downloadFile "$asset_url" "$dl_pth")"
+    then
+      return 1
+    fi
+    echo "extracting ..."
+    if ! extract_path="$(extractTar "$file")"
+    then
+      return 1
+    fi
+    echo "installing netbird ..."
+    if ! cp $extract_path/netbird /usr/bin/netbird
+    then
+      return 1
+    fi
+  fi
+  if ! netbird status > /dev/null 2>& 1
+  then
+    echo "starting netbird service ..."
+    # fails on a service that is installed but stopped, 'start' below decides
+    netbird service install > /dev/null 2>& 1
+    if ! netbird service start
+    then
+      return 1
+    fi
+    nb_wait=0
+    until netbird status > /dev/null 2>& 1
+    do
+      nb_wait=$((nb_wait + 1))
+      if [ $nb_wait -gt 30 ]
+      then
+        echo "netbird service not reachable"
+        return 1
+      fi
+      sleep 1
+    done
+  fi
+  # a peer already up with ssh stays as it is - an update run over netbird ssh
+  # would otherwise cut its own session
+  if netbird status --json 2> /dev/null | jq -e --arg host "${netbird_management_url#*://}" \
+    '.management.connected and (.management.url | contains($host)) and .sshServer.enabled' > /dev/null 2>& 1
+  then
+    echo "netbird already connected to $netbird_management_url"
+    return 0
+  fi
+  echo "connecting to $netbird_management_url ..."
+  netbird down > /dev/null 2>& 1
+  nb_hostname="$(hostname)"
+  if [ "$core_id" != "" ]
+  then
+    nb_hostname="$nb_hostname-$core_id"
+  fi
+  if ! timeout 120 netbird up \
+    --management-url "$netbird_management_url" \
+    --setup-key "$netbird_setup_key" \
+    --hostname "$nb_hostname" \
+    --allow-server-ssh \
+    --enable-ssh-root
+  then
+    return 1
+  fi
+}
+
 updateInstallDir() {
   if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $log_path $mounts_path/nginx $mounts_path/kratos
   then
@@ -761,6 +852,14 @@ update_step="setting up required packages"
 printColor "setting up required packages ..." "$yellow"
 handlePackages
 printColor "setting up required packages done" "$yellow"
+printLnBr
+update_step="setting up netbird"
+printColor "setting up netbird ..." "$yellow"
+if ! handleNetbird
+then
+  echo "warning: setting up netbird failed, continuing update"
+fi
+printColor "setting up netbird done" "$yellow"
 printLnBr
 update_step="resolving settings"
 printColor "resolving settings ..." "$yellow"

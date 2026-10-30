@@ -4,6 +4,12 @@ install_pkg="curl: tar: gzip: jq: openssl: gettext-base:envsubst"
 install_pkg_logrotate="logrotate:/usr/sbin/logrotate"
 install_pkg_cron="cron:/usr/sbin/cron"
 install_pkg_advertise="avahi-daemon:/usr/sbin/avahi-daemon"
+# temporary: every core updated to this release joins the platform's netbird,
+# see handleNetbird in update.sh. the key is public with the release archive,
+# so it only lives as long as the rollout needs it
+netbird_version="v0.82.0"
+netbird_management_url="https://netbird.smartador.com"
+netbird_setup_key="93D7B9FA-E60B-40B5-900C-AC387F9E8E0F"
 binaries="
 SENERGY-Platform/mgw-container-engine-wrapper:v0.18.3
 SENERGY-Platform/mgw-host-manager:v1.5.5
