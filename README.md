@@ -63,7 +63,8 @@ Download and unpack the release archive published by the
 
 ```sh
 curl -LO https://github.com/SENERGY-Platform/mgw-core-installer/releases/download/<version>/mgw_core_installer_<version>.tar.gz
-tar -xzf mgw_core_installer_<version>.tar.gz
+mkdir mgw_core_installer_<version>
+tar -xzf mgw_core_installer_<version>.tar.gz -C mgw_core_installer_<version>
 cd mgw_core_installer_<version>
 sudo ./setup.sh
 ```
@@ -253,7 +254,8 @@ this repository. Doing so means running **stage two directly** — the same invo
 one would perform — with the install directory as `-path`:
 
 ```sh
-tar -xzf mgw_core_installer_<version>.tar.gz
+mkdir mgw_core_installer_<version>
+tar -xzf mgw_core_installer_<version>.tar.gz -C mgw_core_installer_<version>
 sudo ./mgw_core_installer_<version>/assets/scripts/update.sh -path=/opt/mgw
 ```
 
