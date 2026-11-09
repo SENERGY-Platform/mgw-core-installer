@@ -1,0 +1,14 @@
+[Unit]
+Description=${CORE_NAME} recovery of an interrupted install or update
+After=local-fs.target docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+# stays active after it ran, so starting a service unit later doesn't run it again
+RemainAfterExit=yes
+ExecStart=${CORE_ROOT}/current/assets/scripts/recover.sh
+TimeoutStartSec=1800
+
+[Install]
+WantedBy=default.target

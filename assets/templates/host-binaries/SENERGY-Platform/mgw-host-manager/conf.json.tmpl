@@ -7,11 +7,11 @@
     "path": "${LOG_PATH}",
     "file_name": "h_manager"
   },
-  "applications_path": "${BIN_PATH}/SENERGY-Platform/mgw-host-manager/applications.json",
+  "applications_path": "${STATE_PATH}/host-manager/applications.json",
   "blacklist": {
     "net_range_list": ["${SUBNET_GATEWAY}/28", "${SUBNET_CORE}/28", "${SUBNET_MODULE}/16"],
     "app_socket_list": ["${DOCKER_SOCKET_PATH}"],
-    "net_interface_list_path": "${BIN_PATH}/SENERGY-Platform/mgw-host-manager/net_itf_blacklist.json",
-    "net_range_list_path": "${BIN_PATH}/SENERGY-Platform/mgw-host-manager/net_rng_blacklist.json"
+    "net_interface_list_path": "${STATE_PATH}/host-manager/net_itf_blacklist.json",
+    "net_range_list_path": "${STATE_PATH}/host-manager/net_rng_blacklist.json"
   }
 }

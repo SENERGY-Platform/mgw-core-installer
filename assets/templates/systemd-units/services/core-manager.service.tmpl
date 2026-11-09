@@ -1,10 +1,16 @@
 [Unit]
-PartOf=mgw-ce-wrapper.service
-Before=mgw-ce-wrapper.service
+Description=${CORE_NAME} core manager
+PartOf=${CORE_NAME}-ce-wrapper.service
+After=docker.service ${CORE_NAME}-recover.service
+Requires=${CORE_NAME}-recover.service
 
 [Service]
-ExecStart=${BIN_PATH}/SENERGY-Platform/mgw-core-manager/bin -config=${BIN_PATH}/SENERGY-Platform/mgw-core-manager/config/conf.json
+ExecStart=${BIN_PATH}/SENERGY-Platform/mgw-core-manager/bin -config=${CONFIG_PATH}/host-binaries/SENERGY-Platform/mgw-core-manager/conf.json
 Restart=always
+# the core-manager stops the core containers when it stops (compose stop, up to 2 minutes). Only the
+# core-manager gets SIGTERM, not the docker command it may be running
+KillMode=mixed
+TimeoutStopSec=180
 
 [Install]
 WantedBy=default.target

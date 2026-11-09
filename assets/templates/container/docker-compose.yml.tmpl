@@ -1,8 +1,10 @@
+name: ${CORE_NAME}_${VERSION_FOLDER}
+
 services:
   nginx:
-    container_name: ${CORE_NAME}-nginx
+    container_name: ${CORE_NAME}-${VERSION_FOLDER}-nginx
     image: ${NGINX_IMG}
-    restart: "${CTR_RESTART_POLICY}"
+    restart: "no"
     environment:
       CORE_ID: "${CORE_ID}"
       SUBNET_CORE: ${SUBNET_CORE}
@@ -13,9 +15,9 @@ services:
       mgw_cid: "${CORE_ID}"
       core_srv: "true"
     volumes:
-      - ${CONTAINER_PATH}/configs/gateway/conf/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
+      - ${CONFIG_PATH}/container/configs/gateway/conf/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
       - ${MOUNTS_PATH}/nginx:/etc/nginx/conf.d/public_api:ro
-      - ${CONTAINER_PATH}/configs/gateway/template:/etc/nginx/templates:ro
+      - ${CONFIG_PATH}/container/configs/gateway/template:/etc/nginx/templates:ro
       - ${SOCKETS_PATH}:/opt/core/sockets
     ports:
       - ${GATEWAY_PORT}:${GATEWAY_PORT}/tcp
@@ -29,9 +31,9 @@ services:
         aliases:
           - core-api
   mysqldb:
-    container_name: ${CORE_NAME}-mysqldb
+    container_name: ${CORE_NAME}-${VERSION_FOLDER}-mysqldb
     image: ${MYSQLDB_IMG}
-    restart: "${CTR_RESTART_POLICY}"
+    restart: "no"
     environment:
       MYSQL_USER: core_user
       MYSQL_PASSWORD: ${CORE_DB_PW}
@@ -41,8 +43,8 @@ services:
       core_srv: "true"
     volumes:
       - mysqldb-data:/var/lib/mysql
-      - ${CONTAINER_PATH}/configs/db/init:/docker-entrypoint-initdb.d:ro
-      - ${CONTAINER_PATH}/configs/db/conf:/etc/mysql/conf.d:ro
+      - ${CONFIG_PATH}/container/configs/db/init:/docker-entrypoint-initdb.d:ro
+      - ${CONFIG_PATH}/container/configs/db/conf:/etc/mysql/conf.d:ro
     healthcheck:
       test: mysql --user=root --password=${CORE_DB_ROOT_PW} --execute="SHOW DATABASES;"
       interval: 10s
@@ -53,9 +55,9 @@ services:
         aliases:
           - core-db
   kratos:
-    container_name: ${CORE_NAME}-kratos
+    container_name: ${CORE_NAME}-${VERSION_FOLDER}-kratos
     image: ${KRATOS_IMG}
-    restart: "${CTR_RESTART_POLICY}"
+    restart: "no"
     depends_on:
       kratos-migrate:
         condition: service_completed_successfully
@@ -71,7 +73,7 @@ services:
     command: serve -c /etc/config/kratos/config.json -c /etc/config/kratos-dyn/config.json --dev --watch-courier
     # TODO <-- remove --dev flag
     volumes:
-      - ${CONTAINER_PATH}/configs/identity-server:/etc/config/kratos:ro
+      - ${CONFIG_PATH}/container/configs/identity-server:/etc/config/kratos:ro
       - ${MOUNTS_PATH}/kratos:/etc/config/kratos-dyn:ro
       - kratos-home:/home/ory
       - kratos-data:/var/lib/sqlite
@@ -80,9 +82,9 @@ services:
         aliases:
           - identity-server
   kratos-migrate:
-    container_name: ${CORE_NAME}-kratos-migrate
+    container_name: ${CORE_NAME}-${VERSION_FOLDER}-kratos-migrate
     image: ${KRATOS_IMG}
-    restart: on-failure
+    restart: "no"
     depends_on:
       mysqldb:
         condition: service_healthy
@@ -92,18 +94,19 @@ services:
     labels:
       mgw_cid: "${CORE_ID}"
       core_srv: "true"
+      core_srv_oneshot: "true"
     command: -c /etc/config/kratos/config.json -c /etc/config/kratos-dyn/config.json migrate sql -e --yes
     volumes:
-      - ${CONTAINER_PATH}/configs/identity-server:/etc/config/kratos:ro
+      - ${CONFIG_PATH}/container/configs/identity-server:/etc/config/kratos:ro
       - ${MOUNTS_PATH}/kratos:/etc/config/kratos-dyn:ro
       - kratosm-home:/home/ory
       - kratosm-data:/var/lib/sqlite
     networks:
       c_net:
   auth-service:
-    container_name: ${CORE_NAME}-auth-service
+    container_name: ${CORE_NAME}-${VERSION_FOLDER}-auth-service
     image: ${AUTH_SERVICE_IMG}
-    restart: "${CTR_RESTART_POLICY}"
+    restart: "no"
     depends_on:
       kratos:
         condition: service_started
@@ -120,9 +123,9 @@ services:
     networks:
       c_net:
   module-manager-migration:
-    container_name: ${CORE_NAME}-module-manager-migration
+    container_name: ${CORE_NAME}-${VERSION_FOLDER}-module-manager-migration
     image: ${MODULE_MANAGER_MIGRATION_IMG}
-    restart: on-failure
+    restart: "no"
     depends_on:
       mysqldb:
         condition: service_healthy
@@ -136,6 +139,7 @@ services:
     labels:
       mgw_cid: "${CORE_ID}"
       core_srv: "true"
+      core_srv_oneshot: "true"
     volumes:
       - mm-data:/opt/module-manager/data
       - mm-service:/opt/module-manager/service
@@ -144,9 +148,9 @@ services:
     networks:
       c_net:
   module-manager:
-    container_name: ${CORE_NAME}-module-manager
+    container_name: ${CORE_NAME}-${VERSION_FOLDER}-module-manager
     image: ${MODULE_MANAGER_IMG}
-    restart: "${CTR_RESTART_POLICY}"
+    restart: "no"
     depends_on:
       module-manager-migration:
         condition: service_completed_successfully
@@ -162,7 +166,7 @@ services:
       HOST_DEPLOYMENTS_PATH: ${DEPLOYMENTS_PATH}
       HOST_SECRETS_PATH: ${SECRETS_PATH}
       LOGGER_LEVEL: ${MODULE_MANAGER_LOG_LEVEL}
-      HTTP_ACCESS_LOG: ${MODULE_MANGER_HTTP_ACCESS_LOG}
+      HTTP_ACCESS_LOG: ${MODULE_MANAGER_HTTP_ACCESS_LOG}
       MGW_CEW_BASE_URL: "http://core-api/ce-wrapper"
       MGW_CM_BASE_URL: "http://core-api/c-manager"
       MGW_HM_BASE_URL: "http://core-api/h-manager"
@@ -179,16 +183,16 @@ services:
       - mm-service:/opt/module-manager/service
       - mm-modules:/opt/module-manager/modules
       - mm-repo-github-user-sources:/opt/module-manager/repositories/github/user_sources
-      - ${CONTAINER_PATH}/configs/module-manager/repo-github-default-sources:/opt/module-manager/repositories/github/default_sources
+      - ${CONFIG_PATH}/container/configs/module-manager/repo-github-default-sources:/opt/module-manager/repositories/github/default_sources
       - mm-repo-github-repositories:/opt/module-manager/repositories/github/repositories
       - ${HOST_DIR_REPOSITORY_PATH}:/opt/module-manager/repositories/host_dir
       - ${DEPLOYMENTS_PATH}:/opt/module-manager/deployments
     networks:
       c_net:
   secret-manager:
-    container_name: ${CORE_NAME}-secret-manager
+    container_name: ${CORE_NAME}-${VERSION_FOLDER}-secret-manager
     image: ${SECRET_MANAGER_IMG}
-    restart: "${CTR_RESTART_POLICY}"
+    restart: "no"
     depends_on:
       mysqldb:
         condition: service_healthy
@@ -210,9 +214,9 @@ services:
     networks:
       c_net:
   web-ui:
-    container_name: ${CORE_NAME}-web-ui
+    container_name: ${CORE_NAME}-${VERSION_FOLDER}-web-ui
     image: ${WEB_UI_IMG}
-    restart: "${CTR_RESTART_POLICY}"
+    restart: "no"
     labels:
       mgw_cid: "${CORE_ID}"
       core_srv: "true"
@@ -221,41 +225,51 @@ services:
     networks:
       g_net:
 
+# The volumes are named with STACK_NAME, not CORE_NAME, for compatibility: installations older than
+# this layout have them under <stack_name>_<volume>. On new installations stack_name equals core_name
+# (see settings.defaults).
 volumes:
   mm-data:
+    external: true
+    name: ${STACK_NAME}_mm-data
   mm-service:
+    external: true
+    name: ${STACK_NAME}_mm-service
   mm-modules:
+    external: true
+    name: ${STACK_NAME}_mm-modules
   mm-repo-github-user-sources:
+    external: true
+    name: ${STACK_NAME}_mm-repo-github-user-sources
   mm-repo-github-repositories:
+    external: true
+    name: ${STACK_NAME}_mm-repo-github-repositories
   sm-data:
+    external: true
+    name: ${STACK_NAME}_sm-data
   mysqldb-data:
+    external: true
+    name: ${STACK_NAME}_mysqldb-data
   kratos-home:
+    external: true
+    name: ${STACK_NAME}_kratos-home
   kratosm-home:
+    external: true
+    name: ${STACK_NAME}_kratosm-home
   kratos-data:
+    external: true
+    name: ${STACK_NAME}_kratos-data
   kratosm-data:
+    external: true
+    name: ${STACK_NAME}_kratosm-data
 
 networks:
   g_net:
+    external: true
     name: ${CORE_NAME}-0-gateway-net
-    attachable: true
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: ${SUBNET_GATEWAY}/28
   c_net:
+    external: true
     name: ${CORE_NAME}-1-core-net
-    attachable: true
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: ${SUBNET_CORE}/28
   m_net:
+    external: true
     name: ${CORE_NAME}-2-module-net
-    attachable: true
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: ${SUBNET_MODULE}/16

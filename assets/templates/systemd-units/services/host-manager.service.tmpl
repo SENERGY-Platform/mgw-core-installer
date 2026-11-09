@@ -1,9 +1,11 @@
 [Unit]
-PartOf=mgw-ce-wrapper.service
-Before=mgw-ce-wrapper.service
+Description=${CORE_NAME} host manager
+PartOf=${CORE_NAME}-ce-wrapper.service
+After=docker.service ${CORE_NAME}-recover.service
+Requires=${CORE_NAME}-recover.service
 
 [Service]
-ExecStart=${BIN_PATH}/SENERGY-Platform/mgw-host-manager/bin -config=${BIN_PATH}/SENERGY-Platform/mgw-host-manager/config/conf.json
+ExecStart=${BIN_PATH}/SENERGY-Platform/mgw-host-manager/bin -config=${CONFIG_PATH}/host-binaries/SENERGY-Platform/mgw-host-manager/conf.json
 Restart=always
 
 [Install]

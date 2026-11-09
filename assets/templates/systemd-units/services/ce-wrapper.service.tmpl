@@ -1,9 +1,11 @@
 [Unit]
+Description=${CORE_NAME} container engine wrapper
 PartOf=docker.service
-Before=docker.service
+After=docker.service ${CORE_NAME}-recover.service
+Requires=${CORE_NAME}-recover.service
 
 [Service]
-ExecStart=${BIN_PATH}/SENERGY-Platform/mgw-container-engine-wrapper/bin -config=${BIN_PATH}/SENERGY-Platform/mgw-container-engine-wrapper/config/conf.json
+ExecStart=${BIN_PATH}/SENERGY-Platform/mgw-container-engine-wrapper/bin -config=${CONFIG_PATH}/host-binaries/SENERGY-Platform/mgw-container-engine-wrapper/conf.json
 Restart=always
 
 [Install]

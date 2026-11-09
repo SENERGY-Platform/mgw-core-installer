@@ -1,0 +1,51 @@
+# Default settings of this version. Never edited: settings set by the user or the installer go into
+# state/settings, which overrides these. Format: key=value, one per line, no quotes, no shell code.
+# Keys are only ever added, never renamed or removed. A key left empty here is filled in by the install
+# and written into state/settings (generated ids and passwords, values derived from other settings).
+
+# identity and place on the host (written into state/settings by the install, never floating)
+core_id=
+core_name=
+# stack_name exists only for compatibility: it is the prefix of the core's docker volume names
+# (<stack_name>_mysqldb-data, ...). Installations older than this layout had compose name their
+# volumes after the stack name, which could differ from the core name, and docker volumes can't be
+# renamed. A new install always sets it to core_name; it differs only on migrated installations. Use
+# core_name for everything else.
+stack_name=
+host_dir_repository_path=
+gateway_port=8080
+subnet_core=10.0.0.0
+subnet_module=10.1.0.0
+subnet_gateway=10.10.0.0
+core_usr=core-user
+core_usr_pw=
+core_db_pw=
+core_db_root_pw=
+secrets_size=100M
+
+# integrations (written into state/settings by the install)
+systemd=true
+logrotate=true
+cron=true
+advertise=true
+
+# locations of the integrations and docker (written into state/settings by the install)
+systemd_path=/etc/systemd/system
+logrotated_path=/etc/logrotate.d
+cron_path=/etc/cron.daily
+avahi_path=/etc/avahi/services
+docker_socket_path=/var/run/docker.sock
+
+# updates (floating)
+allow_beta=false
+update_retry_limit=3
+
+# core containers (floating)
+auth_service_log_level=warning
+module_manager_log_level=warning
+module_manager_http_access_log=false
+module_manager_dep_startup_delay=20s
+module_manager_aux_dep_startup_delay=30s
+secret_manager_log_level=warning
+kratos_log_level=warning
+kratos_migrate_log_level=warning

@@ -11,18 +11,26 @@
     "cew_socket_path": "${SOCKETS_PATH}/ce_wrapper.sock"
   },
   "endpoints_conf_path": "${MOUNTS_PATH}/nginx/dep_endpoints.location",
-  "compose_file_path": "${CONTAINER_PATH}/docker-compose.yml",
-  "install_path": "${BASE_PATH}",
+  "compose_file_path": "${CONFIG_PATH}/container/docker-compose.yml",
   "core_id": "${CORE_ID}",
   "core_service": {
     "gateway_srv_name": "nginx"
   },
   "kratos": {
-    "version": "v1.3.1",
+    "version": "${KRATOS_VERSION}",
     "config_path": "${MOUNTS_PATH}/kratos/config.json",
     "file_uid": 10000
   },
   "log_handler": {
-    "path": "${BIN_PATH}/SENERGY-Platform/mgw-core-manager/config/log_hdl.json"
+    "path": "${CONFIG_PATH}/host-binaries/SENERGY-Platform/mgw-core-manager/log_hdl.json"
+  },
+  "state_files": {
+    "version_path": "${ASSETS_PATH}/version",
+    "update_path": "${STATE_PATH}/update",
+    "check_path": "${STATE_PATH}/check",
+    "lock_path": "${STATE_PATH}/lock"
+  },
+  "containers": {
+    "wait_sockets": ["${SOCKETS_PATH}/ce_wrapper.sock", "${SOCKETS_PATH}/h_manager.sock"]
   }
 }
