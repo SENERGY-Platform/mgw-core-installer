@@ -27,6 +27,13 @@ render_required="core_id core_name stack_name host_dir_repository_path core_usr_
 # the template folder of each integration and the setting that enables it
 render_integrations="systemd-units:systemd logrotate:logrotate cron:cron avahi:advertise"
 
+# the folders whose files the reconcile links into /etc, and the separator after the core name that
+# their file names get. A file in config has the same name as its link in /etc: systemd treats a
+# unit link whose target has another name as an alias, and "systemctl enable" doesn't accept it as the
+# unit file (checked with systemd 257). The core-owned units in systemd-units/core keep their names;
+# the install names those itself.
+render_linked="systemd-units/services:- logrotate:_ cron:_ avahi:_"
+
 # exports the render variables for the core root $1, the version $2 (e.g. v1.3.0) and its folder
 # name $3 (e.g. v1_3_0), and sets render_vars to the list envsubst gets. Meant for a subshell.
 renderExport() {
@@ -68,6 +75,20 @@ renderExport() {
   renderVar ASSETS_PATH "$1/current/assets"
   renderVar BIN_PATH "$1/current/bin"
   renderVar CONFIG_PATH "$1/current/config"
+}
+
+# prints the path $1 (relative to config) with the core name in front of the file name if the file
+# is directly in one of the linked folders, e.g. cron/update -> cron/mgw_abc_update
+renderName() {
+  for render_item in ${render_linked}
+  do
+    if [ "${1%/*}" = "${render_item%%:*}" ]
+    then
+      echo "${1%/*}/$(settingsGet core_name)${render_item#*:}${1##*/}"
+      return
+    fi
+  done
+  echo "$1"
 }
 
 renderVar() {
@@ -115,7 +136,7 @@ renderVersion() {
       then
         continue
       fi
-      render_out="$render_dst/${render_rel%.tmpl}"
+      render_out="$render_dst/$(renderName "${render_rel%.tmpl}")"
       mkdir -p "${render_out%/*}" || exit 1
       case "$render_rel" in
         *.tmpl)

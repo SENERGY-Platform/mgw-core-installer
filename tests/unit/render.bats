@@ -19,8 +19,8 @@ setup() {
   printf '%s\n' '{"port": "${GATEWAY_PORT}", "id": "${CORE_ID}", "kratos": "${KRATOS_VERSION}",' \
     '"img": "${NGINX_IMG}", "bin": "${BIN_PATH}", "state": "${STATE_PATH}", "folder": "${VERSION_FOLDER}",' \
     '"secrets": "${SECRETS_PATH}", "other": "${NOT_A_SETTING}", "plain": "$HOME"}' > "$V/assets/templates/host-binaries/x/conf.json.tmpl"
-  printf '%s\n' '#!/bin/sh' '${CORE_ROOT}/current/update.sh -a' > "$V/assets/templates/cron/mgw_update.tmpl"
-  chmod 755 "$V/assets/templates/cron/mgw_update.tmpl"
+  printf '%s\n' '#!/bin/sh' '${CORE_ROOT}/current/update.sh -a' > "$V/assets/templates/cron/update.tmpl"
+  chmod 755 "$V/assets/templates/cron/update.tmpl"
   printf '%s\n' '<port>${GATEWAY_PORT}</port>' > "$V/assets/templates/avahi/core.service.tmpl"
   printf '%s\n' 'listen ${GATEWAY_PORT};' > "$V/assets/templates/container/configs/gateway/template/default.conf.template"
 }
@@ -46,19 +46,19 @@ render() {
 
 @test "output files keep their template's mode" {
   run render 'renderVersion "$V" "$ROOT" v1.3.0 v1_3_0'
-  [ "$(stat -c %a "$V/config/cron/mgw_update")" = "755" ]
-  [ "$(cat "$V/config/cron/mgw_update")" = "$(printf '%s\n' '#!/bin/sh' "$ROOT/current/update.sh -a")" ]
+  [ "$(stat -c %a "$V/config/cron/mgw_abc_update")" = "755" ]
+  [ "$(cat "$V/config/cron/mgw_abc_update")" = "$(printf '%s\n' '#!/bin/sh' "$ROOT/current/update.sh -a")" ]
 }
 
 @test "only enabled integrations are rendered" {
   run render 'renderVersion "$V" "$ROOT" v1.3.0 v1_3_0'
-  [ -e "$V/config/cron/mgw_update" ]
+  [ -e "$V/config/cron/mgw_abc_update" ]
   [ ! -e "$V/config/avahi" ]
   printf '%s\n' 'cron=false' 'advertise=true' >> "$BATS_TEST_TMPDIR/settings"
   run render 'renderVersion "$V" "$ROOT" v1.3.0 v1_3_0'
   [ "$status" -eq 0 ]
   [ ! -e "$V/config/cron" ]
-  [ "$(cat "$V/config/avahi/core.service")" = "<port>8080</port>" ]
+  [ "$(cat "$V/config/avahi/mgw_abc_core.service")" = "<port>8080</port>" ]
 }
 
 @test "a missing required setting stops the render and keeps the old config" {
@@ -67,7 +67,7 @@ render() {
   run render 'renderVersion "$V" "$ROOT" v1.3.0 v1_3_0'
   [ "$status" -eq 1 ]
   [[ "$output" == *"setting 'core_db_pw' is empty"* ]]
-  [ -e "$V/config/cron/mgw_update" ]
+  [ -e "$V/config/cron/mgw_abc_update" ]
   [ ! -e "$V/config.new" ] && [ ! -e "$V/config.old" ]
 }
 
@@ -114,7 +114,11 @@ render() {
   for f in $(find "$V/config" -name '*.json'); do python3 -m json.tool "$f" > /dev/null; done
   [ "$(find "$V/config" -name '*.tmpl' | wc -l)" -eq 0 ]
   [ "$(find "$V/assets/templates" -type f | wc -l)" -eq "$(find "$V/config" -type f | wc -l)" ]
-  [ -x "$V/config/cron/mgw_update" ]
+  [ -x "$V/config/cron/mgw_abc_update" ]
   grep -qx "name: mgw_abc_v1_3_0" "$V/config/container/docker-compose.yml"
+  # linked files carry their final names, the core-owned units don't
+  [ -f "$V/config/systemd-units/services/mgw_abc-core-manager.service" ]
+  [ -f "$V/config/logrotate/mgw_abc_core" ] && [ -f "$V/config/avahi/mgw_abc_core.service" ]
+  [ -f "$V/config/systemd-units/core/recover.service" ] && [ -f "$V/config/systemd-units/core/secrets.mount" ]
   grep -q '"version": "v1.3.1"' "$V/config/host-binaries/SENERGY-Platform/mgw-core-manager/conf.json"
 }
