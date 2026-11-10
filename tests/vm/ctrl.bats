@@ -181,3 +181,124 @@ waitForRunning() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"unknown command 'ctr-purge'"* ]]
 }
+
+@test "settings: list and get" {
+  run "$DIR/$X/current/ctrl.sh" settings list
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"core_id=$X (set)"* ]]
+  [[ "$output" == *"core_db_pw=(hidden) (set)"* ]]
+  [[ "$output" == *"kratos_log_level=warning"* ]]
+  run "$DIR/$X/current/ctrl.sh" settings get core_name
+  [ "$output" = "mgw_$X" ]
+  run "$DIR/$X/current/ctrl.sh" settings get no_such_key
+  [ "$status" -eq 1 ]
+}
+
+@test "settings: refused, unknown and invalid" {
+  run "$DIR/$X/current/ctrl.sh" settings set core_id other
+  [ "$status" -eq 1 ] && [[ "$output" == *"core_id can't be changed: it is the core's identity"* ]]
+  run "$DIR/$X/current/ctrl.sh" settings set subnet_core 10.99.0.0
+  [ "$status" -eq 1 ] && [[ "$output" == *"docker networks"* ]]
+  run "$DIR/$X/current/ctrl.sh" settings set no_such_key x
+  [ "$status" -eq 1 ] && [[ "$output" == *"unknown setting"* ]]
+  run "$DIR/$X/current/ctrl.sh" settings set gateway_port 0
+  [ "$status" -eq 1 ] && [[ "$output" == *"invalid gateway_port"* ]]
+  run "$DIR/$X/current/ctrl.sh" settings set gateway_port 22
+  [ "$status" -eq 1 ] && [[ "$output" == *"port 22 is in use"* ]]
+  run "$DIR/$X/current/ctrl.sh" settings reset gateway_port
+  [ "$status" -eq 1 ] && [[ "$output" == *"can't be reset"* ]]
+}
+
+@test "settings: a stored-only setting, and a failed render keeps the old value" {
+  run "$DIR/$X/current/ctrl.sh" settings set allow_beta true
+  [ "$status" -eq 0 ]
+  grep -qx allow_beta=true "$DIR/$X/state/settings"
+  run env MGW_TEST_FAIL_AT=render "$DIR/$X/current/ctrl.sh" settings set allow_beta false
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"allow_beta stays true"* ]]
+  grep -qx allow_beta=true "$DIR/$X/state/settings"
+  run "$DIR/$X/current/ctrl.sh" settings reset allow_beta
+  [ "$status" -eq 0 ]
+  ! grep -q '^allow_beta=' "$DIR/$X/state/settings"
+}
+
+@test "settings: a log level recreates the containers of a running core" {
+  "$DIR/$Y/current/ctrl.sh" start > /dev/null
+  waitForRunning "$Y" 7
+  run "$DIR/$Y/current/ctrl.sh" settings set kratos_log_level debug
+  echo "$output"
+  [ "$status" -eq 0 ]
+  waitForRunning "$Y" 7
+  docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "mgw_$Y-$(readlink "$DIR/$Y/current")-kratos" | grep -qx LOG_LEVEL=debug
+  run "$DIR/$Y/current/ctrl.sh" settings reset kratos_log_level
+  [ "$status" -eq 0 ]
+  waitForRunning "$Y" 7
+  docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "mgw_$Y-$(readlink "$DIR/$Y/current")-kratos" | grep -qx LOG_LEVEL=warning
+}
+
+@test "settings: the gateway port moves nginx" {
+  local port=$((30000 + RANDOM % 5000))
+  run "$DIR/$Y/current/ctrl.sh" settings set gateway_port "$port"
+  echo "$output"
+  [ "$status" -eq 0 ]
+  waitForRunning "$Y" 7
+  docker port "mgw_$Y-$(readlink "$DIR/$Y/current")-nginx" | grep -q ":$port\$"
+  "$DIR/$Y/current/ctrl.sh" stop > /dev/null
+}
+
+@test "settings: an integration is linked and unlinked" {
+  run "$DIR/$X/current/ctrl.sh" settings set logrotate true
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ -L "/etc/logrotate.d/mgw_${X}_core" ]
+  logrotate -d "/etc/logrotate.d/mgw_${X}_core" > /dev/null 2>&1
+  run "$DIR/$X/current/ctrl.sh" settings set logrotate false
+  [ "$status" -eq 0 ]
+  [ ! -e "/etc/logrotate.d/mgw_${X}_core" ]
+}
+
+@test "settings: secrets_size rewrites the mount unit, the tmpfs keeps its size until a reboot" {
+  local unit before
+  unit="/etc/systemd/system/$(systemd-escape --path --suffix=mount "/mnt/mgw_$X/secrets")"
+  before="$(df -h --output=size "/mnt/mgw_$X/secrets" | tail -1 | tr -d ' ')"
+  run "$DIR/$X/current/ctrl.sh" settings set secrets_size 200M
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"takes effect at the next reboot"* ]]
+  grep -q 'size=200M' "$unit"
+  [ "$(df -h --output=size "/mnt/mgw_$X/secrets" | tail -1 | tr -d ' ')" = "$before" ]
+  run "$DIR/$X/current/ctrl.sh" status
+  [[ "$output" == *"secrets:     $before mounted, 200M configured"* ]]
+}
+
+@test "settings: a confirmation without a terminal and without -y is refused" {
+  run "$DIR/$X/current/ctrl.sh" settings set autostart false < /dev/null
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"confirmation needed, run with -y"* ]]
+  grep -qx autostart=true "$DIR/$X/state/settings"
+}
+
+@test "settings: autostart off and on again, the tmpfs and its secrets stay" {
+  local mount_unit
+  mount_unit="$(systemd-escape --path --suffix=mount "/mnt/mgw_$X/secrets")"
+  "$DIR/$X/current/ctrl.sh" start > /dev/null
+  waitForRunning "$X" 7
+  echo secret > "/mnt/mgw_$X/secrets/marker"
+  run "$DIR/$X/current/ctrl.sh" -y settings set autostart false
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ -z "$(find /etc/systemd/system -name "mgw_$X-*" -o -name "$mount_unit")" ]
+  [ "$(wc -l < "$DIR/$X/state/pid")" -eq 3 ]
+  [ "$(cat "/mnt/mgw_$X/secrets/marker")" = "secret" ]
+  waitForRunning "$X" 7
+  run "$DIR/$X/current/ctrl.sh" -y settings set autostart true
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(systemctl is-active "mgw_$X-core-manager.service")" = "active" ]
+  [ "$(systemctl is-active "$mount_unit")" = "active" ]
+  [ "$(systemctl is-enabled "mgw_$X-recover.service")" = "enabled" ]
+  [ ! -e "$DIR/$X/state/pid" ]
+  [ "$(cat "/mnt/mgw_$X/secrets/marker")" = "secret" ]
+  waitForRunning "$X" 7
+  "$DIR/$X/current/ctrl.sh" stop > /dev/null
+}

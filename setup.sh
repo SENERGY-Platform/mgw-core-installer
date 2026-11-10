@@ -276,7 +276,7 @@ do
   collision "docker network $setup_n exists"
 done
 setup_port="$(setupGet gateway_port)"
-if [ "$(ss -ltnH "sport = :$setup_port" 2> /dev/null)" != "" ] || docker ps --format '{{.Ports}}' | grep -q ":$setup_port->"
+if setupPortInUse "$setup_port"
 then
   collision "port $setup_port is in use"
 fi

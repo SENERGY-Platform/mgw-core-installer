@@ -86,3 +86,91 @@ ctrlReport() {
     echo "run $1/current/restore.sh"
   fi
 }
+
+# prints what changing the setting $1 involves (m4-ctrl.md, finding 4):
+#   none         only stored (allow_beta, update_retry_limit)
+#   recreate     re-render, recreate the containers (the container settings)
+#   port         the new port must be free; re-render, recreate (gateway_port)
+#   integration  package if missing, re-render, reconcile (logrotate, cron, advertise)
+#   secrets      re-render, rewrite the mount unit; effective at the next reboot (secrets_size)
+#   autostart    the switch between systemd services and detached processes
+#   refused      the core's identity, its place on the host, its credentials, its subnets
+#   unknown      no setting of this version
+ctrlSettingKind() {
+  case "$1" in
+    allow_beta|update_retry_limit)
+      echo none
+      ;;
+    *_log_level|*_delay|module_manager_http_access_log)
+      echo recreate
+      ;;
+    gateway_port)
+      echo port
+      ;;
+    logrotate|cron|advertise)
+      echo integration
+      ;;
+    secrets_size)
+      echo secrets
+      ;;
+    autostart)
+      echo autostart
+      ;;
+    *)
+      if settingsKnown "$1"
+      then
+        echo refused
+      else
+        echo unknown
+      fi
+  esac
+}
+
+# prints why the setting $1 can't be changed with ctrl.sh
+ctrlRefusedReason() {
+  case "$1" in
+    core_id|core_name|stack_name)
+      echo "it is the core's identity: its volumes, networks, units and files carry it"
+      ;;
+    subnet_*)
+      echo "the subnets are part of the core's existing docker networks"
+      ;;
+    *_pw|core_usr)
+      echo "the credentials are stored in the core's databases"
+      ;;
+    host_dir_repository_path)
+      echo "the module repository's location is part of the existing containers and modules"
+      ;;
+    *)
+      echo "this version doesn't support changing it"
+  esac
+}
+
+# returns 0 if the setting $1 may be reset to its default: only settings that float with the version's
+# defaults; the pinned ones (8) keep the value the install wrote
+ctrlResettable() {
+  case "$(ctrlSettingKind "$1")" in
+    none|recreate)
+      return 0
+  esac
+  return 1
+}
+
+# prints the effective settings, one "key=value" per line, "(set)" after the ones from state/settings,
+# passwords hidden
+ctrlSettingsList() {
+  for ctrl_key in ${settings_keys}
+  do
+    ctrl_value="$(settingsGet "$ctrl_key")"
+    case "$ctrl_key" in
+      *_pw)
+        [ "$ctrl_value" != "" ] && ctrl_value="(hidden)"
+    esac
+    if settingsIsSet "$ctrl_key"
+    then
+      echo "$ctrl_key=$ctrl_value (set)"
+    else
+      echo "$ctrl_key=$ctrl_value"
+    fi
+  done
+}

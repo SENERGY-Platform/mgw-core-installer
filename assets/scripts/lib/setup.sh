@@ -217,7 +217,42 @@ setupValidate() {
           return
       esac
       ;;
-    autostart|logrotate|cron|advertise|allow_beta|start_core|skip_pkg_install_confirm)
+    update_retry_limit)
+      case "$2" in
+        ""|*[!0-9]*|0*)
+          setupInvalid "$1" "$2" "a number from 1 up is needed"
+          return
+      esac
+      ;;
+    secrets_size)
+      case "${2%[kKmMgG]}" in
+        ""|0*|*[!0-9]*)
+          setupInvalid "$1" "$2" "a size like 100M (a number, optionally with k, m or g) is needed"
+          return
+      esac
+      ;;
+    *_log_level)
+      case "$2" in
+        ""|*[!a-z]*)
+          setupInvalid "$1" "$2" "a log level like warning, lowercase letters only"
+          return
+      esac
+      ;;
+    *_delay)
+      case "$2" in
+        *[smh])
+          ;;
+        *)
+          setupInvalid "$1" "$2" "a duration like 20s, 5m or 1h is needed"
+          return
+      esac
+      case "${2%[smh]}" in
+        ""|*[!0-9]*)
+          setupInvalid "$1" "$2" "a duration like 20s, 5m or 1h is needed"
+          return
+      esac
+      ;;
+    autostart|logrotate|cron|advertise|allow_beta|start_core|skip_pkg_install_confirm|module_manager_http_access_log)
       case "$2" in
         true|false)
           ;;
@@ -259,6 +294,11 @@ setupValidateAll() {
     setup_va_rc=1
   fi
   return $setup_va_rc
+}
+
+# returns 0 if the TCP port $1 is in use: something listens on it, or a container publishes it
+setupPortInUse() {
+  [ "$(ss -ltnH "sport = :$1" 2> /dev/null)" != "" ] || docker ps --format '{{.Ports}}' 2> /dev/null | grep -q ":$1->"
 }
 
 # --- unfinished installs ---

@@ -8,6 +8,7 @@
 load helpers
 
 setup() {
+  export SHIPPED="$BATS_TEST_DIRNAME/../../assets/settings.defaults"
   export ROOT="$BATS_TEST_TMPDIR/core"
   mkdir -p "$ROOT/state" "$ROOT/v1_3_0/assets"
   ln -s v1_3_0 "$ROOT/current"
@@ -104,4 +105,57 @@ ctrl() {
   [[ "$output" == *"lock:        locked by update"* ]]
   [[ "$output" == *"last update: running"* ]]
   [[ "$output" != *"needs repair"* ]]
+}
+
+ctrl_shipped() {
+  dsh 'settingsLoad "$SHIPPED" "" || exit 9; '"$1" file settings state lock setup ctrl
+}
+
+@test "settings: what changing each shipped setting involves" {
+  run ctrl_shipped 'for k in $settings_keys; do echo "$k $(ctrlSettingKind "$k")"; done'
+  [ "$status" -eq 0 ]
+  for line in "allow_beta none" "update_retry_limit none" "kratos_log_level recreate" "module_manager_dep_startup_delay recreate" \
+    "module_manager_http_access_log recreate" "gateway_port port" "logrotate integration" "cron integration" "advertise integration" \
+    "secrets_size secrets" "autostart autostart" "core_id refused" "core_name refused" "stack_name refused" "subnet_core refused" \
+    "core_db_pw refused" "core_usr refused" "host_dir_repository_path refused"; do
+    [[ "$output" == *"$line"* ]] || { echo "missing: $line"; false; }
+  done
+  # every shipped setting has a rule
+  [[ "$output" != *" unknown"* ]]
+  run ctrl_shipped 'ctrlSettingKind no_such_setting'
+  [ "$output" = "unknown" ]
+}
+
+@test "settings: only floating settings can be reset" {
+  run ctrl_shipped 'ctrlResettable allow_beta && ctrlResettable kratos_log_level && ! ctrlResettable gateway_port && ! ctrlResettable autostart && ! ctrlResettable core_id'
+  [ "$status" -eq 0 ]
+}
+
+@test "settings: refused ones say why" {
+  run ctrl_shipped 'ctrlRefusedReason core_id; ctrlRefusedReason subnet_module; ctrlRefusedReason core_db_pw'
+  [[ "${lines[0]}" == *"identity"* ]] && [[ "${lines[1]}" == *"docker networks"* ]] && [[ "${lines[2]}" == *"credentials"* ]]
+}
+
+@test "settings: the list marks set values and hides passwords" {
+  printf '%s\n' 'core_id=abc' 'core_db_pw=secret123' 'allow_beta=true' > "$BATS_TEST_TMPDIR/settings"
+  run dsh 'settingsLoad "$SHIPPED" "$BATS_TEST_TMPDIR/settings"; ctrlSettingsList' file settings state lock ctrl
+  [[ "$output" == *"core_id=abc (set)"* ]]
+  [[ "$output" == *"core_db_pw=(hidden) (set)"* ]]
+  [[ "$output" == *"allow_beta=true (set)"* ]]
+  [[ "$output" == *"gateway_port=8080"$'\n'* ]] || [[ "$output" == *"gateway_port=8080" ]]
+  [[ "$output" != *"secret123"* ]]
+}
+
+@test "settings: validation of the changeable values" {
+  for kv in update_retry_limit=3 secrets_size=100M secrets_size=512k secrets_size=1G secrets_size=1048576 kratos_log_level=debug \
+    module_manager_dep_startup_delay=20s module_manager_aux_dep_startup_delay=5m module_manager_http_access_log=true; do
+    run ctrl_shipped 'setupValidate "'"${kv%%=*}"'" "'"${kv#*=}"'"'
+    [ "$status" -eq 0 ] || { echo "refused $kv: $output"; false; }
+  done
+  for kv in update_retry_limit=0 update_retry_limit=x secrets_size=M secrets_size=10Mb secrets_size=0M secrets_size=-1M \
+    kratos_log_level=Debug kratos_log_level= "kratos_log_level=warn ing" 'kratos_log_level=$x' module_manager_dep_startup_delay=20 \
+    module_manager_dep_startup_delay=s module_manager_dep_startup_delay=1.5s module_manager_http_access_log=yes; do
+    run ctrl_shipped 'setupValidate "'"${kv%%=*}"'" "'"${kv#*=}"'"'
+    [ "$status" -eq 1 ] || { echo "accepted $kv"; false; }
+  done
 }
