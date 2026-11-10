@@ -16,6 +16,10 @@
 #
 # Return codes: 0 success, 1 failed, 3 rate limited. Errors are reported on stderr.
 
+# the GitHub API. MGW_TEST_GITHUB_API points it at the tests' local mock (tests/vm/github_mock.py);
+# like MGW_TEST_FAIL_AT it is only honoured when set explicitly, nothing in the release sets it.
+github_api="${MGW_TEST_GITHUB_API:-https://api.github.com}"
+
 # the waits between attempts in seconds; one attempt more than there are waits
 net_retry_delays="30 120"
 net_api_timeout=120
@@ -130,7 +134,7 @@ netFetch() {
 # fetches the GitHub release $2 (a tag, empty for the latest) of the repository $1 (owner/name) into
 # the file $3
 githubRelease() {
-  github_url="https://api.github.com/repos/$1/releases"
+  github_url="$github_api/repos/$1/releases"
   if [ "$2" = "" ]
   then
     github_url="$github_url/latest"
@@ -142,7 +146,7 @@ githubRelease() {
 
 # fetches the list of releases of the repository $1 into the file $2
 githubReleases() {
-  netFetch "https://api.github.com/repos/$1/releases" "$2" api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28"
+  netFetch "$github_api/repos/$1/releases" "$2" api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28"
 }
 
 # prints the download URL of the asset whose name ends in $2 in the release JSON file $1

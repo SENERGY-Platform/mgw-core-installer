@@ -10,8 +10,10 @@
 # up. The other tests don't need a real prepare and use folders of their own.
 
 load ../unit/helpers
+load github
 
 setup_file() {
+  startGithubMock
   export ASSETS="$BATS_TEST_DIRNAME/../../assets"
   export CORE="mgwt$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')"
   export ROOT="/var/tmp/$CORE" R="/var/tmp/$CORE/state/install"
@@ -32,6 +34,7 @@ setup_file() {
 }
 
 teardown_file() {
+  stopGithubMock
   docker ps -aq --filter "label=com.docker.compose.project=${CORE}_v0_40_0" | xargs -r docker rm -f > /dev/null
   docker volume ls -q --filter "name=$CORE" | xargs -r docker volume rm > /dev/null
   docker network ls -q --filter "name=$CORE" | xargs -r docker network rm > /dev/null
