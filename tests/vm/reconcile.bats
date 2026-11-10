@@ -12,8 +12,8 @@ setup() {
   # not in /tmp: linked unit files have to be on the root file system (PLAN.md 5)
   export ROOT="/var/tmp/$CORE" ETC="$BATS_TEST_TMPDIR/etc"
   mkdir -p "$ETC/logrotate.d" "$ETC/cron.daily" "$ETC/avahi"
-  printf '%s\n' 'core_name=' 'systemd_path=/etc/systemd/system' "logrotated_path=$ETC/logrotate.d" \
-    "cron_path=$ETC/cron.daily" "avahi_path=$ETC/avahi" > "$BATS_TEST_TMPDIR/defaults"
+  export host_logrotated_path="$ETC/logrotate.d" host_cron_path="$ETC/cron.daily" host_avahi_path="$ETC/avahi"
+  printf '%s\n' 'core_name=' > "$BATS_TEST_TMPDIR/defaults"
   printf '%s\n' "core_name=$CORE" > "$BATS_TEST_TMPDIR/settings"
   version v1_3_0 a b
   ln -s v1_3_0 "$ROOT/current"
@@ -43,7 +43,7 @@ version() {
 }
 
 reconcile() {
-  dsh 'settingsLoad "$BATS_TEST_TMPDIR/defaults" "$BATS_TEST_TMPDIR/settings" || exit 9; reconcileEtc "$ROOT"' file settings reconcile
+  dsh 'settingsLoad "$BATS_TEST_TMPDIR/defaults" "$BATS_TEST_TMPDIR/settings" || exit 9; reconcileEtc "$ROOT"' file settings host reconcile
 }
 
 description() {

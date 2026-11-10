@@ -16,9 +16,10 @@
 # (NGINX_IMG ...); and the derived values below. Paths into the version go through current, never a
 # vX_Y_Z folder: a version is rendered before current points to it (PLAN.md 4).
 #
-# Needs lib/settings.sh with the settings loaded, and the version's options sourced (images).
+# Needs lib/settings.sh with the settings loaded, lib/host.sh, and the version's options sourced
+# (images).
 
-# settings_keys comes from lib/settings.sh, images from options
+# settings_keys comes from lib/settings.sh, host_docker_socket from lib/host.sh, images from options
 # shellcheck disable=SC2154
 
 # settings the install fills in; rendering without them would produce a config with blanks
@@ -63,6 +64,7 @@ renderExport() {
   done
   # the core-manager's config needs kratos' version, which is the tag of its image
   renderVar KRATOS_VERSION "${render_kratos_img##*:}"
+  renderVar DOCKER_SOCKET_PATH "$host_docker_socket"
   renderVar VERSION "$2"
   renderVar VERSION_FOLDER "$3"
   renderVar CORE_ROOT "$1"

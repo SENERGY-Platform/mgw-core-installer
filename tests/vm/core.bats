@@ -23,8 +23,8 @@ setup() {
   done
   mkdir -p "$ROOT/log" "$ROOT/state"
   ln -s v1_3_0 "$ROOT/current"
-  printf '%s\n' 'core_name=' 'systemd=false' 'secrets_size=16M' 'systemd_path=/etc/systemd/system' \
-    "logrotated_path=$BATS_TEST_TMPDIR" "cron_path=$BATS_TEST_TMPDIR" "avahi_path=$BATS_TEST_TMPDIR" > "$BATS_TEST_TMPDIR/defaults"
+  export host_logrotated_path="$BATS_TEST_TMPDIR" host_cron_path="$BATS_TEST_TMPDIR" host_avahi_path="$BATS_TEST_TMPDIR"
+  printf '%s\n' 'core_name=' 'systemd=false' 'secrets_size=16M' > "$BATS_TEST_TMPDIR/defaults"
   printf '%s\n' "core_name=$CORE" > "$BATS_TEST_TMPDIR/settings"
 }
 
@@ -44,7 +44,7 @@ teardown() {
 }
 
 core() {
-  dsh 'settingsLoad "$BATS_TEST_TMPDIR/defaults" "$BATS_TEST_TMPDIR/settings" || exit 9; '"$1" file settings state lock reconcile core
+  dsh 'settingsLoad "$BATS_TEST_TMPDIR/defaults" "$BATS_TEST_TMPDIR/settings" || exit 9; '"$1" file settings state lock host reconcile core
 }
 
 # the pids of the running fake host binaries of this core

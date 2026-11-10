@@ -15,13 +15,14 @@ setup() {
     "$ETC/systemd" "$ETC/logrotate.d" "$ETC/cron.daily" "$ETC/avahi"
   ln -s v1_3_0 "$ROOT/current"
   touch "$C/logrotate/mgw_abc_core" "$C/cron/mgw_abc_update" "$C/avahi/mgw_abc_core.service"
-  printf '%s\n' 'core_name=' "systemd_path=$ETC/systemd" "logrotated_path=$ETC/logrotate.d" \
-    "cron_path=$ETC/cron.daily" "avahi_path=$ETC/avahi" > "$BATS_TEST_TMPDIR/defaults"
+  export host_systemd_path="$ETC/systemd" host_logrotated_path="$ETC/logrotate.d" \
+    host_cron_path="$ETC/cron.daily" host_avahi_path="$ETC/avahi"
+  printf '%s\n' 'core_name=' > "$BATS_TEST_TMPDIR/defaults"
   printf '%s\n' 'core_name=mgw_abc' > "$BATS_TEST_TMPDIR/settings"
 }
 
 reconcile() {
-  dsh 'settingsLoad "$BATS_TEST_TMPDIR/defaults" "$BATS_TEST_TMPDIR/settings" || exit 9; reconcileEtc "$ROOT"' file settings reconcile
+  dsh 'settingsLoad "$BATS_TEST_TMPDIR/defaults" "$BATS_TEST_TMPDIR/settings" || exit 9; reconcileEtc "$ROOT"' file settings host reconcile
 }
 
 @test "creates a link through current for every file, under the file's name" {

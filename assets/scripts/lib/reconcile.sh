@@ -21,11 +21,7 @@
 # resolves the link and points the .wants link into the version folder; that's fine, systemd only
 # uses the .wants link's name, also once the version folder is gone (checked with systemd 257).
 #
-# Needs lib/settings.sh with the settings loaded (core_name and the /etc paths).
-
-# per integration folder in config: the setting with the /etc folder. A link has the same name as its
-# file; the render gives the files their final names (render_linked in lib/render.sh).
-reconcile_folders="systemd-units/services:systemd_path logrotate:logrotated_path cron:cron_path avahi:avahi_path"
+# Needs lib/host.sh.
 
 # reconciles the links of the core root $1. Returns 1 if anything couldn't be done (the rest is done
 # anyway), after reporting it on stderr.
@@ -34,6 +30,10 @@ reconcileEtc() {
   reconcile_rc=0
   reconcile_units_changed=false
   reconcile_units=""
+  # per integration folder in config: the /etc folder (lib/host.sh). A link has the same name as its
+  # file; the render gives the files their final names (render_linked in lib/render.sh).
+  # shellcheck disable=SC2154 # set by lib/host.sh
+  reconcile_folders="systemd-units/services:$host_systemd_path logrotate:$host_logrotated_path cron:$host_cron_path avahi:$host_avahi_path"
   # without current's config, everything would look unwanted and be removed
   if ! [ -d "$reconcile_config" ]
   then
@@ -43,7 +43,7 @@ reconcileEtc() {
   for reconcile_item in ${reconcile_folders}
   do
     reconcile_folder="${reconcile_item%%:*}"
-    reconcile_etc="$(settingsGet "${reconcile_item#*:}")"
+    reconcile_etc="${reconcile_item#*:}"
     if ! reconcileFolder "$reconcile_config/$reconcile_folder" "$reconcile_etc" "$reconcile_folder"
     then
       reconcile_rc=1

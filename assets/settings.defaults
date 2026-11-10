@@ -29,13 +29,6 @@ logrotate=true
 cron=true
 advertise=true
 
-# locations of the integrations and docker (written into state/settings by the install)
-systemd_path=/etc/systemd/system
-logrotated_path=/etc/logrotate.d
-cron_path=/etc/cron.daily
-avahi_path=/etc/avahi/services
-docker_socket_path=/var/run/docker.sock
-
 # updates (floating)
 allow_beta=false
 update_retry_limit=3

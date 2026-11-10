@@ -26,7 +26,7 @@ setup() {
 }
 
 render() {
-  dsh '. "$V/assets/options"; settingsLoad "$V/assets/settings.defaults" "$BATS_TEST_TMPDIR/settings" || exit 1; '"$1" file settings render
+  dsh '. "$V/assets/options"; settingsLoad "$V/assets/settings.defaults" "$BATS_TEST_TMPDIR/settings" || exit 1; '"$1" file settings host render
 }
 
 @test "a .tmpl is rendered with settings, images and derived values" {
@@ -121,4 +121,5 @@ render() {
   [ -f "$V/config/logrotate/mgw_abc_core" ] && [ -f "$V/config/avahi/mgw_abc_core.service" ]
   [ -f "$V/config/systemd-units/core/recover.service" ] && [ -f "$V/config/systemd-units/core/secrets.mount" ]
   grep -q '"version": "v1.3.1"' "$V/config/host-binaries/SENERGY-Platform/mgw-core-manager/conf.json"
+  grep -q '"host": "unix:///var/run/docker.sock"' "$V/config/host-binaries/SENERGY-Platform/mgw-container-engine-wrapper/conf.json"
 }
