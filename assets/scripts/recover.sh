@@ -23,7 +23,7 @@ if ! cd "${0%/*}/../../.."
 then
   exit 1
 fi
-core_root="$(pwd)"
+core_root="$(pwd -P)"
 lib="$core_root/current/assets/scripts/lib"
 if ! [ -d "$lib" ]
 then
@@ -35,17 +35,33 @@ do
   . "$lib/$recover_lib.sh" || exit 1
 done
 
-lockAcquire "$core_root/state/lock" recover
-case $? in
-  0)
-    ;;
-  2)
-    echo "the lock is held, its holder is responsible; nothing to recover"
-    exit 0
-    ;;
-  *)
-    exit 1
-esac
+# run by update.sh under its lock (G5): the lock is inherited and stays with the caller; releasing it
+# here would release the caller's as well (m2-assets-lib.md, "For M5")
+recover_inherited=false
+if lockInherited "$core_root/state/lock" recover
+then
+  recover_inherited=true
+else
+  lockAcquire "$core_root/state/lock" recover
+  case $? in
+    0)
+      ;;
+    2)
+      echo "the lock is held, its holder is responsible; nothing to recover"
+      exit 0
+      ;;
+    *)
+      exit 1
+  esac
+fi
+
+# releases the lock unless it belongs to the caller
+recoverRelease() {
+  if [ "$recover_inherited" != "true" ]
+  then
+    lockRelease 2> /dev/null
+  fi
+}
 
 record="$core_root/state/install"
 recordClear recover_inst "result" ""
@@ -62,9 +78,9 @@ then
   else
     echo "removing the unfinished install left something behind, listed in $record" >&2
   fi
-  lockRelease 2> /dev/null
+  recoverRelease
   exit 1
 fi
 
-lockRelease
+recoverRelease
 exit 0
