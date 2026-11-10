@@ -14,6 +14,7 @@
 #   folder:<path>   a folder, relative to the core root ("." is the core root itself)
 #   link:<path>     a symbolic link, relative to the core root (current)
 #   file:<path>     a file, absolute (the core-owned unit files in /etc/systemd/system)
+#   dir:<path>      a folder outside the core root, absolute (/mnt/<core_name>)
 #   unit:<name>     an enabled systemd unit
 #   mount:<path>    a tmpfs mounted without systemd
 #   volume:<name>   a docker volume
@@ -100,6 +101,16 @@ objectsFolder() {
   mkdir -p "$1/$2"
 }
 
+# creates the folder $1 (absolute, outside the core root) with its parents if it doesn't exist
+objectsDir() {
+  if [ -d "$1" ]
+  then
+    return 0
+  fi
+  objectsRecord "dir:$1" || return 1
+  mkdir -p "$1"
+}
+
 # writes stdin to the file $1 (absolute) with mode $2
 objectsFile() {
   objectsRecord "file:$1" || return 1
@@ -161,6 +172,14 @@ objectsRemove() {
       else
         rm -rf "${1:?}/$objects_name"
       fi
+      ;;
+    dir)
+      case "$objects_name" in
+        ""|/|*/..|*/../*|*/.|*/./*|[!/]*)
+          echo "refusing to remove '$objects_name'" >&2
+          return 1
+      esac
+      rm -rf "$objects_name"
       ;;
     file)
       case "$objects_name" in

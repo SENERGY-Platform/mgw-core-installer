@@ -118,7 +118,7 @@ objects() {
 }
 
 @test "remove refuses paths outside the core root" {
-  for o in "folder:" "folder:/etc" "folder:.." "folder:a/../.." "link:../x" "file:relative"; do
+  for o in "folder:" "folder:/etc" "folder:.." "folder:a/../.." "link:../x" "file:relative" "dir:/" "dir:" "dir:relative" "dir:/mnt/.." "dir:/mnt/../etc"; do
     run objects 'objectsRemove "$ROOT" "'"$o"'"'
     [ "$status" -eq 1 ] || { echo "accepted $o"; false; }
   done
@@ -127,6 +127,18 @@ objects() {
   run objects 'objectsRemove / folder:.'
   [ "$status" -eq 1 ]
   [ -d "$ROOT" ]
+}
+
+@test "a folder outside the core root is created recorded and removed" {
+  run objects '
+    installRecordBegin "$R" v1_3_0 install
+    objects_record="$R"
+    objectsDir "$BATS_TEST_TMPDIR/mnt/mgw_abc"
+    grep -qx "created=dir:$BATS_TEST_TMPDIR/mnt/mgw_abc" "$R" && echo recorded
+    objectsRemove "$ROOT" "dir:$BATS_TEST_TMPDIR/mnt/mgw_abc"'
+  [ "$status" -eq 0 ]
+  [ "$output" = "recorded" ]
+  [ ! -e "$BATS_TEST_TMPDIR/mnt/mgw_abc" ]
 }
 
 @test "remove tolerates objects that don't exist" {

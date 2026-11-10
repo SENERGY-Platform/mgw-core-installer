@@ -1,0 +1,49 @@
+# Config file for a non-interactive install: sudo ./setup.sh -c <file>
+#
+# The format of the settings: key=value, one per line, the value taken literally (no quotes, no
+# comment after a value). Lines starting with "#" are comments. A key left out keeps its default; an
+# unknown key fails the install. Every value is checked before anything is changed.
+
+# where the core is installed: <install_dir>/<core_id>
+install_dir=/opt/mgw
+# start the core after the installation
+start_core=true
+# install missing packages without asking
+skip_pkg_install_confirm=false
+
+# integrations
+systemd=true
+logrotate=true
+# automatic updates
+cron=true
+# mDNS advertisement
+advertise=true
+allow_beta=false
+
+# the core; empty means generated (core_id, the passwords) or derived (core_name: mgw_<core_id>,
+# stack_name: the core name, host_dir_repository_path: <core root>/repositories/host_dir)
+core_id=
+core_name=
+host_dir_repository_path=
+gateway_port=8080
+# the core and gateway subnets are /28, the module subnet /16
+subnet_core=10.0.0.0
+subnet_module=10.1.0.0
+subnet_gateway=10.10.0.0
+# the web ui login
+core_usr=core-user
+core_usr_pw=
+core_db_pw=
+core_db_root_pw=
+secrets_size=100M
+
+# further settings with their defaults, see settings.defaults; they can be changed later with ctrl.sh
+#update_retry_limit=3
+#auth_service_log_level=warning
+#module_manager_log_level=warning
+#module_manager_http_access_log=false
+#module_manager_dep_startup_delay=20s
+#module_manager_aux_dep_startup_delay=30s
+#secret_manager_log_level=warning
+#kratos_log_level=warning
+#kratos_migrate_log_level=warning

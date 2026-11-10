@@ -1,784 +1,450 @@
 #!/bin/sh
 
+# Copyright (c) 2026 InfAI (CC SES)
 
-if ! cd ${0%/*}
+# Installs a fresh multi-gateway core (PLAN.md 10a). Lives in the root of the release archive (or a
+# git clone), next to assets/, and is not installed.
+#
+#   sudo ./setup.sh             interactive
+#   sudo ./setup.sh -c <file>   non-interactive, everything from the config file
+#                               (assets/setup.conf.example is the template)
+#
+# The install leaves the core in exactly the state an update would leave behind, built with the same
+# building blocks. From the moment the core root exists, every object is recorded in state/install
+# before it is created; a failure removes everything again, and a killed install is cleaned up by
+# the next setup.sh, the recovery unit or ctrl.sh.
+
+# the libraries' variables (host_*, state_*, setup_*, objects_record) and the package lists of options
+# are used across files, which shellcheck can't follow
+# shellcheck disable=SC2034,SC2154
+
+if ! cd "${0%/*}"
 then
   exit 1
 fi
 
-. ./assets/scripts/lib/settings.sh
+lib=./assets/scripts/lib
+for setup_lib in file settings state lock host render reconcile net docker objects core version setup
+do
+  # shellcheck disable=SC1090
+  . "$lib/$setup_lib.sh" || exit 1
+done
 
-read_config=false
-while getopts ':c:h' opt; do
+usage() {
+  echo "usage: $0 [-c <config file>]"
+  echo "  without -c, the installer asks; with -c, it takes everything from the config file"
+}
+
+config_file=""
+while getopts ':c:h' opt
+do
   case "$opt" in
     c)
-      echo "Reading config from '${OPTARG}'"
-      . ${OPTARG}
-      read_config=true
+      config_file="$OPTARG"
       ;;
-
     h)
-      echo "Usage: $(basename $0) [-c configfile]\n If a config file is given, the installer will run non-interactive mode."
-      exit 0
-      ;;
-
-    ?)
-      echo "Invalid command option.\nUsage: $(basename $0) [-c configfile]"
-      exit 1
-      ;;
-  esac
-done
-shift "$(($OPTIND -1))"
-
-. ./assets/.options
-. ./assets/scripts/lib/util.sh
-. ./assets/scripts/lib/os.sh
-. ./assets/scripts/lib/package.sh
-. ./assets/scripts/lib/github.sh
-. ./assets/scripts/lib/container.sh
-. ./assets/scripts/lib/sysd_ctrl.sh
-. ./assets/scripts/lib/sem_ver.sh
-
-setup_path=$(pwd)
-# '.version' ships with a release archive but is not part of the repository, so
-# running the installer from a git clone has to fall back to a version of its own.
-# only the install directory gets a '.version' written, see prepareInstallDir
-if [ -f .version ]
-then
-  version="$(cat .version)"
-else
-  version="dev-$(date +%s)"
-fi
-
-if ! platform="$(getPlatform)"
-then
-  echo "platform not supported"
-  exit 1
-fi
-if ! arch="$(getArch)"
-then
-  echo "architecture not supported"
-  exit 1
-fi
-
-# runs after everything the user is asked, so the package lists it works on are
-# the ones the chosen options actually need - see getRequiredPkg/getInstallPkg
-handlePackages() {
-  missing=$(getMissingPkg "$(getRequiredPkg)")
-  if [ "$missing" != "" ]
-  then
-    echo "missing required packages: $missing"
-    exit 1
-  fi
-  missing=$(getMissingDockerPkg)
-  if [ "$missing" != "" ]
-  then
-   echo "missing required packages: $missing"
-   echo "please follow instructions at 'https://docs.docker.com/engine/install' and run setup again"
-   exit 1
-  fi
-  missing=$(getMissingPkg "$(getInstallPkg)")
-  if [ "$missing" != "" ]
-  then
-    printColor "the following new packages will be installed: " "$blue" "nb"
-    echo "$missing"
-    while :
-    do
-      if [ "$skip_pgk_install_confirm" != "true" ]
-      then
-        printColor "continue? (y/n): " "$blue" "nb"
-        read -r choice
-      else
-        choice=y
-      fi
-      case "$choice" in
-      y)
-        if ! installPkg "$missing"
-        then
-          exit 1
-        fi
-        break
-        ;;
-      n)
-        exit 0
-        ;;
-      *)
-        echo "unknown option"
-      esac
-    done
-  fi
-}
-
-prepareInstallDir() {
-  if ! mkdir -p $secrets_path $deployments_path $sockets_path $bin_path $container_path $log_path $mounts_path $mounts_path/nginx $mounts_path/kratos
-  then
-    exit 1
-  fi
-  if ! cp ./assets/scripts/ctrl.sh $base_path/ctrl.sh
-  then
-    exit 1
-  fi
-  if ! cp ./assets/scripts/update.sh $base_path/update.sh
-  then
-    exit 1
-  fi
-  if ! cp ./assets/scripts/uninstall.sh $base_path/uninstall.sh
-  then
-    exit 1
-  fi
-  if [ -d $scripts_path ]
-  then
-    if ! rm -r $scripts_path
-    then
-      exit 1
-    fi
-  fi
-  if ! cp -r ./assets/scripts/lib $scripts_path
-  then
-    exit 1
-  fi
-  if ! cp ./assets/.options $base_path/.options
-  then
-    exit 1
-  fi
-  # the version resolved at startup, which a git clone has no '.version' for
-  if ! echo "$version" > $base_path/.version
-  then
-    exit 1
-  fi
-}
-
-handleBin() {
-  wrk_spc="/tmp/mgw-install"
-  rm -r $wrk_spc > /dev/null 2>& 1
-  if ! mkdir -p $wrk_spc
-  then
-    exit 1
-  fi
-  for item in ${binaries}
-  do
-    repo="${item%%:*}"
-    bin_version="${item##*:}"
-    echo "getting $repo release $bin_version ..."
-    if ! release="$(getGitHubRelease "$repo" "$bin_version")"
-    then
-      rm -r $wrk_spc
-      exit 1
-    fi
-    if ! asset_url="$(getGitHubReleaseAssetUrl "$release" "$platform")"
-    then
-      rm -r $wrk_spc
-      exit 1
-    fi
-    dl_pth="$wrk_spc/$repo"
-    if ! mkdir -p $dl_pth
-    then
-      rm -r $wrk_spc
-      exit 1
-    fi
-    echo "downloading ..."
-    if ! file="$(downloadFile "$asset_url" "$dl_pth")"
-    then
-      rm -r $wrk_spc
-      exit 1
-    fi
-    echo "extracting ..."
-    if ! extract_path="$(extractTar "$file")"
-    then
-      rm -r $wrk_spc
-      exit 1
-    fi
-    echo "copying ..."
-    target_path="$bin_path/$repo"
-    if ! mkdir -p $target_path
-    then
-      rm -r $wrk_spc
-      exit 1
-    fi
-    if ! cp -r $extract_path/$arch/* $target_path
-    then
-      rm -r $wrk_spc
-      exit 1
-    fi
-    echo "$item" >> $base_path/.binaries
-  done
-  rm -r $wrk_spc
-}
-
-handleBinConfigs() {
-  for item in ${binaries}
-  do
-    repo="${item%%:*}"
-    if stat ./assets/bin/$repo > /dev/null 2>& 1
-    then
-      if ! mkdir -p $bin_path/$repo/config
-      then
-        exit 1
-      fi
-      echo "copying $repo configs ..."
-      files=$(ls ./assets/bin/$repo)
-      for file in ${files}
-      do
-        if real_file="$(getTemplateBase "$file")"
-        then
-          if ! envsubst < ./assets/bin/$repo/$file > $bin_path/$repo/config/$real_file
-          then
-            exit 1
-          fi
-        else
-          if ! cp ./assets/bin/$repo/$file $bin_path/$repo/config/$file
-          then
-            exit 1
-          fi
-        fi
-      done
-    fi
-  done
-}
-
-# installs and enables the units, but leaves starting them to startComponents.
-# the host binaries read files the installation renders - the core-manager reads
-# the compose file at startup - so nothing may run before every one of them is
-# in place
-handleSystemd() {
-  if [ "$systemd" = "true" ]
-  then
-    units=""
-    echo "copying systemd mount units ..."
-    if ! units=$(copyWithTemplates ./assets/units/mounts $systemd_path "$units" "mnt-$core_name-")
-    then
-      exit 1
-    fi
-    echo "copying systemd service units ..."
-    if ! units=$(copyWithTemplates ./assets/units/services $systemd_path "$units" "$core_name-")
-    then
-      exit 1
-    fi
-    if [ "$units" != "" ]
-    then
-      echo "reloading systemd ..."
-      if ! systemctl daemon-reload
-      then
-        exit 1
-      fi
-      for unit in ${units}
-      do
-        echo "enabling $unit ..."
-        if ! systemctl enable "$unit"
-        then
-          exit 1
-        fi
-        echo "$unit" >> $base_path/.units
-      done
-    fi
-  fi
-}
-
-handleLogrotate() {
-  if [ "$logrotate" = "true" ]
-  then
-    echo "copying logrotate config ..."
-    if ! envsubst < ./assets/logrotate/mgw_core.template > $logrotated_path/"$core_name"_core
-    then
-      exit 1
-    fi
-  fi
-}
-
-handleCron() {
-  if [ "$cron" = "true" ]
-  then
-    echo "creating cronjob ..."
-    if ! envsubst '$BASE_PATH $LOG_PATH' < ./assets/cron/mgw_update.template > $cron_path/"$core_name"_update
-    then
-      exit 1
-    fi
-    if ! chmod +x $cron_path/"$core_name"_update
-    then
-      exit 1
-    fi
-  fi
-}
-
-handleAvahi() {
-  if [ "$advertise" = "true" ]
-  then
-    echo "creating avahi service ..."
-    if ! envsubst < ./assets/avahi/core.service.template > $avahi_path/"$core_name"_core.service
-    then
-      exit 1
-    fi
-  fi
-}
-
-handleDefaultSettings() {
-  while :
-  do
-    if [ "$read_config" = "true" ]
-    then
-      choice=n
-    else
-      printColor "change default settings? (y/n): " "$blue" "nb"
-      read -r choice
-    fi
-    case "$choice" in
-      y)
-        printf "install directory [%s]: " "$base_path"
-        read -r input
-        if [ "$input" != "" ]; then
-          case $input in
-            /*)
-              ;;
-            *)
-              echo "must be absolute path"
-              exit 1
-          esac
-          base_path="$input"
-        fi
-        printf "stack name [%s]: " "$stack_name"
-        read -r input
-        if [ "$input" != "" ]; then
-          stack_name="$input"
-        fi
-        printf "core id [%s]: " "$core_id"
-        read -r input
-        if [ "$input" != "" ]; then
-          core_id="$input"
-        fi
-        printf "core user [%s]: " "$core_usr"
-        read -r input
-        if [ "$input" != "" ]; then
-          core_usr="$input"
-        fi
-        printf "core database password [%s]: " "$core_db_pw"
-        read -r input
-        if [ "$input" != "" ]; then
-          core_db_pw="$input"
-        fi
-        printf "core database root password [%s]: " "$core_db_root_pw"
-        read -r input
-        if [ "$input" != "" ]; then
-          core_db_root_pw="$input"
-        fi
-        printf "gateway port [%s]: " "$gateway_port"
-        read -r input
-        if [ "$input" != "" ]; then
-          gateway_port="$input"
-        fi
-        printf "core subnet [%s]: " "$subnet_core"
-        read -r input
-        if [ "$input" != "" ]; then
-          subnet_core="$input"
-        fi
-        printf "module subnet [%s]: " "$subnet_module"
-        read -r input
-        if [ "$input" != "" ]; then
-          subnet_module="$input"
-        fi
-        printf "gateway subnet [%s]: " "$subnet_gateway"
-        read -r input
-        if [ "$input" != "" ]; then
-          subnet_gateway="$input"
-        fi
-        printf "host dir repository path [%s]: " "$host_dir_repository_path"
-        read -r input
-        if [ "$input" != "" ]; then
-          host_dir_repository_path="$input"
-        fi
-        break
-        ;;
-      n)
-        break
-        ;;
-      *)
-        echo "unknown option"
-    esac
-  done
-  deployments_path=$base_path/deployments
-  sockets_path=$base_path/sockets
-  bin_path=$base_path/bin
-  container_path=$base_path/container
-  log_path=$base_path/log
-  scripts_path=$base_path/scripts
-  mounts_path=$base_path/mounts
-}
-
-handleDatabasePasswords() {
-  if [ "$core_db_pw" = "" ]
-  then
-    if ! core_db_pw="$(openssl rand -hex 16)"
-    then
-      exit 1
-    fi
-  fi
-  if [ "$core_db_root_pw" = "" ]
-  then
-    if ! core_db_root_pw="$(openssl rand -hex 16)"
-    then
-      exit 1
-    fi
-  fi
-}
-
-handleCoreUserPassword() {
-  if [ "$core_usr_pw" = "" ]
-  then
-    if ! core_usr_pw="$(openssl rand -hex 16)"
-    then
-      exit 1
-    fi
-  fi
-}
-
-handleCoreID() {
-  if [ "$core_id" = "" ]
-  then
-    if ! core_id="$(openssl rand -hex 4)"
-    then
-      exit 1
-    fi
-  fi
-}
-
-handleCoreName() {
-  if [ "$core_name" = "" ]
-  then
-    core_name="mgw_$core_id"
-  fi
-}
-
-handleSecretsPath() {
-  secrets_path=/mnt/$core_name/secrets
-}
-
-handleStackName() {
-  if [ "$stack_name" = "" ]
-  then
-    stack_name="$core_name"
-  fi
-}
-
-handleBetaRelease() {
-  if [ "$read_config" != "true" ]
-  then
-    while :
-    do
-      printColor "allow beta releases? (y/n): " "$blue" "nb"
-      read -r choice
-      case "$choice" in
-      y)
-        allow_beta=true
-        break
-        ;;
-      n)
-        allow_beta=false
-        break
-        ;;
-      *)
-        echo "unknown option"
-      esac
-    done
-  fi
-}
-
-handleIntegration() {
-  if [ "$read_config" != "true" ]
-  then
-    while :
-    do
-      printColor "enable OS startup integration? (y/n): " "$blue" "nb"
-      read -r choice
-      case "$choice" in
-      y)
-        systemd=true
-        break
-        ;;
-      n)
-        systemd=false
-        echo "please use 'ctrl.sh' for manual control"
-        break
-        ;;
-      *)
-        echo "unknown option"
-      esac
-    done
-    while :
-    do
-      printColor "enable log rotation? (y/n): " "$blue" "nb"
-      read -r choice
-      case "$choice" in
-      y)
-        logrotate=true
-        break
-        ;;
-      n)
-        logrotate=false
-        break
-        ;;
-      *)
-        echo "unknown option"
-      esac
-    done
-    while :
-    do
-      printColor "enable automatic updates? (y/n): " "$blue" "nb"
-      read -r choice
-      case "$choice" in
-      y)
-        cron=true
-        break
-        ;;
-      n)
-        cron=false
-        break
-        ;;
-      *)
-        echo "unknown option"
-      esac
-    done
-    while :
-    do
-      printColor "enable mDNS advertisement? (y/n): " "$blue" "nb"
-      read -r choice
-      case "$choice" in
-      y)
-        advertise=true
-        break
-        ;;
-      n)
-        advertise=false
-        break
-        ;;
-      *)
-        echo "unknown option"
-      esac
-    done
-  fi
-}
-
-createContainers() {
-  echo "creating containers ..."
-  if ! cd $container_path
-  then
-    exit 1
-  fi
-  if ! dockerCompose up --no-start
-  then
-    exit 1
-  fi
-  if ! cd $setup_path
-  then
-    exit 1
-  fi
-}
-
-# the core is started as a whole or not at all, which is why the question covers
-# the units as well as the containers: starting the units alone leaves the
-# gateway proxying to services that are not there, a core the user has to repair
-# with 'ctrl.sh' before it has ever been up
-handleCoreStart() {
-  if [ "$read_config" != "true" ]
-  then
-    while :
-    do
-      printColor "start core? (y/n): " "$blue" "nb"
-      read -r choice
-      case "$choice" in
-      y)
-        start_core=true
-        break
-        ;;
-      n)
-        start_core=false
-        break
-        ;;
-      *)
-        echo "unknown option"
-      esac
-    done
-  fi
-}
-
-# brings the core up in the order its parts depend on each other: the host
-# binaries first, because the containers reach the core through their unix
-# sockets and mount the gateway and identity-server configs the core-manager
-# writes, then the containers. only called with systemd integration - without
-# it the core is started by 'ctrl.sh', which keeps the same order
-startComponents() {
-  startUnits
-  echo "starting containers ..."
-  if ! cd $container_path
-  then
-    exit 1
-  fi
-  if ! dockerCompose start
-  then
-    exit 1
-  fi
-  if ! cd $setup_path
-  then
-    exit 1
-  fi
-}
-
-handleOptions() {
-  if [ "$SYSTEMD_PATH" != "" ]
-  then
-    case $SYSTEMD_PATH in
-      /*)
-        ;;
-      *)
-        echo "systemd path must be absolute"
-        exit 1
-    esac
-    systemd_path="$SYSTEMD_PATH"
-  fi
-  if [ "$LOGROTATED_PATH" != "" ]
-  then
-    case $LOGROTATED_PATH in
-      /*)
-        ;;
-      *)
-        echo "logrotate.d path must be absolute"
-        exit 1
-    esac
-    logrotated_path="$LOGROTATED_PATH"
-  fi
-  if [ "$CRON_PATH" != "" ]
-  then
-    case $CRON_PATH in
-      /*)
-        ;;
-      *)
-        echo "cron path must be absolute"
-        exit 1
-    esac
-    cron_path="$CRON_PATH"
-  fi
-}
-
-checkRoot() {
-  if ! isRoot
-  then
-    echo "root privileges required"
-    exit 1
-  fi
-}
-
-# closes the installation with the credentials needed for the first login. the
-# values get a line each and no color, so they survive being copied out of the
-# terminal
-printAccessInfo() {
-  printColor "log into the web ui with:" "$yellow"
-  printf "  user:     %s\n" "$core_usr"
-  # the output of a non-interactive install usually ends up in a log file, so
-  # there the password is only pointed at, never printed
-  if [ "$read_config" != "true" ]
-  then
-    printf "  password: %s\n" "$core_usr_pw"
-  fi
-  printLnBr
-  if [ "$read_config" != "true" ]
-  then
-    echo "the credentials are also stored in '.settings' under '$base_path'"
-  fi
-}
-
-handleOptions
-checkRoot
-if [ "$read_config" != "true" ]
-then
-  while :
-  do
-    printColor "install multi-gateway core $version? (y/n): " "$blue" "nb"
-    read -r choice
-    case $choice in
-    y)
-      break
-      ;;
-    n)
+      usage
       exit 0
       ;;
     *)
-      echo "unknown option"
+      usage >&2
+      exit 1
+  esac
+done
+
+auto=false
+if [ "$config_file" != "" ]
+then
+  auto=true
+fi
+
+if [ -f ./assets/version ]
+then
+  version="$(cat ./assets/version)"
+else
+  # a git clone has no assets/version, the release build writes it
+  version="dev-$(date +%s)"
+fi
+
+say() {
+  printf '%s\n' "$*"
+}
+
+fail() {
+  say "$*" >&2
+  exit 1
+}
+
+# asks $1 with the default $2 in brackets until setupValidate accepts the answer for the key $3;
+# prints the answer
+ask() {
+  while :
+  do
+    printf '%s [%s]: ' "$1" "$2" >&2
+    read -r ask_answer || exit 1
+    ask_answer="${ask_answer:-$2}"
+    if [ "$3" = "" ] || setupValidate "$3" "$ask_answer"
+    then
+      printf '%s\n' "$ask_answer"
+      return
+    fi
+  done
+}
+
+# asks the yes/no question $1; returns 0 for yes
+askYes() {
+  while :
+  do
+    printf '%s (y/n): ' "$1" >&2
+    read -r ask_answer || exit 1
+    case "$ask_answer" in
+      y)
+        return 0
+        ;;
+      n)
+        return 1
+        ;;
+      *)
+        say "please answer y or n" >&2
     esac
   done
-fi
-printLnBr
-# the flow is deliberately in three parts: everything the user is asked runs
-# first, the packages those answers need are installed second, and only then are
-# the settings resolved - the ids and passwords are generated with openssl,
-# which is one of the packages the second part installs.
-# what follows writes the whole installation before a single component of the
-# core is started, because a component may read any of those files at startup -
-# starting is the last step, see startComponents
-printColor "setting up installer ..." "$yellow"
-detectDockerCompose
-handleDefaultSettings
-handleIntegration
-handleBetaRelease
-printColor "setting up installer done" "$yellow"
-printLnBr
-printColor "setting up required packages ..." "$yellow"
-handlePackages
-printColor "setting up required packages done" "$yellow"
-printLnBr
-printColor "resolving settings ..." "$yellow"
-handleCoreID
-handleCoreName
-handleSecretsPath
-handleStackName
-handleDatabasePasswords
-handleCoreUser
-handleCoreUserPassword
-handleGatewayPort
-handleSubnets
-handleRestartPolicy
-parseImages
-exportSettingsToEnv
-printColor "resolving settings done" "$yellow"
-printLnBr
-printColor "setting up install directory ..." "$yellow"
-prepareInstallDir
-printColor "setting up install directory done" "$yellow"
-printLnBr
-printColor "setting up binaries ..." "$yellow"
-handleBin
-handleBinConfigs
-printColor "setting up binaries done" "$yellow"
-printLnBr
-printColor "setting up integration ..." "$yellow"
-handleSystemd
-handleLogrotate
-handleCron
-handleAvahi
-printColor "setting up integration done" "$yellow"
-printLnBr
-printColor "setting up container environment ..." "$yellow"
-copyContainerAssets
-createContainers
-printColor "setting up container environment done" "$yellow"
-printLnBr
-# everything the core reads at startup is rendered by now, '.settings' included -
-# 'ctrl.sh' and 'update.sh' source it, so it must not wait for a start that can
-# still fail
-saveSettings
-# a core without startup integration is never started here, it is left to
-# 'ctrl.sh' - see handleIntegration
-if [ "$systemd" = "true" ]
-then
-  handleCoreStart
-  if [ "$start_core" = "true" ]
+}
+
+askBool() {
+  if askYes "$1"
   then
-    printColor "starting core ..." "$yellow"
-    startComponents
-    printColor "starting core done" "$yellow"
+    echo true
   else
-    echo "please use 'ctrl.sh' for manual control or reboot your system"
+    echo false
   fi
-  printLnBr
+}
+
+# prints $1 random bytes as hex
+randomHex() {
+  od -An -N"$1" -tx1 /dev/urandom | tr -d ' \n'
+}
+
+# --- 1. checks, nothing changed yet ---
+
+if [ "$(id -u)" != "0" ]
+then
+  fail "root privileges required"
 fi
-printColor "installation successful" "$yellow"
-printLnBr
-printAccessInfo
-printLnBr
+hostPlatform > /dev/null || exit 1
+hostArch > /dev/null || exit 1
+if ! command -v docker > /dev/null 2>&1 || ! docker compose version > /dev/null 2>&1
+then
+  fail "docker with the compose plugin is required, see https://docs.docker.com/engine/install"
+fi
+if ! version_folder="$(versionFolder "$version")"
+then
+  exit 1
+fi
+if ! settingsLoad ./assets/settings.defaults ""
+then
+  exit 1
+fi
+# the version's own static asset: the package lists, binaries and images
+# shellcheck disable=SC1091
+. ./assets/options || exit 1
+
+# --- 3. the questions, or the config file ---
+
+if [ "$auto" = "true" ]
+then
+  say "reading config file '$config_file' ..."
+  configLoad "$config_file" || exit 1
+else
+  if ! askYes "install multi-gateway core $version?"
+  then
+    exit 0
+  fi
+  if askYes "change default settings?"
+  then
+    setupSet install_dir "$(ask "install directory" /opt/mgw install_dir)"
+    setupSet core_id "$(ask "core id (empty: generated)" "" "")"
+    while [ "$(setupGet core_id)" != "" ] && ! setupValidate core_id "$(setupGet core_id)"
+    do
+      setupSet core_id "$(ask "core id (empty: generated)" "" "")"
+    done
+    setupSet core_usr "$(ask "core user" "$(setupGet core_usr)" core_usr)"
+    for setup_pw in core_db_pw core_db_root_pw
+    do
+      setup_pw_answer="$(ask "$setup_pw (empty: generated)" "" "")"
+      while [ "$setup_pw_answer" != "" ] && ! setupValidate "$setup_pw" "$setup_pw_answer"
+      do
+        setup_pw_answer="$(ask "$setup_pw (empty: generated)" "" "")"
+      done
+      setupSet "$setup_pw" "$setup_pw_answer"
+    done
+    setupSet gateway_port "$(ask "gateway port" "$(setupGet gateway_port)" gateway_port)"
+    setupSet subnet_core "$(ask "core subnet (/28)" "$(setupGet subnet_core)" subnet_core)"
+    setupSet subnet_module "$(ask "module subnet (/16)" "$(setupGet subnet_module)" subnet_module)"
+    setupSet subnet_gateway "$(ask "gateway subnet (/28)" "$(setupGet subnet_gateway)" subnet_gateway)"
+    setup_hd="$(ask "host dir repository path (empty: <core root>/repositories/host_dir)" "" "")"
+    while [ "$setup_hd" != "" ] && ! setupValidate host_dir_repository_path "$setup_hd"
+    do
+      setup_hd="$(ask "host dir repository path (empty: <core root>/repositories/host_dir)" "" "")"
+    done
+    setupSet host_dir_repository_path "$setup_hd"
+  fi
+  setupSet systemd "$(askBool "enable OS startup integration (systemd)?")"
+  setupSet logrotate "$(askBool "enable log rotation?")"
+  setupSet cron "$(askBool "enable automatic updates?")"
+  setupSet advertise "$(askBool "enable mDNS advertisement?")"
+  setupSet allow_beta "$(askBool "allow beta releases?")"
+  setupSet start_core "$(askBool "start the core after the installation?")"
+fi
+
+# --- 6. the generated and derived settings (od instead of openssl: no package needed yet) ---
+
+install_dir="$(setupGet install_dir)"
+install_dir="${install_dir:-/opt/mgw}"
+setupSet install_dir "$install_dir"
+[ "$(setupGet core_id)" != "" ] || setupSet core_id "$(randomHex 4)"
+[ "$(setupGet core_name)" != "" ] || setupSet core_name "mgw_$(setupGet core_id)"
+[ "$(setupGet stack_name)" != "" ] || setupSet stack_name "$(setupGet core_name)"
+for setup_pw in core_usr_pw core_db_pw core_db_root_pw
+do
+  [ "$(setupGet "$setup_pw")" != "" ] || setupSet "$setup_pw" "$(randomHex 16)"
+done
+core_root="$install_dir/$(setupGet core_id)"
+[ "$(setupGet host_dir_repository_path)" != "" ] || setupSet host_dir_repository_path "$core_root/repositories/host_dir"
+if ! setupValidateAll
+then
+  exit 1
+fi
+core_name="$(setupGet core_name)"
+stack_name="$(setupGet stack_name)"
+
+# --- 1. checks of the install directory ---
+
+setup_dir="$install_dir"
+while ! [ -e "$setup_dir" ]
+do
+  setup_dir="${setup_dir%/*}"
+  setup_dir="${setup_dir:-/}"
+done
+if [ "$(findmnt -n -o TARGET --target "$setup_dir")" != "/" ]
+then
+  fail "'$install_dir' isn't on the root file system: systemd needs the unit files it links there at boot"
+fi
+if [ -e "$install_dir/.settings" ]
+then
+  fail "'$install_dir' contains an installation of an older installer; its update.sh migrates it"
+fi
+
+# --- 2. unfinished installs ---
+
+if [ -d "$install_dir" ]
+then
+  for setup_unfinished in $(setupUnfinished "$install_dir")
+  do
+    say "unfinished install found: $setup_unfinished"
+    if [ "$auto" = "false" ] && ! askYes "remove it?"
+    then
+      fail "not installing next to an unfinished install"
+    fi
+    (
+      lockAcquire "$setup_unfinished/state/lock" setup.sh || exit 1
+      installCleanup "$setup_unfinished" "$setup_unfinished/state/install"
+    ) || fail "removing the unfinished install '$setup_unfinished' failed, see its state/install"
+  done
+fi
+
+# --- 4. collision checks, nothing changed yet ---
+
+setup_collisions=""
+collision() {
+  setup_collisions="${setup_collisions}  $*$state_nl"
+}
+[ ! -e "$core_root" ] || collision "$core_root exists"
+for setup_f in "$host_systemd_path/$core_name"-* "$host_systemd_path/$(systemd-escape --path --suffix=mount "/mnt/$core_name/secrets" 2> /dev/null)" \
+  "$host_logrotated_path/$core_name"_* "$host_cron_path/$core_name"_* "$host_avahi_path/$core_name"_*
+do
+  if [ -e "$setup_f" ] || [ -L "$setup_f" ]
+  then
+    collision "$setup_f exists"
+  fi
+done
+for setup_v in $(docker volume ls -q | grep "^${stack_name}_")
+do
+  collision "docker volume $setup_v exists"
+done
+for setup_n in $(docker network ls --format '{{.Name}}' | grep "^$core_name-.*-net\$")
+do
+  collision "docker network $setup_n exists"
+done
+setup_port="$(setupGet gateway_port)"
+if [ "$(ss -ltnH "sport = :$setup_port" 2> /dev/null)" != "" ] || docker ps --format '{{.Ports}}' | grep -q ":$setup_port->"
+then
+  collision "port $setup_port is in use"
+fi
+# shellcheck disable=SC2046 # one argument per network id
+for setup_subnet in $(docker network inspect -f '{{range .IPAM.Config}}{{.Subnet}} {{end}}' $(docker network ls -q) 2> /dev/null)
+do
+  case "$setup_subnet" in
+    *:*)
+      continue
+  esac
+  for setup_ours in "$(setupGet subnet_core)/28" "$(setupGet subnet_gateway)/28" "$(setupGet subnet_module)/16"
+  do
+    if subnetsOverlap "$setup_ours" "$setup_subnet"
+    then
+      collision "subnet $setup_ours overlaps $setup_subnet of an existing docker network"
+    fi
+  done
+done
+if [ "$setup_collisions" != "" ]
+then
+  say "not installing, the core would collide with:" >&2
+  printf '%s' "$setup_collisions" >&2
+  fail "leftovers of a core with this name can be repaired with restore.sh; otherwise choose another core id, port or subnets"
+fi
+
+# --- 5. packages ---
+
+setup_required="$require_pkg"
+[ "$(setupGet systemd)" = "true" ] && setup_required="$setup_required $require_pkg_systemd"
+setup_missing="$(setupMissingPkg "$setup_required")"
+if [ "$setup_missing" != "" ]
+then
+  fail "missing required packages: $setup_missing"
+fi
+setup_install="$install_pkg"
+[ "$(setupGet logrotate)" = "true" ] && setup_install="$setup_install $install_pkg_logrotate"
+[ "$(setupGet cron)" = "true" ] && setup_install="$setup_install $install_pkg_cron"
+[ "$(setupGet advertise)" = "true" ] && setup_install="$setup_install $install_pkg_advertise"
+setup_missing="$(setupMissingPkg "$setup_install")"
+if [ "$setup_missing" != "" ]
+then
+  say "the following packages will be installed: $setup_missing"
+  if [ "$auto" = "false" ] && [ "$(setupGet skip_pkg_install_confirm)" != "true" ] && ! askYes "continue?"
+  then
+    exit 0
+  fi
+  # shellcheck disable=SC2086 # one argument per package
+  if ! apt-get update || ! apt-get install -y $setup_missing
+  then
+    fail "installing packages failed"
+  fi
+fi
+
+# --- 7. core root, record, lock ---
+
+record="$core_root/state/install"
+
+# removes everything recorded so far and ends the install
+setupAbort() {
+  trap - INT TERM HUP
+  say "$1, removing what the install created ..." >&2
+  if ! installCleanup "$core_root" "$record"
+  then
+    say "the cleanup left something behind, listed in $record; the next setup.sh tries again" >&2
+  fi
+  lockRelease 2> /dev/null
+  exit 1
+}
+
+if ! mkdir -p "$install_dir" || ! mkdir "$core_root" || ! mkdir "$core_root/state"
+then
+  fail "cannot create '$core_root'"
+fi
+installRecordBegin "$record" "$version_folder" install || { rm -rf "$core_root"; fail "cannot write '$record'"; }
+installRecordAdd "$record" folder:. || { rm -rf "$core_root"; fail "cannot write '$record'"; }
+trap 'setupAbort "interrupted"' INT TERM HUP
+if ! lockAcquire "$core_root/state/lock" install
+then
+  setupAbort "cannot take the lock"
+fi
+objects_record="$record"
+
+# --- 8. state/settings ---
+
+say "writing state/settings ..."
+for setup_key in ${setup_pinned} ${setup_set}
+do
+  if ! settingsKnown "$setup_key"
+  then
+    continue
+  fi
+  settingsSet "$core_root/state/settings" "$setup_key" "$(setupGet "$setup_key")" || setupAbort "cannot write state/settings"
+done
+settingsLoad ./assets/settings.defaults "$core_root/state/settings" || setupAbort "cannot read state/settings"
+
+# --- 9. core-owned folders ---
+
+testFail folders || setupAbort "creating the folders failed"
+for setup_folder in deployments log mounts/nginx mounts/kratos sockets state/host-manager
+do
+  objectsFolder "$core_root" "$setup_folder" || setupAbort "cannot create $setup_folder"
+done
+setup_hd="$(settingsGet host_dir_repository_path)"
+case "$setup_hd" in
+  "$core_root"/*)
+    objectsFolder "$core_root" "${setup_hd#"$core_root"/}" || setupAbort "cannot create $setup_hd"
+    ;;
+  *)
+    # outside the core root: the installation was pointed at it, it isn't removed with the core
+    mkdir -p "$setup_hd" || setupAbort "cannot create $setup_hd"
+esac
+
+# --- 10. prepare version, then the core-owned units and the secrets tmpfs ---
+
+versionPrepare "$core_root" ./assets "$version" 0 0 || setupAbort "preparing $version failed"
+testFail prepare || setupAbort "preparing $version failed"
+setup_config="$core_root/$version_folder/config/systemd-units/core"
+objectsDir "/mnt/$core_name" || setupAbort "cannot create /mnt/$core_name"
+if [ "$(settingsGet systemd)" = "true" ]
+then
+  setup_mount_unit="$(systemd-escape --path --suffix=mount "/mnt/$core_name/secrets")"
+  objectsFile "$host_systemd_path/$setup_mount_unit" 644 < "$setup_config/secrets.mount" || setupAbort "cannot write the mount unit"
+  objectsFile "$host_systemd_path/$core_name-recover.service" 644 < "$setup_config/recover.service" || setupAbort "cannot write the recovery unit"
+  systemctl daemon-reload || setupAbort "systemctl daemon-reload failed"
+  for setup_unit in "$setup_mount_unit" "$core_name-recover.service"
+  do
+    objectsRecord "unit:$setup_unit" || setupAbort "cannot record $setup_unit"
+    systemctl enable "$setup_unit" > /dev/null 2>&1 || setupAbort "enabling $setup_unit failed"
+  done
+else
+  objectsRecord "mount:/mnt/$core_name/secrets" || setupAbort "cannot record the secrets tmpfs"
+fi
+coreMountSecrets || setupAbort "mounting the secrets tmpfs failed"
+testFail units || setupAbort "setting up the core-owned units failed"
+
+# --- 11. activate version ---
+
+versionActivate "$core_root" "$version_folder" || setupAbort "activating $version failed"
+testFail activate || setupAbort "activating $version failed"
+
+# --- 12. success ---
+
+{ testFail success && installRecordResult "$record" success; } || setupAbort "cannot record the install's success"
+trap - INT TERM HUP
+objects_record=""
+say "installation of $version successful: $core_root"
+
+# --- 13. start ---
+
+if [ "$(setupGet start_core)" = "true" ]
+then
+  say "starting the core ..."
+  if ! coreStart "$core_root"
+  then
+    say "starting the core failed; the installation is complete, start it with $core_root/current/ctrl.sh start" >&2
+  fi
+fi
+
+# --- 14. finish ---
+
+lockRelease
+say ""
+say "control the core with: $core_root/current/ctrl.sh"
+say "log into the web ui with:"
+say "  user:     $(settingsGet core_usr)"
+if [ "$auto" = "false" ]
+then
+  say "  password: $(settingsGet core_usr_pw)"
+else
+  say "  password: core_usr_pw in $core_root/state/settings"
+fi
