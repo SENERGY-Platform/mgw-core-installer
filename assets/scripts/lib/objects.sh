@@ -219,8 +219,10 @@ objectsRemove() {
       objects_ctrs="$(docker ps -aq --filter "label=com.docker.compose.project=$objects_name")"
       if [ "$objects_ctrs" != "" ]
       then
+        # -v: also anonymous volumes. The core's containers have none today (the compose file mounts
+        # named volumes on every path the images declare); this keeps a future gap from leaking
         # shellcheck disable=SC2086 # one argument per container
-        docker rm -f $objects_ctrs > /dev/null
+        docker rm -f -v $objects_ctrs > /dev/null
       fi
       ;;
     etclinks)
