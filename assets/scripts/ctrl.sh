@@ -18,6 +18,7 @@ usage: ctrl.sh [-y] <command>
   start          start the core (the host binaries; the core-manager starts the containers)
   stop           stop the core
   restart        stop, then start the core
+  ctr-recreate   recreate the core's containers (a running core is stopped and started again)
   status         show the core's state, its last update and check, and who holds its lock
   help           show this help
 
@@ -171,6 +172,13 @@ case "$command" in
   restart)
     ctrlBegin
     coreStop "$core_root" && coreStart "$core_root"
+    rc=$?
+    lockRelease
+    exit $rc
+    ;;
+  ctr-recreate)
+    ctrlBegin
+    coreRecreate "$core_root" 0
     rc=$?
     lockRelease
     exit $rc

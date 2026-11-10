@@ -146,6 +146,33 @@ waitForRunning() {
   [ "$(findmnt -n -o FSTYPE "/mnt/mgw_$Y/secrets")" = "tmpfs" ]
 }
 
+@test "ctr-recreate on a stopped core: new containers, still stopped" {
+  local before
+  before="$(docker ps -aq --filter "label=mgw_cid=$X" | sort)"
+  run "$DIR/$X/current/ctrl.sh" ctr-recreate
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(docker ps -aq --filter "label=mgw_cid=$X" | wc -l)" -eq 9 ]
+  [ -z "$(comm -12 <(echo "$before") <(docker ps -aq --filter "label=mgw_cid=$X" | sort))" ]
+  waitForRunning "$X" 0
+  [ "$(systemctl is-active "mgw_$X-core-manager.service")" = "inactive" ]
+}
+
+@test "ctr-recreate on a running core: new containers, the core runs again, migrations done" {
+  "$DIR/$Y/current/ctrl.sh" start > /dev/null
+  waitForRunning "$Y" 7
+  local before
+  before="$(docker ps -aq --filter "label=mgw_cid=$Y" | sort)"
+  run "$DIR/$Y/current/ctrl.sh" ctr-recreate
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ -z "$(comm -12 <(echo "$before") <(docker ps -aq --filter "label=mgw_cid=$Y" | sort))" ]
+  [ "$(wc -l < "$DIR/$Y/state/pid")" -eq 3 ]
+  waitForRunning "$Y" 7
+  [ "$(docker ps -a --filter "label=mgw_cid=$Y" --filter label=core_srv_oneshot=true --format '{{.Status}}' | grep -c '^Exited (0)')" -eq 2 ]
+  "$DIR/$Y/current/ctrl.sh" stop > /dev/null
+}
+
 @test "help and unknown commands" {
   run "$DIR/$X/current/ctrl.sh" help
   [ "$status" -eq 0 ]

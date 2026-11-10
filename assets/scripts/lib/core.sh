@@ -273,3 +273,41 @@ coreStopBins() {
   fi
   rm -f "$1/state/pid"
 }
+
+# returns 0 if any part of the core of the core root $1 runs (a unit or a host binary)
+coreAnyRunning() {
+  if [ "$(settingsGet autostart)" = "true" ]
+  then
+    for core_unit in $(coreUnits "$1")
+    do
+      systemctl is-active --quiet "$core_unit" && return 0
+    done
+    return 1
+  fi
+  [ "$(coreListBins "$1")" != "" ]
+}
+
+# recreates current's containers of the core root $1 (ctr-recreate, and after a settings change that
+# affects the compose file). The core-manager's monitor would start new containers one by one,
+# without the compose dependencies and without the one-shot migrations, so a running core is stopped
+# first and started again afterwards: its core-manager runs compose start, in dependency order
+# (m4-ctrl.md, finding 3). Volumes and networks are external and stay. $2 limits the compose call in
+# seconds (0: no limit).
+coreRecreate() {
+  core_was_running=false
+  if coreAnyRunning "$1"
+  then
+    core_was_running=true
+    coreStop "$1" || return 1
+  fi
+  echo "recreating the containers ..."
+  if ! dockerCompose "${2:-0}" -f "$1/current/config/container/docker-compose.yml" up --no-start --force-recreate --pull never --remove-orphans
+  then
+    echo "recreating the containers failed" >&2
+    return 1
+  fi
+  if [ "$core_was_running" = "true" ]
+  then
+    coreStart "$1"
+  fi
+}
