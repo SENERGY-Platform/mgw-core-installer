@@ -309,3 +309,14 @@ testFail() {
   esac
   return 0
 }
+
+# The test hook for interruptions: kills this process with SIGKILL if MGW_TEST_KILL_AT names the step
+# $1, so a VM test can interrupt a run exactly there, without any of its own handling running (like a
+# power loss). Only honoured when set explicitly; nothing in the release sets it.
+testKill() {
+  case " ${MGW_TEST_KILL_AT:-} " in
+    *" $1 "*)
+      echo "test: killed at $1" >&2
+      kill -KILL $$
+  esac
+}

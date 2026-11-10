@@ -123,3 +123,79 @@ updateCleanup() {
   done
   return $update_cl_rc
 }
+
+# --- the handling per phase (PLAN.md 13), shared by stage two and the recovery (14) ---
+#
+# They work on: core_root, core_name, record (state/update), old_folder, new_folder, was_running, the
+# record in the upd_ variables, and update_start_allowed (false at boot, see updateHandleC).
+
+update_start_allowed=true
+
+# records the final result of a failure: rolled_back $1, the step $2; counts it towards the retry
+# limit if $3 is "count" (G8: only failures from the stop on). A failed write is only logged: this
+# runs during or after the handling (S2).
+updateRecordFailure() {
+  updateSet result failed
+  updateSet rolled_back "$1"
+  updateSet step "$2"
+  updateSet finished "$(stateNow)"
+  if [ "$3" = "count" ] && ! attemptsAddFailure "$core_root/state/attempts" "$new_folder"
+  then
+    recordWarn upd "could not count the failure in state/attempts"
+  fi
+  updateRecordWrite "$record" || echo "cannot write $record" >&2
+}
+
+# G9: the error handling itself failed. Nothing more is attempted; the core is left as it is and
+# needs restore.sh. ctrl.sh refuses changing commands, the units don't start at boot.
+updateHandlingFailed() {
+  echo "the error handling failed at: $1" >&2
+  echo "nothing more is attempted; repair the core with $core_root/current/restore.sh" >&2
+  updateSet recovery_failed true
+  updateRecordFailure false "$2; the rollback failed at: $1" count
+  exit 1
+}
+
+# B: the old core is untouched. Remove the new containers, keep the images (G1), record, then remove
+# the new version folder (never the one current points to). Doesn't count towards G8.
+updateHandleB() {
+  objectsRemove "$core_root" "project:${core_name}_$new_folder" 2> /dev/null ||
+    recordWarn upd "could not remove the containers of $new_folder"
+  updateRecordFailure false "$1"
+  for handle_folder in "${new_folder}_tmp" "$new_folder"
+  do
+    versionRemoveLeftover "$core_root" "$handle_folder" > /dev/null 2>&1 ||
+      echo "warning: could not remove $core_root/$handle_folder" >&2
+  done
+}
+
+# C: the rollback. The old containers were only stopped, the old folder never modified: pointing
+# back is enough. Every step can be repeated (G6); a failing one is G9.
+updateHandleC() {
+  echo "rolling back to $old_folder ..." >&2
+  testFail rollback || updateHandlingFailed "removing the containers of $new_folder" "$1"
+  objectsRemove "$core_root" "project:${core_name}_$new_folder" 2> /dev/null ||
+    updateHandlingFailed "removing the containers of $new_folder" "$1"
+  settingsLoad "$core_root/$old_folder/assets/settings.defaults" "$core_root/state/settings" ||
+    updateHandlingFailed "reading the settings of $old_folder" "$1"
+  versionActivate "$core_root" "$old_folder" || updateHandlingFailed "activating $old_folder" "$1"
+  # at boot the units start by themselves right after the recovery unit; starting them from it would
+  # deadlock (m5-update.md, finding 2)
+  if [ "$was_running" = "true" ] && [ "$update_start_allowed" = "true" ]
+  then
+    coreStart "$core_root" || updateHandlingFailed "starting $old_folder" "$1"
+  fi
+  updateRecordFailure true "$1" count
+  for handle_folder in "${new_folder}_tmp" "$new_folder"
+  do
+    versionRemoveLeftover "$core_root" "$handle_folder" > /dev/null 2>&1 ||
+      echo "warning: could not remove $core_root/$handle_folder" >&2
+  done
+}
+
+# D: past the point of no return, no rollback (G3): data migrations may have run. The half-started
+# new version is left as it is, the old version kept for investigation.
+updateHandleD() {
+  updateRecordFailure false "$1" count
+}
+

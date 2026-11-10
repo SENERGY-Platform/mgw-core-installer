@@ -7,7 +7,7 @@ Wants=docker.service
 Type=oneshot
 # stays active after it ran, so starting a service unit later doesn't run it again
 RemainAfterExit=yes
-ExecStart=${CORE_ROOT}/current/assets/scripts/recover.sh
+ExecStart=${CORE_ROOT}/current/assets/scripts/recover.sh -boot
 TimeoutStartSec=1800
 
 [Install]

@@ -133,85 +133,19 @@ then
     updateRecordWrite "$record"
   }
 
-  # records the final result of a failure: rolled_back $1, the step $2; counts it towards the retry
-  # limit if $3 is "count" (G8: only failures from the stop on). A failed write is only logged: this
-  # runs during or after the handling (S2).
-  recordFailure() {
-    updateSet result failed
-    updateSet rolled_back "$1"
-    updateSet step "$2"
-    updateSet finished "$(stateNow)"
-    if [ "$3" = "count" ] && ! attemptsAddFailure "$core_root/state/attempts" "$new_folder"
-    then
-      recordWarn upd "could not count the failure in state/attempts"
-    fi
-    updateRecordWrite "$record" || echo "cannot write $record" >&2
-  }
-
-  # G9: the error handling itself failed. Nothing more is attempted; the core is left as it is and
-  # needs restore.sh. ctrl.sh refuses changing commands, the units don't start at boot.
-  handlingFailed() {
-    echo "the error handling failed at: $1" >&2
-    echo "nothing more is attempted; repair the core with $core_root/current/restore.sh" >&2
-    updateSet recovery_failed true
-    recordFailure false "$2; the rollback failed at: $1" count
-    exit 1
-  }
-
-  # B: the old core is untouched. Remove the new containers, keep the images (G1), record, then remove
-  # the new version folder (never the one current points to). Doesn't count towards G8.
-  handleB() {
-    objectsRemove "$core_root" "project:${core_name}_$new_folder" 2> /dev/null ||
-      recordWarn upd "could not remove the containers of $new_folder"
-    recordFailure false "$1"
-    for handle_folder in "${new_folder}_tmp" "$new_folder"
-    do
-      versionRemoveLeftover "$core_root" "$handle_folder" > /dev/null 2>&1 ||
-        echo "warning: could not remove $core_root/$handle_folder" >&2
-    done
-  }
-
-  # C: the rollback. The old containers were only stopped, the old folder never modified: pointing
-  # back is enough. Every step can be repeated (G6); a failing one is G9.
-  handleC() {
-    echo "rolling back to $old_folder ..." >&2
-    testFail rollback || handlingFailed "removing the containers of $new_folder" "$1"
-    objectsRemove "$core_root" "project:${core_name}_$new_folder" 2> /dev/null ||
-      handlingFailed "removing the containers of $new_folder" "$1"
-    settingsLoad "$core_root/$old_folder/assets/settings.defaults" "$core_root/state/settings" ||
-      handlingFailed "reading the settings of $old_folder" "$1"
-    versionActivate "$core_root" "$old_folder" || handlingFailed "activating $old_folder" "$1"
-    if [ "$was_running" = "true" ]
-    then
-      coreStart "$core_root" || handlingFailed "starting $old_folder" "$1"
-    fi
-    recordFailure true "$1" count
-    for handle_folder in "${new_folder}_tmp" "$new_folder"
-    do
-      versionRemoveLeftover "$core_root" "$handle_folder" > /dev/null 2>&1 ||
-        echo "warning: could not remove $core_root/$handle_folder" >&2
-    done
-  }
-
-  # D: past the point of no return, no rollback (G3): data migrations may have run. The half-started
-  # new version is left as it is, the old version kept for investigation.
-  handleD() {
-    recordFailure false "$1" count
-  }
-
   # a failure in the phase $1 (B, C, D) at the step $2 (13)
   stageFail() {
     trap - INT TERM HUP
     echo "the update failed in phase $1: $2" >&2
     case "$1" in
       B)
-        handleB "$2"
+        updateHandleB "$2"
         ;;
       C)
-        handleC "$2"
+        updateHandleC "$2"
         ;;
       D)
-        handleD "$2"
+        updateHandleD "$2"
     esac
     exit 1
   }
@@ -241,6 +175,7 @@ then
     objectsRemove "$core_root" "folder:${new_folder}_tmp"
     exit 1
   fi
+  testKill preparing
   # a manual run resets the retry count (G8)
   if [ "$auto" != "true" ]
   then
@@ -254,24 +189,28 @@ then
   testFail prepare || stageFail B "preparing $new_version"
   updateSet phase switching
   step "switching to $new_version" || stageFail B "recording the switch"
+  testKill switching
 
   # C: switching; versionBuild left the new version's settings loaded, autostart and the units are
   # the same for stopping the old one
   update_phase=C
   testFail stop || stageFail C "stopping $old_folder"
   coreStop "$core_root" || stageFail C "stopping $old_folder"
+  testKill stopped
   # a safety net if the old core-manager didn't stop its containers (e.g. it had crashed)
   dockerCompose "$ctr_limit" -f "$core_root/$old_folder/config/container/docker-compose.yml" stop > /dev/null 2>&1 ||
     stageFail C "stopping the containers of $old_folder"
   versionActivate "$core_root" "$new_folder" || stageFail C "activating $new_folder"
   [ "$version_warning" = "" ] || recordWarn upd "$version_warning"
   testFail activate || stageFail C "activating $new_folder"
+  testKill activated
 
   # D: starting, the point of no return (only if the core was meant to run)
   if [ "$was_running" = "true" ]
   then
     updateSet phase starting
     step "starting $new_version" || stageFail C "recording the start"
+    testKill starting
     # S8: the point of no return is the first host binary starting; a start that fails before is
     # still rolled back
     start_mark="$(coreStartMark "$core_root")"
