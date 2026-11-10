@@ -23,7 +23,7 @@
 state_format=1
 
 # the fields of each record in the order they are written; the stable fields (PLAN.md 9) first
-state_update_fields="format writer kind result phase started finished from_version to_version old_folder new_folder was_running rolled_back interrupted old_project step warnings_omitted"
+state_update_fields="format writer kind result phase started finished from_version to_version old_folder new_folder was_running rolled_back interrupted recovery_failed old_project step warnings_omitted"
 state_check_fields="format check_time check_result check_version check_step warnings_omitted"
 state_install_fields="format writer result mode started finished"
 
