@@ -94,8 +94,136 @@ fi
 
 if [ "$stage" = "2" ]
 then
-  echo "stage two isn't implemented in this version" >&2
-  exit 1
+  # --- stage two (the new version's code, PLAN.md 10) ---
+
+  record="$core_root/state/update"
+  # this script runs from <core root>/vX_Y_Z_tmp, which is renamed to vX_Y_Z while it runs; nothing
+  # below keeps a path into it
+  new_folder="$(basename "$(dirname "$(dirname "$script_dir")")")"
+  new_folder="${new_folder%_tmp}"
+  new_version="$(cat "$script_dir/../version")"
+  pull_limit=0
+  ctr_limit=0
+  if [ "$auto" = "true" ]
+  then
+    pull_limit="$docker_pull_limit"
+    ctr_limit="$docker_ctr_limit"
+  fi
+
+  if ! lockInherited "$core_root/state/lock" update
+  then
+    lockAcquire "$core_root/state/lock" update || exit 1
+  fi
+
+  # the old version's effective settings: for the target state and stopping it
+  if ! settingsLoad "$core_root/current/assets/settings.defaults" "$core_root/state/settings"
+  then
+    exit 1
+  fi
+  old_folder="$(readlink "$core_root/current")"
+  from_version="$(cat "$core_root/current/assets/version" 2> /dev/null)"
+  core_name="$(settingsGet core_name)"
+  was_running=false
+  [ "$(coreTarget "$core_root")" = "running" ] && was_running=true
+
+  # records the step $1 (informational) and writes the record; returns 1 if it can't be written
+  step() {
+    updateSet step "$1"
+    echo "$1 ..."
+    updateRecordWrite "$record"
+  }
+
+  # a failure in the phase $1 at the step $2 (13); the handling per phase follows with the error
+  # handling, until then the failure is recorded
+  stageFail() {
+    echo "the update failed in phase $1: $2" >&2
+    updateSet result failed
+    updateSet step "$2"
+    updateSet finished "$(stateNow)"
+    updateRecordWrite "$record"
+    exit 1
+  }
+
+  # the first record, before anything is created (10, S2: without it the update can't start)
+  recordClear upd "$state_update_fields" warning
+  updateSet format "$state_format"
+  updateSet writer "$new_folder"
+  updateSet kind update
+  updateSet result running
+  updateSet phase preparing
+  updateSet started "$(stateNow)"
+  updateSet from_version "$from_version"
+  updateSet to_version "$new_version"
+  updateSet old_folder "$old_folder"
+  updateSet new_folder "$new_folder"
+  updateSet was_running "$was_running"
+  updateSet old_project "${core_name}_$old_folder"
+  if ! step "preparing $new_version"
+  then
+    echo "cannot write $record, not updating" >&2
+    objectsRemove "$core_root" "folder:${new_folder}_tmp"
+    exit 1
+  fi
+  # a manual run resets the retry count (G8)
+  if [ "$auto" != "true" ]
+  then
+    attemptsReset "$core_root/state/attempts" "$new_folder" || recordWarn upd "could not reset state/attempts"
+  fi
+
+  # B: preparation, the old core untouched
+  versionBuild "$core_root" "$new_version" "$pull_limit" "$ctr_limit" pin
+  build_rc=$?
+  [ $build_rc -eq 0 ] || stageFail B "preparing $new_version (exit code $build_rc)"
+  testFail prepare || stageFail B "preparing $new_version"
+  updateSet phase switching
+  step "switching to $new_version" || stageFail B "recording the switch"
+
+  # C: switching; versionBuild left the new version's settings loaded, autostart and the units are
+  # the same for stopping the old one
+  testFail stop || stageFail C "stopping $old_folder"
+  coreStop "$core_root" || stageFail C "stopping $old_folder"
+  # a safety net if the old core-manager didn't stop its containers (e.g. it had crashed)
+  dockerCompose "$ctr_limit" -f "$core_root/$old_folder/config/container/docker-compose.yml" stop > /dev/null 2>&1 ||
+    stageFail C "stopping the containers of $old_folder"
+  versionActivate "$core_root" "$new_folder" || stageFail C "activating $new_folder"
+  [ "$version_warning" = "" ] || recordWarn upd "$version_warning"
+  testFail activate || stageFail C "activating $new_folder"
+
+  # D: starting, the point of no return (only if the core was meant to run)
+  if [ "$was_running" = "true" ]
+  then
+    updateSet phase starting
+    step "starting $new_version" || stageFail C "recording the start"
+    coreStart "$core_root" || stageFail D "starting $new_version"
+  fi
+
+  # the final record, then the cleanup (E): an interrupted cleanup leaves a final record
+  updateSet result success
+  updateSet phase "done"
+  updateSet finished "$(stateNow)"
+  step "cleaning up" || stageFail C "recording the success"
+  attemptsReset "$core_root/state/attempts" "$new_folder" > /dev/null 2>&1
+  cleanup_out="$(updateCleanup "$core_root")"
+  if [ "$cleanup_out" != "" ]
+  then
+    printf '%s\n' "$cleanup_out" | while IFS= read -r cleanup_line
+    do
+      echo "warning: $cleanup_line" >&2
+    done
+    # a heredoc, not a pipe: the loop must run in this shell to keep the warnings
+    while IFS= read -r cleanup_line
+    do
+      recordWarn upd "$cleanup_line"
+    done <<CLEANUP
+$cleanup_out
+CLEANUP
+    updateSet step "done, the cleanup left something behind"
+  else
+    updateSet step "done"
+  fi
+  updateRecordWrite "$record" || echo "warning: cannot write $record" >&2
+  echo "updated to $new_version"
+  exit 0
 fi
 
 # --- stage one (the running version's code) ---

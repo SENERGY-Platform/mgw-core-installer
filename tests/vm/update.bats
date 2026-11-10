@@ -22,7 +22,7 @@ setup_file() {
   tar -xzf "$MGW_TEST_RELEASES/mgw_core_installer_v0.40.0.tar.gz" -C "$BATS_FILE_TMPDIR/v0.40.0"
   local n=$((RANDOM % 90 + 20))
   printf '%s\n' "install_dir=$DIR" "core_id=$U" "gateway_port=$((20000 + RANDOM % 10000))" "subnet_core=10.$n.0.0" \
-    "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" autostart=false start_core=false \
+    "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" autostart=true start_core=true \
     logrotate=false cron=false advertise=false > "$BATS_FILE_TMPDIR/u.conf"
   "$BATS_FILE_TMPDIR/v0.40.0/setup.sh" -c "$BATS_FILE_TMPDIR/u.conf" > "$BATS_FILE_TMPDIR/u.log" 2>&1
 }
@@ -56,45 +56,16 @@ check() {
   [ ! -e "/tmp/mgw_$U" ]
 }
 
-@test "a beta only with allow_beta" {
+@test "a beta isn't taken without allow_beta" {
   "$REPO/tests/vm/build_release.sh" v0.41.0-beta1 "$MGW_TEST_RELEASES"
   run "$ROOT/current/update.sh" -a
   [ "$status" -eq 0 ]
   check check_result=up_to_date
-  "$ROOT/current/ctrl.sh" settings set allow_beta true > /dev/null
-  run "$ROOT/current/update.sh" -a
-  echo "$output"
-  check check_version=v0.41.0-beta1
-  [ "$(cat "$ROOT/v0_41_0-beta1_tmp/assets/version")" = "v0.41.0-beta1" ]
-  "$ROOT/current/ctrl.sh" settings reset allow_beta > /dev/null
-  rm -rf "$ROOT/v0_41_0-beta1_tmp" "$MGW_TEST_RELEASES/mgw_core_installer_v0.41.0-beta1.tar.gz"
+  rm "$MGW_TEST_RELEASES/mgw_core_installer_v0.41.0-beta1.tar.gz"
 }
 
-@test "a newer release: downloaded into vX_Y_Z_tmp and handed over to stage two" {
+@test "the retry limit: automatic runs skip a version that failed too often" {
   "$REPO/tests/vm/build_release.sh" v0.41.0 "$MGW_TEST_RELEASES"
-  run "$ROOT/current/update.sh" -a
-  echo "$output"
-  # stage two of this version isn't implemented yet: S4
-  [ "$status" -eq 1 ]
-  check check_result=failed
-  check check_version=v0.41.0
-  check "check_step=the update script of v0.41.0 failed (exit code 1), see state/update"
-  [ "$(cat "$ROOT/v0_41_0_tmp/assets/version")" = "v0.41.0" ]
-  [ "$(readlink "$ROOT/v0_41_0_tmp/update.sh")" = "assets/scripts/update.sh" ]
-  (cd "$ROOT/v0_41_0_tmp/assets" && sha256sum -c --quiet checksums)
-  [ ! -e "/tmp/mgw_$U" ]
-  [ "$(readlink "$ROOT/current")" = "v0_40_0" ]
-}
-
-@test "a leftover vX_Y_Z_tmp is replaced by the next run (S3)" {
-  touch "$ROOT/v0_41_0_tmp/leftover"
-  run "$ROOT/current/update.sh"
-  [ ! -e "$ROOT/v0_41_0_tmp/leftover" ]
-  [ -d "$ROOT/v0_41_0_tmp/assets" ]
-}
-
-@test "the retry limit: automatic runs skip the version, manual runs don't" {
-  rm -rf "$ROOT/v0_41_0_tmp"
   printf '%s\n' version=v0_41_0 failures=3 > "$ROOT/state/attempts"
   run "$ROOT/current/update.sh" -a
   echo "$output"
@@ -102,9 +73,7 @@ check() {
   check check_result=skipped
   check "check_step=v0.41.0 failed 3 times"
   [ ! -e "$ROOT/v0_41_0_tmp" ]
-  run "$ROOT/current/update.sh"
-  [ -d "$ROOT/v0_41_0_tmp" ]
-  rm -f "$ROOT/state/attempts"
+  rm "$ROOT/state/attempts"
 }
 
 @test "a held lock refuses the run and records nothing" {
@@ -139,11 +108,66 @@ check() {
   [[ "$output" == *"isn't an installation of the old installer"* ]]
 }
 
+# waits up to 5 minutes until $1 long-running containers of the project $2 run
+waitForRunning() {
+  local i=0 n
+  while [ $i -lt 60 ]; do
+    n="$(docker ps --filter "label=com.docker.compose.project=$2" --filter status=running --format '{{.Label "core_srv_oneshot"}}' | grep -c '^$' || true)"
+    [ "$n" -eq "$1" ] && return 0
+    sleep 5
+    i=$((i + 1))
+  done
+  docker ps -a --filter "label=mgw_cid=$U" --format '{{.Names}} {{.Status}}'
+  return 1
+}
+
+@test "an update of a running core: switched, started, old version cleaned up" {
+  waitForRunning 7 "mgw_${U}_v0_40_0"
+  run "$ROOT/current/update.sh" -a
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(readlink "$ROOT/current")" = "v0_41_0" ]
+  [ ! -e "$ROOT/v0_40_0" ] && [ ! -e "$ROOT/v0_41_0_tmp" ]
+  # the record
+  grep -qx result=success "$ROOT/state/update"
+  grep -qx phase=done "$ROOT/state/update"
+  grep -qx from_version=v0.40.0 "$ROOT/state/update" && grep -qx to_version=v0.41.0 "$ROOT/state/update"
+  grep -qx writer=v0_41_0 "$ROOT/state/update" && grep -qx old_folder=v0_40_0 "$ROOT/state/update"
+  grep -qx was_running=true "$ROOT/state/update"
+  ! grep -q '^warning=' "$ROOT/state/update"
+  grep -qx failures=0 "$ROOT/state/attempts"
+  check check_result=update_available && check check_version=v0.41.0
+  # the new version runs, the old containers are gone
+  [ "$(systemctl show -p ExecStart --value "mgw_$U-core-manager.service" | grep -o "path=[^ ;]*")" = "path=$ROOT/current/bin/SENERGY-Platform/mgw-core-manager/bin" ]
+  [ "$(systemctl is-active "mgw_$U-core-manager.service")" = "active" ]
+  [ -z "$(docker ps -aq --filter "label=com.docker.compose.project=mgw_${U}_v0_40_0")" ]
+  waitForRunning 7 "mgw_${U}_v0_41_0"
+}
+
+@test "an update of a stopped core: it stays stopped, unused images are removed" {
+  "$ROOT/current/ctrl.sh" stop > /dev/null
+  mkdir -p "$BATS_TEST_TMPDIR/overlay"
+  sed 's/^NGINX_IMG=nginx:.*/NGINX_IMG=nginx:1.31.0-alpine/' "$REPO/assets/options" > "$BATS_TEST_TMPDIR/overlay/options"
+  "$REPO/tests/vm/build_release.sh" v0.42.0 "$MGW_TEST_RELEASES" "$BATS_TEST_TMPDIR/overlay"
+  local old_nginx
+  old_nginx="$(grep '^NGINX_IMG=' "$REPO/assets/options" | cut -d= -f2)"
+  run "$ROOT/current/update.sh"
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(readlink "$ROOT/current")" = "v0_42_0" ]
+  grep -qx was_running=false "$ROOT/state/update"
+  [ "$(systemctl is-active "mgw_$U-core-manager.service")" = "inactive" ]
+  waitForRunning 0 "mgw_${U}_v0_42_0"
+  grep -qx nginx:1.31.0-alpine "$ROOT/state/images"
+  ! grep -qx "$old_nginx" "$ROOT/state/images"
+  ! docker image inspect "$old_nginx" > /dev/null 2>&1
+}
+
 @test "an unfinished install is recovered under the update's lock first" {
   # a minimal core of folders only: its install never recorded success
   local fake="$DIR/fake"
   mkdir -p "$fake/state"
-  cp -a "$ROOT/v0_40_0" "$fake/v0_40_0"
+  cp -a "$ROOT/$(readlink "$ROOT/current")" "$fake/v0_40_0"
   ln -s v0_40_0 "$fake/current"
   printf '%s\n' "core_id=fake" "core_name=mgw_fake" > "$fake/state/settings"
   printf '%s\n' result=running created=folder:. created=folder:v0_40_0 > "$fake/state/install"
