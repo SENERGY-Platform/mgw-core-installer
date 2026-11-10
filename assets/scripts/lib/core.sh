@@ -10,7 +10,8 @@
 # Without systemd they are started detached and recorded in state/pid (from the former
 # lib/bin_ctrl.sh).
 #
-# Needs lib/settings.sh with the settings loaded (autostart, core_name, secrets_size).
+# Needs lib/settings.sh with the settings loaded (autostart, core_name, secrets_size), and
+# lib/state.sh for the target state.
 
 # host binaries in start order, with the base name of the file their output goes to
 core_bins="SENERGY-Platform/mgw-container-engine-wrapper:ce_wrapper
@@ -309,5 +310,44 @@ coreRecreate() {
   if [ "$core_was_running" = "true" ]
   then
     coreStart "$1"
+  fi
+}
+
+# --- the target state (PLAN.md 9, m5-update.md finding 5) ---
+
+# the current boot's id; a reboot changes it
+coreBootId() {
+  cat /proc/sys/kernel/random/boot_id 2> /dev/null
+}
+
+# records in state/target_state of the core root $1 that the core is meant to be $2 (running or
+# stopped), for this boot. Written by whoever starts or stops the core on purpose, before acting, so
+# a failed start still records the intent. Needs lib/state.sh.
+coreSetTarget() {
+  recordClear core_target "state boot_id" ""
+  recordSet core_target state "$2"
+  recordSet core_target boot_id "$(coreBootId)"
+  recordWrite "$1/state/target_state" core_target "state boot_id" ""
+}
+
+# prints whether the core of the core root $1 is meant to be running or stopped. An entry from
+# before the last boot, or none: autostart decides, because a reboot starts a core with autostart
+# and leaves one without it down.
+coreTarget() {
+  recordClear core_target "state boot_id" ""
+  # shellcheck disable=SC2154 # core_target_* are set by recordLoad
+  if recordLoad "$1/state/target_state" core_target "" 2> /dev/null && [ "$core_target_boot_id" = "$(coreBootId)" ]
+  then
+    case "$core_target_state" in
+      running|stopped)
+        echo "$core_target_state"
+        return 0
+    esac
+  fi
+  if [ "$(settingsGet autostart)" = "true" ]
+  then
+    echo running
+  else
+    echo stopped
   fi
 }

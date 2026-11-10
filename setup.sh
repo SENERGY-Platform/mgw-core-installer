@@ -426,6 +426,14 @@ say "installation of $version successful: $core_root"
 
 # --- 13. start ---
 
+# whether the core is meant to run (PLAN.md 9); a failure here doesn't fail the install, without the
+# file autostart decides
+if [ "$(setupGet start_core)" = "true" ]
+then
+  coreSetTarget "$core_root" running || say "warning: cannot write state/target_state" >&2
+else
+  coreSetTarget "$core_root" stopped || say "warning: cannot write state/target_state" >&2
+fi
 if [ "$(setupGet start_core)" = "true" ]
 then
   say "starting the core ..."

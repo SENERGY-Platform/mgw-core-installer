@@ -4,7 +4,11 @@
 # 130 MiB) are downloaded once, not on every install. The installer uses it when MGW_TEST_GITHUB_API
 # points at it (lib/net.sh).
 #
-#   python3 github_mock.py <port file> <cache dir>
+#   python3 github_mock.py <port file> <cache dir> [<releases dir>]
+#
+# The releases of SENERGY-Platform/mgw-core-installer come from the releases dir instead of GitHub:
+# every mgw_core_installer_<tag>.tar.gz in it is a release <tag> (a prerelease if the tag contains
+# -alpha or -beta), built by build_release.sh.
 #
 # GET /repos/...        the API response, fetched from api.github.com the first time and cached; every
 #                       asset's browser_download_url points to /download/<name> of this server
@@ -23,6 +27,26 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PORT_FILE, CACHE = sys.argv[1], sys.argv[2]
+RELEASES = sys.argv[3] if len(sys.argv) > 3 else ""
+INSTALLER = "/repos/SENERGY-Platform/mgw-core-installer/releases"
+PREFIX, SUFFIX = "mgw_core_installer_", ".tar.gz"
+
+
+def local_releases(base):
+    if not RELEASES or not os.path.isdir(RELEASES):
+        return []
+    found = []
+    for name in sorted(os.listdir(RELEASES)):
+        if name.startswith(PREFIX) and name.endswith(SUFFIX):
+            tag = name[len(PREFIX):-len(SUFFIX)]
+            found.append({
+                "tag_name": tag, "name": tag, "draft": False,
+                "prerelease": "-alpha" in tag or "-beta" in tag,
+                "published_at": "%s" % os.path.getmtime(os.path.join(RELEASES, name)),
+                "assets": [{"name": name, "browser_download_url": base + "/download/" + name}],
+            })
+    found.sort(key=lambda r: r["published_at"], reverse=True)
+    return found
 os.makedirs(os.path.join(CACHE, "api"), exist_ok=True)
 os.makedirs(os.path.join(CACHE, "assets"), exist_ok=True)
 
@@ -65,6 +89,26 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         base = "http://" + self.headers["Host"]
         try:
+            if self.path == INSTALLER or self.path.startswith(INSTALLER + "/") or self.path.startswith(INSTALLER + "?"):
+                releases = local_releases(base)
+                rest = self.path[len(INSTALLER):].split("?")[0].strip("/")
+                if rest == "":
+                    self.send(200, json.dumps(releases).encode())
+                    return
+                if rest == "latest":
+                    stable = [r for r in releases if not r["prerelease"]]
+                    match = stable[:1]
+                else:
+                    match = [r for r in releases if rest == "tags/" + r["tag_name"]]
+                if match:
+                    self.send(200, json.dumps(match[0]).encode())
+                else:
+                    self.send(404, b'{"message": "Not Found"}')
+                return
+            if self.path.startswith("/download/" + PREFIX) and RELEASES:
+                with open(os.path.join(RELEASES, os.path.basename(self.path)), "rb") as f:
+                    self.send(200, f.read(), "application/octet-stream")
+                return
             if self.path.startswith("/repos/"):
                 key = hashlib.sha1(self.path.encode()).hexdigest()
                 cached = os.path.join(CACHE, "api", key + ".json")

@@ -1,0 +1,6 @@
+# Settings this version adds that must keep their old behaviour on existing cores (PLAN.md 8).
+#
+# An update adds each key=value line to state/settings if the key is missing there, so an existing
+# core keeps behaving as before while new installations get the default from settings.defaults.
+# Example: a new setting gateway_tls with the default true for new installations would be listed
+# here as gateway_tls=false. Keys are only ever added, never removed.

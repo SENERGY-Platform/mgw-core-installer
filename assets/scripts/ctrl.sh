@@ -222,6 +222,8 @@ switchAutostart() {
   fi
   if [ "$switch_running" = "true" ]
   then
+    # the target state's fallback after a reboot changes with autostart, so it is written explicitly
+    coreSetTarget "$core_root" running || echo "warning: cannot write state/target_state" >&2
     coreStart "$core_root" || return 1
   fi
 }
@@ -368,6 +370,7 @@ case "$command" in
     ;;
   start)
     ctrlBegin
+    coreSetTarget "$core_root" running || echo "warning: cannot write state/target_state" >&2
     coreStart "$core_root"
     rc=$?
     lockRelease
@@ -375,6 +378,7 @@ case "$command" in
     ;;
   stop)
     ctrlBegin always
+    coreSetTarget "$core_root" stopped || echo "warning: cannot write state/target_state" >&2
     coreStop "$core_root"
     rc=$?
     lockRelease
@@ -382,6 +386,7 @@ case "$command" in
     ;;
   restart)
     ctrlBegin
+    coreSetTarget "$core_root" running || echo "warning: cannot write state/target_state" >&2
     coreStop "$core_root" && coreStart "$core_root"
     rc=$?
     lockRelease

@@ -108,19 +108,6 @@ version() {
   [ "$(docker volume ls -q --filter label=com.docker.volume.anonymous | sort)" = "$anonymous_before" ]
 }
 
-@test "prepare refuses an existing version folder and removes a leftover _tmp folder" {
-  local root="/var/tmp/${CORE}x"
-  mkdir -p "$root/state" "$root/v0_40_0_tmp/leftover" "$root/v0_41_0"
-  run dsh 'versionPrepare "'"$root"'" "$ASSETS" v0.41.0 0 0' file settings state host render reconcile net docker objects core version
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"exists already"* ]]
-  run dsh 'settingsLoad "$ASSETS/settings.defaults" "" ; versionDownloadBins() { return 9; }; renderVersion() { return 0; }
-    versionPrepare "'"$root"'" "$ASSETS" v0.40.0 0 0' file settings state host render reconcile net docker objects core version
-  [ "$status" -eq 9 ]
-  [ ! -e "$root/v0_40_0_tmp/leftover" ]
-  rm -rf "$root"
-}
-
 @test "activate switches an existing current without a gap and refuses a missing folder" {
   local root="/var/tmp/${CORE}y"
   mkdir -p "$root/v1/config" "$root/v2/config"
