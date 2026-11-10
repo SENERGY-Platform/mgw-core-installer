@@ -20,12 +20,12 @@ setup_file() {
   export U="u$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')" V="v$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')"
   local n=$((RANDOM % 93 + 20))
   printf '%s\n' "install_dir=$DIR" "core_id=$U" "gateway_port=$((20000 + RANDOM % 10000))" "subnet_core=10.$n.0.0" \
-    "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" systemd=true start_core=true \
+    "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" autostart=true start_core=true \
     logrotate=false cron=false advertise=false > "$BATS_FILE_TMPDIR/u.conf"
   "$REPO/setup.sh" -c "$BATS_FILE_TMPDIR/u.conf" > "$BATS_FILE_TMPDIR/u.log" 2>&1
   n=$((n + 1))
   printf '%s\n' "install_dir=$DIR" "core_id=$V" "gateway_port=$((20000 + RANDOM % 10000))" "subnet_core=10.$n.0.0" \
-    "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" systemd=false start_core=false \
+    "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" autostart=false start_core=false \
     logrotate=false cron=false advertise=false > "$BATS_FILE_TMPDIR/v.conf"
   "$REPO/setup.sh" -c "$BATS_FILE_TMPDIR/v.conf" > "$BATS_FILE_TMPDIR/v.log" 2>&1
   # keepers for the core images, a module of core U, an image only core U lists

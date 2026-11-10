@@ -74,7 +74,7 @@ waitForContainers() {
 }
 
 @test "core A: config file, systemd, started: the core comes up" {
-  run "$REPO/setup.sh" -c "$(conf "$A" "$PA" "$NA" systemd=true start_core=true)"
+  run "$REPO/setup.sh" -c "$(conf "$A" "$PA" "$NA" autostart=true start_core=true)"
   echo "$output"
   [ "$status" -eq 0 ]
   local root="$DIR/$A"
@@ -102,7 +102,7 @@ waitForContainers() {
   [ "$status" -eq 0 ]
   local root="$DIR/$B"
   grep -qx result=success "$root/state/install"
-  grep -qx systemd=false "$root/state/settings"
+  grep -qx autostart=false "$root/state/settings"
   [[ "$output" == *"password: "[0-9a-f]* ]]
   [ "$(wc -l < "$root/state/pid")" -eq 3 ]
   [ "$(findmnt -n -o FSTYPE "/mnt/mgw_$B/secrets")" = "tmpfs" ]
@@ -146,7 +146,7 @@ waitForContainers() {
 }
 
 @test "a failure after prepare removes the version, containers, volumes, networks, units and tmpfs" {
-  run env MGW_TEST_FAIL_AT=activate "$REPO/setup.sh" -c "$(conf c4 "$((PB + 4))" "$((NB + 4))" systemd=true)"
+  run env MGW_TEST_FAIL_AT=activate "$REPO/setup.sh" -c "$(conf c4 "$((PB + 4))" "$((NB + 4))" autostart=true)"
   echo "$output"
   [ "$status" -eq 1 ]
   [ ! -e "$DIR/c4" ] && [ ! -e /mnt/mgw_c4 ]

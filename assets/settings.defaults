@@ -24,7 +24,10 @@ core_db_root_pw=
 secrets_size=100M
 
 # integrations (written into state/settings by the install)
-systemd=true
+# autostart: systemd runs the host binaries as services: they start at boot, are restarted after a
+# crash, and the recovery unit runs before them at boot. false: ctrl.sh start starts them as detached
+# processes; no start at boot, no restart after a crash.
+autostart=true
 logrotate=true
 cron=true
 advertise=true

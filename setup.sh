@@ -188,7 +188,7 @@ else
     done
     setupSet host_dir_repository_path "$setup_hd"
   fi
-  setupSet systemd "$(askBool "enable OS startup integration (systemd)?")"
+  setupSet autostart "$(askBool "start the core at boot (systemd)?")"
   setupSet logrotate "$(askBool "enable log rotation?")"
   setupSet cron "$(askBool "enable automatic updates?")"
   setupSet advertise "$(askBool "enable mDNS advertisement?")"
@@ -305,7 +305,7 @@ fi
 # --- 5. packages ---
 
 setup_required="$require_pkg"
-[ "$(setupGet systemd)" = "true" ] && setup_required="$setup_required $require_pkg_systemd"
+[ "$(setupGet autostart)" = "true" ] && setup_required="$setup_required $require_pkg_systemd"
 setup_missing="$(setupMissingPkg "$setup_required")"
 if [ "$setup_missing" != "" ]
 then
@@ -395,7 +395,7 @@ versionPrepare "$core_root" ./assets "$version" 0 0 || setupAbort "preparing $ve
 testFail prepare || setupAbort "preparing $version failed"
 setup_config="$core_root/$version_folder/config/systemd-units/core"
 objectsDir "/mnt/$core_name" || setupAbort "cannot create /mnt/$core_name"
-if [ "$(settingsGet systemd)" = "true" ]
+if [ "$(settingsGet autostart)" = "true" ]
 then
   setup_mount_unit="$(systemd-escape --path --suffix=mount "/mnt/$core_name/secrets")"
   objectsFile "$host_systemd_path/$setup_mount_unit" 644 < "$setup_config/secrets.mount" || setupAbort "cannot write the mount unit"

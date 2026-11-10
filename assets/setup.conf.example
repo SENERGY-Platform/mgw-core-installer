@@ -12,7 +12,8 @@ start_core=true
 skip_pkg_install_confirm=false
 
 # integrations
-systemd=true
+# start the core at boot, through systemd services (restarted after a crash)
+autostart=true
 logrotate=true
 # automatic updates
 cron=true

@@ -24,7 +24,7 @@ setup() {
   mkdir -p "$ROOT/log" "$ROOT/state"
   ln -s v1_3_0 "$ROOT/current"
   export host_logrotated_path="$BATS_TEST_TMPDIR" host_cron_path="$BATS_TEST_TMPDIR" host_avahi_path="$BATS_TEST_TMPDIR"
-  printf '%s\n' 'core_name=' 'systemd=false' 'secrets_size=16M' > "$BATS_TEST_TMPDIR/defaults"
+  printf '%s\n' 'core_name=' 'autostart=false' 'secrets_size=16M' > "$BATS_TEST_TMPDIR/defaults"
   printf '%s\n' "core_name=$CORE" > "$BATS_TEST_TMPDIR/settings"
 }
 
@@ -53,7 +53,7 @@ procs() {
 }
 
 with_systemd() {
-  echo 'systemd=true' >> "$BATS_TEST_TMPDIR/settings"
+  echo 'autostart=true' >> "$BATS_TEST_TMPDIR/settings"
   mkdir -p "$ROOT/v1_3_0/config/systemd-units/services"
   local repo name
   for repo in $REPOS; do

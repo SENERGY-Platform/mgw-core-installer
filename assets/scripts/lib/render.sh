@@ -26,7 +26,7 @@
 render_required="core_id core_name stack_name host_dir_repository_path core_usr_pw core_db_pw core_db_root_pw"
 
 # the template folder of each integration and the setting that enables it
-render_integrations="systemd-units:systemd logrotate:logrotate cron:cron avahi:advertise"
+render_integrations="systemd-units:autostart logrotate:logrotate cron:cron avahi:advertise"
 
 # the folders whose files the reconcile links into /etc, and the separator after the core name that
 # their file names get. A file in config has the same name as its link in /etc: systemd treats a

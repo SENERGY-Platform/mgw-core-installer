@@ -70,14 +70,14 @@ conf() {
 @test "validation of single values" {
   valid=(core_id=ab12 core_id=a-b_c core_name=mgw_ab12 install_dir=/opt/mgw install_dir=/srv/mgw-2/x
     gateway_port=1 gateway_port=65535 subnet_core=10.0.0.16 subnet_module=172.20.0.0 core_db_pw=abcdefgh core_usr_pw=A.b_c~d+e-f
-    core_usr=core-user systemd=false start_core=true)
+    core_usr=core-user autostart=false start_core=true)
   for kv in "${valid[@]}"; do
     run setup_lib 'setupValidate "'"${kv%%=*}"'" "'"${kv#*=}"'"'
     [ "$status" -eq 0 ] || { echo "refused $kv: $output"; false; }
   done
   invalid=(core_id= core_id=Ab core_id=-a "core_id=a b" core_id=a.b install_dir=relative install_dir=/ "install_dir=/a b"
     install_dir=/a/../b gateway_port=0 gateway_port=65536 gateway_port=80a gateway_port=08080 subnet_core=10.0.0.5 subnet_core=10.0.0
-    subnet_module=10.1.1.0 core_db_pw=short 'core_db_pw=with$dollar' 'core_usr_pw=with space1' core_usr= systemd=yes)
+    subnet_module=10.1.1.0 core_db_pw=short 'core_db_pw=with$dollar' 'core_usr_pw=with space1' core_usr= autostart=yes)
   for kv in "${invalid[@]}"; do
     run setup_lib 'setupValidate "'"${kv%%=*}"'" "'"${kv#*=}"'"'
     [ "$status" -eq 1 ] || { echo "accepted $kv"; false; }

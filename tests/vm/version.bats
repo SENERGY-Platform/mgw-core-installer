@@ -27,7 +27,7 @@ setup_file() {
   printf '%s\n' "core_id=${CORE#mgwt}" "core_name=$CORE" "stack_name=$CORE" "host_dir_repository_path=$ROOT/repositories/host_dir" \
     core_usr_pw=userpassword core_db_pw=dbpassword core_db_root_pw=rootpassword \
     "subnet_core=10.$n.0.0" "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" \
-    systemd=true logrotate=false cron=false advertise=false > "$ROOT/state/settings"
+    autostart=true logrotate=false cron=false advertise=false > "$ROOT/state/settings"
   version '
     installRecordBegin "$R" v0_40_0 install
     objects_record="$R"

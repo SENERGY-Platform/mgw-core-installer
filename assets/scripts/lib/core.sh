@@ -10,7 +10,7 @@
 # Without systemd they are started detached and recorded in state/pid (from the former
 # lib/bin_ctrl.sh).
 #
-# Needs lib/settings.sh with the settings loaded (systemd, core_name, secrets_size).
+# Needs lib/settings.sh with the settings loaded (autostart, core_name, secrets_size).
 
 # host binaries in start order, with the base name of the file their output goes to
 core_bins="SENERGY-Platform/mgw-container-engine-wrapper:ce_wrapper
@@ -64,7 +64,7 @@ coreMountSecrets() {
     return 1
   fi
   echo "mounting $core_secrets ..."
-  if [ "$(settingsGet systemd)" = "true" ]
+  if [ "$(settingsGet autostart)" = "true" ]
   then
     systemctl start "$(systemd-escape --path --suffix=mount "$core_secrets")"
     return
@@ -79,7 +79,7 @@ coreStart() {
   then
     return 1
   fi
-  if [ "$(settingsGet systemd)" = "true" ]
+  if [ "$(settingsGet autostart)" = "true" ]
   then
     core_units="$(coreUnits "$1")"
     if [ "$core_units" = "" ]
@@ -97,7 +97,7 @@ coreStart() {
 
 # stops the core of the core root $1. The secrets tmpfs stays mounted (PLAN.md 6).
 coreStop() {
-  if [ "$(settingsGet systemd)" = "true" ]
+  if [ "$(settingsGet autostart)" = "true" ]
   then
     core_units="$(coreUnits "$1")"
     if [ "$core_units" = "" ]
@@ -114,7 +114,7 @@ coreStop() {
 
 # returns 0 if the core of the core root $1 is running: every host binary (unit or process) is up
 coreRunning() {
-  if [ "$(settingsGet systemd)" = "true" ]
+  if [ "$(settingsGet autostart)" = "true" ]
   then
     core_units="$(coreUnits "$1")"
     [ "$core_units" != "" ] || return 1

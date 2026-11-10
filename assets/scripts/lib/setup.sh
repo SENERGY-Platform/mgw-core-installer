@@ -18,7 +18,7 @@
 setup_keys="install_dir start_core skip_pkg_install_confirm"
 
 # settings the install writes into state/settings even when they keep their default (pinning, 8)
-setup_pinned="core_id core_name stack_name host_dir_repository_path gateway_port subnet_core subnet_module subnet_gateway core_usr core_usr_pw core_db_pw core_db_root_pw secrets_size systemd logrotate cron advertise allow_beta"
+setup_pinned="core_id core_name stack_name host_dir_repository_path gateway_port subnet_core subnet_module subnet_gateway core_usr core_usr_pw core_db_pw core_db_root_pw secrets_size autostart logrotate cron advertise allow_beta"
 
 # the keys that were set (config file or questions), in order
 setup_set=""
@@ -217,7 +217,7 @@ setupValidate() {
           return
       esac
       ;;
-    systemd|logrotate|cron|advertise|allow_beta|start_core|skip_pkg_install_confirm)
+    autostart|logrotate|cron|advertise|allow_beta|start_core|skip_pkg_install_confirm)
       case "$2" in
         true|false)
           ;;

@@ -12,7 +12,7 @@ setup() {
   mkdir -p "$V/assets/templates/host-binaries/x" "$V/assets/templates/cron" "$V/assets/templates/avahi" \
     "$V/assets/templates/container/configs/gateway/template"
   printf '%s\n' 'core_id=' 'core_name=' 'stack_name=' 'host_dir_repository_path=' 'core_usr_pw=' 'core_db_pw=' \
-    'core_db_root_pw=' 'gateway_port=8080' 'cron=true' 'advertise=false' 'logrotate=true' 'systemd=true' > "$V/assets/settings.defaults"
+    'core_db_root_pw=' 'gateway_port=8080' 'cron=true' 'advertise=false' 'logrotate=true' 'autostart=true' > "$V/assets/settings.defaults"
   printf '%s\n' 'core_id=abc' 'core_name=mgw_abc' 'stack_name=mgw_abc' "host_dir_repository_path=$ROOT/repositories/host_dir" \
     'core_usr_pw=u' 'core_db_pw=d' 'core_db_root_pw=r' > "$BATS_TEST_TMPDIR/settings"
   printf '%s\n' 'images="' 'NGINX_IMG=nginx:1.31.1-alpine' 'KRATOS_IMG=oryd/kratos:v1.3.1' '"' > "$V/assets/options"
