@@ -11,12 +11,15 @@
 load ../unit/helpers
 load github
 
+# Subnets: only 10.x ranges, docker uses 172.17.0.0/16 and up for its own networks. Core and gateway
+# 10.<n>.0.0 and 10.<n>.1.0, module 10.<n+120>.0.0/16, with n from 20 to 119.
+
 setup_file() {
   startGithubMock
   export REPO="$BATS_TEST_DIRNAME/../.."
   export DIR="/var/tmp/mgwt-install-$(od -An -N2 -tx1 /dev/urandom | tr -d ' \n')"
   export A="a$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')" B="b$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')"
-  local n=$((RANDOM % 100 + 100))
+  local n=$((RANDOM % 93 + 20))
   export NA="$n" NB="$((n + 1))" PA="$((20000 + RANDOM % 10000))"
   export PB="$((PA + 1))"
 }
@@ -50,7 +53,7 @@ conf() {
   local id="$1" port="$2" n="$3"
   shift 3
   printf '%s\n' "install_dir=$DIR" "core_id=$id" "gateway_port=$port" "subnet_core=10.$n.0.0" "subnet_gateway=10.$n.1.0" \
-    "subnet_module=172.$((n % 16 + 16)).0.0" logrotate=false cron=false advertise=false "$@" > "$BATS_TEST_TMPDIR/$id.conf"
+    "subnet_module=10.$((n + 120)).0.0" logrotate=false cron=false advertise=false "$@" > "$BATS_TEST_TMPDIR/$id.conf"
   echo "$BATS_TEST_TMPDIR/$id.conf"
 }
 
@@ -93,7 +96,7 @@ waitForContainers() {
 }
 
 @test "core B: interactive, without systemd, in the same install directory" {
-  answers=(y y "$DIR" "$B" "" "" "" "$PB" "10.$NB.0.0" "172.$((NB % 16 + 16)).0.0" "10.$NB.1.0" "" n n n n n y)
+  answers=(y y "$DIR" "$B" "" "" "" "$PB" "10.$NB.0.0" "10.$((NB + 120)).0.0" "10.$NB.1.0" "" n n n n n y)
   run sh -c "printf '%s\n' \"\$@\" | '$REPO/setup.sh'" sh "${answers[@]}"
   echo "$output"
   [ "$status" -eq 0 ]
@@ -159,7 +162,8 @@ waitForContainers() {
   setsid "$REPO/setup.sh" -c "$(conf c5 "$((PB + 5))" "$((NB + 5))")" > "$BATS_TEST_TMPDIR/c5.log" 2>&1 &
   local pid=$! i=0
   until grep -q '^created=folder:dev-.*_tmp$' "$DIR/c5/state/install" 2> /dev/null; do
-    sleep 0.5; i=$((i + 1)); [ $i -lt 120 ]
+    sleep 0.5; i=$((i + 1))
+    if [ $i -ge 120 ]; then cat "$BATS_TEST_TMPDIR/c5.log"; false; fi
   done
   kill -KILL -- "-$pid"
   wait "$pid" 2> /dev/null || true

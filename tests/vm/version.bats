@@ -12,6 +12,9 @@
 load ../unit/helpers
 load github
 
+# Subnets: only 10.x ranges, docker uses 172.17.0.0/16 and up for its own networks. Core and gateway
+# 10.<n>.0.0 and 10.<n>.1.0, module 10.<n+120>.0.0/16, with n from 20 to 119.
+
 setup_file() {
   startGithubMock
   export ASSETS="$BATS_TEST_DIRNAME/../../assets"
@@ -20,17 +23,17 @@ setup_file() {
   export host_logrotated_path="$BATS_FILE_TMPDIR" host_cron_path="$BATS_FILE_TMPDIR" host_avahi_path="$BATS_FILE_TMPDIR"
   mkdir -p "$ROOT/state"
   # subnets of their own, so the test can't collide with the networks of a core on the VM
-  local n=$((RANDOM % 200 + 20))
+  local n=$((RANDOM % 100 + 20))
   printf '%s\n' "core_id=${CORE#mgwt}" "core_name=$CORE" "stack_name=$CORE" "host_dir_repository_path=$ROOT/repositories/host_dir" \
     core_usr_pw=userpassword core_db_pw=dbpassword core_db_root_pw=rootpassword \
-    "subnet_core=10.$n.0.0" "subnet_gateway=10.$n.1.0" "subnet_module=172.$((n % 16 + 16)).0.0" \
+    "subnet_core=10.$n.0.0" "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" \
     systemd=true logrotate=false cron=false advertise=false > "$ROOT/state/settings"
   version '
     installRecordBegin "$R" v0_40_0 install
     objects_record="$R"
     installRecordAdd "$R" folder:.
-    versionPrepare "$ROOT" "$ASSETS" v0.40.0 0 0' > "$BATS_FILE_TMPDIR/prepare.log" 2>&1
-  echo $? > "$BATS_FILE_TMPDIR/prepare.rc"
+    versionPrepare "$ROOT" "$ASSETS" v0.40.0 0 0' > "$BATS_FILE_TMPDIR/prepare.log" 2>&1 &&
+    echo 0 > "$BATS_FILE_TMPDIR/prepare.rc" || echo $? > "$BATS_FILE_TMPDIR/prepare.rc"
 }
 
 teardown_file() {
@@ -88,6 +91,10 @@ version() {
 }
 
 @test "the cleanup removes everything prepare and activate created" {
+  local anonymous_before
+  anonymous_before="$(docker volume ls -q --filter label=com.docker.volume.anonymous | sort)"
+  # keep the images cached for the next run
+  rm -f "$ROOT/state/images"
   run version 'installCleanup "$ROOT" "$R"'
   echo "$output"
   [ "$status" -eq 0 ]
@@ -97,6 +104,8 @@ version() {
   [ -z "$(docker network ls -q --filter "name=$CORE")" ]
   [ ! -e "/etc/systemd/system/$CORE-core-manager.service" ]
   [ -z "$(find /etc/systemd/system -name "$CORE-*")" ]
+  # no anonymous volumes of the containers left behind
+  [ "$(docker volume ls -q --filter label=com.docker.volume.anonymous | sort)" = "$anonymous_before" ]
 }
 
 @test "prepare refuses an existing version folder and removes a leftover _tmp folder" {
