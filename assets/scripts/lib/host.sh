@@ -11,3 +11,33 @@
 : "${host_cron_path:=/etc/cron.daily}"
 : "${host_avahi_path:=/etc/avahi/services}"
 : "${host_docker_socket:=/var/run/docker.sock}"
+
+# prints the platform the host binaries are released for (the name in their release asset)
+hostPlatform() {
+  case "$(uname -s)" in
+    Linux)
+      echo linux
+      ;;
+    *)
+      echo "unsupported platform '$(uname -s)'" >&2
+      return 1
+  esac
+}
+
+# prints the architecture folder in the host binaries' release archives
+hostArch() {
+  case "$(uname -m)" in
+    x86_64)
+      echo amd64
+      ;;
+    aarch64|armv8l)
+      echo arm64
+      ;;
+    armv7l)
+      echo arm
+      ;;
+    *)
+      echo "unsupported architecture '$(uname -m)'" >&2
+      return 1
+  esac
+}
