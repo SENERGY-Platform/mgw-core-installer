@@ -298,12 +298,14 @@ imagesList() {
 }
 
 # The test hook for failure injection (implementation.md, decision 5): returns 1 and says so if the
-# environment variable MGW_TEST_FAIL_AT names the step $1, so a VM test can make that step fail as if
-# its command had failed. Only honoured when set explicitly; nothing in the release sets it.
+# environment variable MGW_TEST_FAIL_AT names the step $1 (several steps separated by spaces), so a VM
+# test can make that step fail as if its command had failed. Only honoured when set explicitly; nothing
+# in the release sets it.
 testFail() {
-  if [ "${MGW_TEST_FAIL_AT:-}" = "$1" ]
-  then
-    echo "test: failing at $1" >&2
-    return 1
-  fi
+  case " ${MGW_TEST_FAIL_AT:-} " in
+    *" $1 "*)
+      echo "test: failing at $1" >&2
+      return 1
+  esac
+  return 0
 }

@@ -351,3 +351,30 @@ coreTarget() {
     echo stopped
   fi
 }
+
+# --- the point of no return (PLAN.md 13, S8) ---
+
+# prints a mark of the host binaries' last start for the core root $1, to compare after a start
+coreStartMark() {
+  if [ "$(settingsGet autostart)" = "true" ]
+  then
+    for core_unit in $(coreUnits "$1")
+    do
+      printf '%s=%s ' "$core_unit" "$(systemctl show -p ExecMainStartTimestampMonotonic --value "$core_unit" 2> /dev/null)"
+    done
+    return
+  fi
+  echo none
+}
+
+# returns 0 if a host binary of the core root $1 started since the mark $2 (coreStartMark): the
+# point of no return was passed (S8). With systemd a unit's main process start time changed; without,
+# a pid was recorded in state/pid.
+coreStartedSince() {
+  if [ "$(settingsGet autostart)" = "true" ]
+  then
+    [ "$(coreStartMark "$1")" != "$2" ]
+    return
+  fi
+  [ -s "$1/state/pid" ]
+}
