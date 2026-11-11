@@ -72,6 +72,22 @@ then
     echo "this release can't migrate the installation in '$old_path' yet" >&2
     exit 1
   fi
+  # the old update.sh run by hand after a migration got as far as current, and was interrupted: the
+  # recovery the next update.sh would run first, then the way to the new one (m7-migration.md,
+  # finding 8 c)
+  recordClear old_upd "kind result" ""
+  if [ -x "$old_path/current/assets/scripts/recover.sh" ] &&
+    recordLoad "$old_path/state/update" old_upd "" 2> /dev/null && [ "$old_upd_kind" = "migration" ]
+  then
+    "$old_path/current/assets/scripts/recover.sh" -by="the old update.sh"
+    if [ -e "$old_path/current" ]
+    then
+      echo "$old_path has the new layout now: run $old_path/current/update.sh" >&2
+    else
+      echo "the interrupted migration of $old_path was rolled back; the next update tries again" >&2
+    fi
+    exit 1
+  fi
   echo "'$old_path' isn't an installation of the old installer" >&2
   exit 1
 fi
@@ -309,6 +325,13 @@ if ! "$script_dir/recover.sh"
 then
   echo "the recovery failed or removed an unfinished install; not updating" >&2
   finish failed "" "recovering before the update" 1
+fi
+# an interrupted migration rolled back by the recovery: the old installation is back, its own
+# update.sh runs the next update (m7-migration.md, finding 8 c)
+if ! [ -e "$core_root/current" ] && [ -e "$core_root/.settings" ]
+then
+  echo "the interrupted migration was rolled back to the old installation; its update.sh runs the next update" >&2
+  exit 1
 fi
 lockWriteHolder "$core_root/state/lock" update "$$"
 

@@ -22,6 +22,8 @@
 # - An update record "running" while the lock is held here: the update was interrupted. The version
 #   that wrote the record recovers it, by the phase it reached; if that version's folder is missing
 #   or damaged, nobody can, and the core is left for restore.sh (G9).
+# - A record of kind migration goes to the writer's migration.sh -recover (m7-migration.md, finding
+#   8), also one whose cleanup was interrupted after the success.
 #
 # Exit codes: 0 nothing (more) to recover, 1 failed, G9, or an unfinished install was removed.
 
@@ -143,6 +145,16 @@ if [ "$upd_recovery_failed" = "true" ]
 then
   echo "the recovery of an interrupted update failed before; repair the core with $core_root/current/restore.sh" >&2
   recoverExit 1
+fi
+# a migration whose cleanup was interrupted after its success: the old installation's leftovers are
+# only known to migration.sh, which repeats the cleanup (m7-migration.md, finding 8 d)
+if [ "$upd_kind" = "migration" ] && [ "$upd_result" = "success" ] && [ "$upd_step" = "cleaning up" ]
+then
+  if [ "$upd_writer" = "$own_folder" ] && [ -x "$script_dir/migration.sh" ]
+  then
+    exec "$script_dir/migration.sh" -recover "$@"
+  fi
+  recoverExit 0
 fi
 if [ "$upd_result" != "running" ] && [ "$upd_result" != "unreadable" ]
 then

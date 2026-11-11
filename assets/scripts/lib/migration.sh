@@ -365,11 +365,19 @@ migrationMoveBack() {
   done < "$1/moved"
   if [ "$(migrationOld systemd)" = "true" ] && [ -r "$2/.units" ]
   then
-    systemctl daemon-reload || return 1
+    if ! systemctl daemon-reload
+    then
+      echo "systemctl daemon-reload failed" >&2
+      return 1
+    fi
     while IFS= read -r migration_unit || [ -n "$migration_unit" ]
     do
       [ "$migration_unit" != "" ] || continue
-      systemctl enable "$migration_unit" > /dev/null 2>&1 || return 1
+      if ! migration_enable_out="$(systemctl enable "$migration_unit" 2>&1 < /dev/null)"
+      then
+        echo "cannot enable $migration_unit: $migration_enable_out" >&2
+        return 1
+      fi
     done < "$2/.units"
   fi
 }

@@ -122,6 +122,13 @@ rolledBack() {
   [ ! -e "$DIR/state/migration" ] && [ ! -e "$DIR/state/host-manager" ]
   [ ! -e "/etc/systemd/system/mgw_$S-recover.service" ]
   [ -f "/etc/logrotate.d/mgw_${S}_core" ] && [ ! -L "/etc/logrotate.d/mgw_${S}_core" ]
+  # the old mount unit is the old file again, enabled
+  if grep -q "^systemd=true" "$DIR/.settings"; then
+    local mount_unit
+    mount_unit="$(systemd-escape --path --suffix=mount "/mnt/mgw_$S/secrets")"
+    [ -f "/etc/systemd/system/$mount_unit" ] && ! grep -q "^Description=" "/etc/systemd/system/$mount_unit"
+    systemctl is-enabled --quiet "$mount_unit"
+  fi
   [ -z "$(docker ps -aq --filter "label=com.docker.compose.project=mgw_${S}_v0_40_0")" ]
   [ "$(oldStatus result)" = "failed" ] && [[ "$(oldStatus step)" == *"(rolled back)"* ]]
   oldRunning
