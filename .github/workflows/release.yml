@@ -1,7 +1,8 @@
 name: Release
 
 # Builds the installer archive with .github/build_release.sh, the script the VM tests use, and
-# publishes it as a GitHub release (docs/plan: PLAN.md 3, m8-release.md).
+# publishes it as a GitHub release (docs/plan: PLAN.md 3, m8-release.md). Before that, it checks that
+# every volume a core image declares is mounted.
 #
 # Tags follow SemVer: vX.Y.Z, vX.Y.Z-beta.N, vX.Y.Z-alpha.N; alphas and betas are published as
 # pre-releases. To test this workflow, push to a fork and tag there: gateways only ask this
@@ -30,6 +31,13 @@ jobs:
             echo "$GITHUB_REF_NAME isn't a release version (vX.Y.Z, vX.Y.Z-beta.N, vX.Y.Z-alpha.N)"
             exit 1
           fi
+      # a volume a core image declares but the compose file doesn't mount would lose its data with
+      # every update (.github/check_volumes.sh); the runner has docker with compose and buildx and jq,
+      # envsubst comes with gettext-base
+      - name: Check the volumes of the core images
+        run: |
+          command -v envsubst > /dev/null || { sudo apt-get update && sudo apt-get install -y gettext-base; }
+          .github/check_volumes.sh
       - name: Build the archive
         run: .github/build_release.sh "$GITHUB_REF_NAME" dist
       - name: Release

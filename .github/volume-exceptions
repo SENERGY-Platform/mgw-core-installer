@@ -1,0 +1,7 @@
+# Exceptions of .github/check_volumes.sh: paths a core image declares as a volume that the compose
+# file deliberately doesn't mount, because their content doesn't matter (it may be lost whenever the
+# containers are created again). One per line:
+#
+#   <service> <path> <reason>
+#
+# The reason is mandatory. Empty today: every declared path is mounted.
