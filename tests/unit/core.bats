@@ -7,9 +7,9 @@
 load helpers
 
 @test "version folder names" {
-  run dsh 'versionFolder v1.2.3; versionFolder v0.33.0-beta2; versionFolder v1.2.10-beta12; versionFolder dev-1762650000' core
+  run dsh 'versionFolder v1.2.3; versionFolder v0.33.0-beta2; versionFolder v1.2.10-beta12; versionFolder v0.40.0-beta.1; versionFolder dev-1762650000' core
   [ "$status" -eq 0 ]
-  [ "$output" = "$(printf '%s\n' v1_2_3 v0_33_0-beta2 v1_2_10-beta12 dev-1762650000)" ]
+  [ "$output" = "$(printf '%s\n' v1_2_3 v0_33_0-beta2 v1_2_10-beta12 v0_40_0-beta_1 dev-1762650000)" ]
 }
 
 @test "versions that can't be part of a compose project name are refused" {

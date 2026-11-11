@@ -6,7 +6,7 @@
 MGW_TEST_CACHE="${MGW_TEST_CACHE:-/var/tmp/mgw-test-cache}"
 
 # starts the mock and exports MGW_TEST_GITHUB_API; call in setup_file. The installer releases it
-# serves come from MGW_TEST_RELEASES (build them with build_release.sh), by default an empty folder
+# serves come from MGW_TEST_RELEASES (build them with .github/build_release.sh), by default an empty folder
 # of the test file.
 startGithubMock() {
   local port_file="$BATS_FILE_TMPDIR/github_mock.port" i=0

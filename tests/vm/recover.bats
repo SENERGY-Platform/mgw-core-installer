@@ -23,7 +23,7 @@ setup_file() {
   export DIR="/var/tmp/mgwt-recover-$(od -An -N2 -tx1 /dev/urandom | tr -d ' \n')"
   export R="r$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')"
   export ROOT="$DIR/$R"
-  "$REPO/tests/vm/build_release.sh" v0.40.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.40.0 "$MGW_TEST_RELEASES"
   mkdir -p "$BATS_FILE_TMPDIR/v0.40.0"
   tar -xzf "$MGW_TEST_RELEASES/mgw_core_installer_v0.40.0.tar.gz" -C "$BATS_FILE_TMPDIR/v0.40.0"
   local n=$((RANDOM % 8 + 75))
@@ -31,7 +31,7 @@ setup_file() {
     "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" autostart=true start_core=true \
     logrotate=false cron=false advertise=false > "$BATS_FILE_TMPDIR/r.conf"
   "$BATS_FILE_TMPDIR/v0.40.0/setup.sh" -c "$BATS_FILE_TMPDIR/r.conf" > "$BATS_FILE_TMPDIR/r.log" 2>&1
-  "$REPO/tests/vm/build_release.sh" v0.41.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.41.0 "$MGW_TEST_RELEASES"
 }
 
 teardown_file() {
@@ -97,7 +97,7 @@ killedAt() {
 }
 
 @test "killed after the switch, recovered at boot: rolled back without starting units" {
-  "$REPO/tests/vm/build_release.sh" v0.42.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.42.0 "$MGW_TEST_RELEASES"
   killedAt activated switching
   [ "$(readlink "$ROOT/current")" = "v0_42_0" ]
   run "$ROOT/current/assets/scripts/recover.sh" -boot
@@ -126,7 +126,7 @@ killedAt() {
 @test "the writer's folder missing: G9, the record taken over, ctrl.sh and update.sh refuse" {
   "$ROOT/current/ctrl.sh" stop > /dev/null
   rm -f "$ROOT/state/attempts"
-  "$REPO/tests/vm/build_release.sh" v0.43.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.43.0 "$MGW_TEST_RELEASES"
   killedAt switching switching
   rm -rf "$ROOT/v0_43_0"
   run "$ROOT/current/assets/scripts/recover.sh"

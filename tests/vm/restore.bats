@@ -20,7 +20,7 @@ setup_file() {
   export ROOT="$DIR/$S"
   local v
   for v in v0.40.0 v0.41.0; do
-    "$REPO/tests/vm/build_release.sh" "$v" "$MGW_TEST_RELEASES"
+    "$REPO/.github/build_release.sh" "$v" "$MGW_TEST_RELEASES"
     mkdir -p "$BATS_FILE_TMPDIR/$v"
     tar -xzf "$MGW_TEST_RELEASES/mgw_core_installer_$v.tar.gz" -C "$BATS_FILE_TMPDIR/$v"
   done
@@ -95,7 +95,7 @@ restored() {
 }
 
 @test "an interrupted update is recovered, nothing rebuilt" {
-  "$REPO/tests/vm/build_release.sh" v0.41.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.41.0 "$MGW_TEST_RELEASES"
   MGW_TEST_KILL_AT=preparing "$ROOT/current/update.sh" > /dev/null 2>&1 || true
   grep -qx result=running "$ROOT/state/update"
   cp "$ROOT/state/restore" "$BATS_TEST_TMPDIR/restore.before"

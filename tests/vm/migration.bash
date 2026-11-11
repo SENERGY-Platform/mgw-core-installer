@@ -21,7 +21,7 @@ migrationSetupFile() {
   export DIR="/var/tmp/mgwt-$1-$(od -An -N2 -tx1 /dev/urandom | tr -d ' \n')"
   export S="m$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')"
   export WORK="/tmp/mgw-update-$1" MIG_N="$2" MIG_PORT="$3"
-  "$REPO/tests/vm/build_release.sh" v0.40.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.40.0 "$MGW_TEST_RELEASES"
   installOld "$OLD_VERSION" "${4:-true}"
 }
 

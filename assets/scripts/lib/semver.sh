@@ -2,9 +2,12 @@
 
 # Copyright (c) 2026 InfAI (CC SES)
 
-# Release versions (PLAN.md 3): vMAJOR.MINOR.PATCH, optionally with -alphaN or -betaN (e.g.
-# v0.33.0-beta2). Every number may have several digits. A pre-release comes before its release, an
-# alpha before a beta: v1.2.3-alpha2 < v1.2.3-beta1 < v1.2.3 < v1.2.4-alpha1.
+# Release versions (PLAN.md 3): vMAJOR.MINOR.PATCH, optionally with -alpha.N or -beta.N, the SemVer
+# form of the tags from v0.40.0 on (e.g. v0.40.0-beta.2), or -alphaN and -betaN, the form of the
+# older tags (e.g. v0.33.0-beta2), which stay in the release list (m8-release.md, decision 2). Every
+# number may have several digits. A pre-release comes before its release, an alpha before a beta:
+# v1.2.3-alpha.2 < v1.2.3-beta.1 < v1.2.3 < v1.2.4-alpha.1. Both forms of the same pre-release are
+# equal. Other pre-release names (e.g. -rc.1, -test.1) aren't release versions.
 
 # splits the version $1 into semver_major, semver_minor, semver_patch, semver_pre (0 alpha, 1 beta,
 # 2 release) and semver_pre_n; returns 1 if it isn't a release version
@@ -32,6 +35,8 @@ semverParse() {
     *-*)
       return 1
   esac
+  # -beta.2 and -beta2 are the same pre-release
+  semver_pre_n="${semver_pre_n#.}"
   case "$semver_rest" in
     *.*.*.*)
       return 1

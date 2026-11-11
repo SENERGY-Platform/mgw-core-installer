@@ -46,3 +46,23 @@ semver() {
   run semver "semverLess dev-1762650000 v1.0.0"
   [ "$status" -eq 1 ]
 }
+
+@test "the SemVer form of pre-releases (-beta.N, -alpha.N) next to the old one (-betaN)" {
+  for v in v0.40.0-beta.1 v1.2.10-beta.12 v1.0.0-alpha.1; do
+    run semver "semverValid '$v' && semverIsPre '$v'"
+    [ "$status" -eq 0 ] || { echo "refused $v"; false; }
+  done
+  for v in v1.2.3-beta. v1.2.3-beta..1 v1.2.3-beta.1.2 v1.2.3-beta.01 v1.2.3-rc.1 v0.0.0-test.1 v1.2.3-test.1; do
+    run semver "semverValid '$v'"
+    [ "$status" -eq 1 ] || { echo "accepted '$v'"; false; }
+  done
+  # both forms of the same pre-release are equal, and they sort among each other
+  run semver "semverCompare v1.2.3-beta.2 v1.2.3-beta2"
+  [ "$output" = "0" ]
+  ordered=(v0.33.0-beta2 v0.40.0-alpha.1 v0.40.0-beta.1 v0.40.0-beta2 v0.40.0-beta.10 v0.40.0)
+  local i
+  for ((i = 0; i < ${#ordered[@]} - 1; i++)); do
+    run semver "semverLess '${ordered[$i]}' '${ordered[$((i + 1))]}'"
+    [ "$status" -eq 0 ] || { echo "not ${ordered[$i]} < ${ordered[$((i + 1))]}"; false; }
+  done
+}

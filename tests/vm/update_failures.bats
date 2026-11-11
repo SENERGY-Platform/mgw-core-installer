@@ -23,7 +23,7 @@ setup_file() {
   export DIR="/var/tmp/mgwt-fail-$(od -An -N2 -tx1 /dev/urandom | tr -d ' \n')"
   export F="f$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')"
   export ROOT="$DIR/$F"
-  "$REPO/tests/vm/build_release.sh" v0.40.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.40.0 "$MGW_TEST_RELEASES"
   mkdir -p "$BATS_FILE_TMPDIR/v0.40.0"
   tar -xzf "$MGW_TEST_RELEASES/mgw_core_installer_v0.40.0.tar.gz" -C "$BATS_FILE_TMPDIR/v0.40.0"
   local n=$((RANDOM % 8 + 65))
@@ -31,7 +31,7 @@ setup_file() {
     "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" autostart=true start_core=true \
     logrotate=false cron=false advertise=false > "$BATS_FILE_TMPDIR/f.conf"
   "$BATS_FILE_TMPDIR/v0.40.0/setup.sh" -c "$BATS_FILE_TMPDIR/f.conf" > "$BATS_FILE_TMPDIR/f.log" 2>&1
-  "$REPO/tests/vm/build_release.sh" v0.41.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.41.0 "$MGW_TEST_RELEASES"
 }
 
 teardown_file() {
@@ -135,7 +135,7 @@ backOn() {
 }
 
 @test "D: a failure after the start isn't rolled back, the old version is kept" {
-  "$REPO/tests/vm/build_release.sh" v0.42.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.42.0 "$MGW_TEST_RELEASES"
   run env MGW_TEST_FAIL_AT=started "$ROOT/current/update.sh" -a
   echo "$output"
   [ "$status" -eq 1 ]
@@ -148,7 +148,7 @@ backOn() {
 }
 
 @test "the next successful update removes the leftovers of the failed ones" {
-  "$REPO/tests/vm/build_release.sh" v0.43.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.43.0 "$MGW_TEST_RELEASES"
   run "$ROOT/current/update.sh" -a
   echo "$output"
   [ "$status" -eq 0 ]
@@ -160,7 +160,7 @@ backOn() {
 }
 
 @test "SIGTERM during the preparation gets B's handling" {
-  "$REPO/tests/vm/build_release.sh" v0.44.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.44.0 "$MGW_TEST_RELEASES"
   setsid "$ROOT/current/update.sh" > "$BATS_TEST_TMPDIR/term.log" 2>&1 &
   local pid=$! i=0
   until grep -qx phase=preparing "$ROOT/state/update" 2> /dev/null && grep -qx to_version=v0.44.0 "$ROOT/state/update" 2> /dev/null; do

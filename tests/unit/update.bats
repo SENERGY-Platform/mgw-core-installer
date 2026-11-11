@@ -71,3 +71,19 @@ update_lib() {
   run update_lib 'updateCheckRecord "$C" up_to_date "" ""'
   ! grep -q '^warning=' "$C"
 }
+
+@test "SemVer pre-release tags count as pre-releases, other pre-release names never count" {
+  cat > "$R" <<'JSON'
+[
+  {"tag_name": "v0.0.0-test.1", "prerelease": true, "draft": false},
+  {"tag_name": "v0.42.0-test.3", "prerelease": false, "draft": false},
+  {"tag_name": "v0.41.0-beta.2", "prerelease": false, "draft": false},
+  {"tag_name": "v0.41.0-beta1", "prerelease": false, "draft": false},
+  {"tag_name": "v0.40.0", "prerelease": false, "draft": false}
+]
+JSON
+  run update_lib 'updatePickRelease "$R" v0.33.0-beta2 false'
+  [ "$output" = "v0.40.0" ]
+  run update_lib 'updatePickRelease "$R" v0.40.0 true'
+  [ "$output" = "v0.41.0-beta.2" ]
+}

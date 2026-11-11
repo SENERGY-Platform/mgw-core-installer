@@ -22,7 +22,7 @@ setup_file() {
   export DIR="/var/tmp/mgwt-update-$(od -An -N2 -tx1 /dev/urandom | tr -d ' \n')"
   export U="u$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')"
   export ROOT="$DIR/$U"
-  "$REPO/tests/vm/build_release.sh" v0.40.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.40.0 "$MGW_TEST_RELEASES"
   mkdir -p "$BATS_FILE_TMPDIR/v0.40.0"
   tar -xzf "$MGW_TEST_RELEASES/mgw_core_installer_v0.40.0.tar.gz" -C "$BATS_FILE_TMPDIR/v0.40.0"
   local n=$((RANDOM % 8 + 55))
@@ -62,7 +62,7 @@ check() {
 }
 
 @test "a beta isn't taken without allow_beta" {
-  "$REPO/tests/vm/build_release.sh" v0.41.0-beta1 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.41.0-beta1 "$MGW_TEST_RELEASES"
   run "$ROOT/current/update.sh" -a
   [ "$status" -eq 0 ]
   check check_result=up_to_date
@@ -70,7 +70,7 @@ check() {
 }
 
 @test "the retry limit: automatic runs skip a version that failed too often" {
-  "$REPO/tests/vm/build_release.sh" v0.41.0 "$MGW_TEST_RELEASES"
+  "$REPO/.github/build_release.sh" v0.41.0 "$MGW_TEST_RELEASES"
   printf '%s\n' version=v0_41_0 failures=3 > "$ROOT/state/attempts"
   run "$ROOT/current/update.sh" -a
   echo "$output"
@@ -155,7 +155,7 @@ waitForRunning() {
   "$ROOT/current/ctrl.sh" stop > /dev/null
   mkdir -p "$BATS_TEST_TMPDIR/overlay"
   sed 's/^NGINX_IMG=nginx:.*/NGINX_IMG=nginx:1.31.0-alpine/' "$REPO/assets/options" > "$BATS_TEST_TMPDIR/overlay/options"
-  "$REPO/tests/vm/build_release.sh" v0.42.0 "$MGW_TEST_RELEASES" "$BATS_TEST_TMPDIR/overlay"
+  "$REPO/.github/build_release.sh" v0.42.0 "$MGW_TEST_RELEASES" "$BATS_TEST_TMPDIR/overlay"
   local old_nginx
   old_nginx="$(grep '^NGINX_IMG=' "$REPO/assets/options" | cut -d= -f2)"
   run "$ROOT/current/update.sh"
