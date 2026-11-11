@@ -167,3 +167,92 @@ migrated() {
   grep -qx "core_id=$S" "$DIR/state/settings" && grep -qx "stack_name=mgw_$S" "$DIR/state/settings"
   [ "$(stat -c %a "$DIR/state/settings")" = "600" ]
 }
+
+# --- a module deployed through the module-manager's API (the container, port 80 on the core network) ---
+
+TEST_MODULE=github.com/mgw-test/migration-module
+
+# prints the base URL of the module-manager in the container $1
+mmUrl() {
+  local ip
+  ip="$(docker inspect -f "{{(index .NetworkSettings.Networks \"mgw_$S-1-core-net\").IPAddress}}" "$1")"
+  [ -n "$ip" ] && echo "http://$ip:80"
+}
+
+# waits until the module-manager at $1 answers
+mmReady() {
+  local i=0
+  while ! curl -fs "$1/health/service" > /dev/null; do
+    sleep 2
+    i=$((i + 1))
+    [ $i -lt 90 ] || { echo "the module-manager at $1 doesn't answer"; return 1; }
+  done
+}
+
+# waits for the job $2 of the module-manager at $1, prints its result (results/$3) and fails if it
+# reports an error
+mmJob() {
+  local i=0 result
+  [ -n "$2" ] && [ "$2" != "null" ]
+  while [ "$(curl -fsS "$1/jobs/$2" | jq -r .end)" = "0001-01-01T00:00:00Z" ]; do
+    sleep 2
+    i=$((i + 1))
+    [ $i -lt 150 ] || { echo "job $2 didn't end"; return 1; }
+  done
+  result="$(curl -fsS "$1/results/$3/$2")"
+  echo "$3: $result"
+  [ "$(printf '%s' "$result" | jq -r '.has_error')" = "false" ]
+}
+
+# installs and deploys the test module from the host dir repository through the module-manager in the
+# container $1: one nginx service, its image already on the VM
+deployTestModule() {
+  local hd url job
+  hd="$(sed -n 's/^host_dir_repository_path=//p' "$DIR/.settings")"
+  mkdir -p "$hd/migration-module"
+  cat > "$hd/migration-module/Modfile.yml" <<MODFILE
+modfileVersion: "v1"
+id: $TEST_MODULE
+name: Migration Test Module
+description: Deployed before a migration, still deployed after it.
+license: Apache-2.0 license
+author: Tester
+version: v1.0.0
+type: add-on
+deploymentType: single
+services:
+  web:
+    name: Web
+    image: nginx:1.31.1-alpine
+MODFILE
+  url="$(mmUrl "$1")"
+  mmReady "$url"
+  curl -fsS -X POST -H 'Content-Type: application/json' \
+    -d "[{\"id\":\"$TEST_MODULE\",\"source\":\"localhost\",\"channel\":\"default\"}]" "$url/modules-change-request"
+  echo
+  job="$(curl -fsS -X PATCH "$url/modules-change-request" | jq -r .id)"
+  mmJob "$url" "$job" modules-change
+  job="$(curl -fsS -X POST -H 'Content-Type: application/json' -d "[{\"module_id\":\"$TEST_MODULE\"}]" "$url/deployments" | jq -r .id)"
+  mmJob "$url" "$job" deployments
+  # a new deployment is disabled; enabled, the module-manager's monitor starts its containers
+  curl -fsS -X POST -H 'Content-Type: application/json' -d "[\"$TEST_MODULE\"]" "$url/deployments-enable"
+  echo
+}
+
+# waits until a container of a deployment of this core runs
+moduleRunning() {
+  local i=0
+  while [ -z "$(docker ps -q --filter "label=mgw_cid=$S" --filter label=mgw_did --filter status=running)" ]; do
+    sleep 2
+    i=$((i + 1))
+    [ $i -lt 60 ] || { docker ps -a --filter label=mgw_did --format '{{.Names}} {{.Status}}'; return 1; }
+  done
+}
+
+# returns 0 if the module-manager in the container $1 lists the test module as deployed
+moduleDeployed() {
+  local url
+  url="$(mmUrl "$1")"
+  mmReady "$url"
+  curl -fsS "$url/modules-reduced" | jq -e --arg id "$TEST_MODULE" 'any(.[]; .id == $id and .is_deployed)' > /dev/null
+}

@@ -21,6 +21,13 @@ teardown_file() {
   migrationTeardownFile
 }
 
+@test "a module deployed in the old core" {
+  oldRunning
+  deployTestModule "mgw_$S-module-manager"
+  moduleRunning
+  moduleDeployed "mgw_$S-module-manager"
+}
+
 @test "the real old stage one (cron's -a): migrated in place, the old installation gone" {
   local vol_before hm="$DIR/bin/SENERGY-Platform/mgw-host-manager" f
   vol_before="$(docker volume inspect -f '{{.CreatedAt}}' "mgw_${S}_mysqldb-data")"
@@ -43,6 +50,9 @@ teardown_file() {
   systemctl is-active --quiet "mgw_$S-core-manager.service"
   [ "$(stat -f -c %T "/mnt/mgw_$S/secrets")" = "tmpfs" ]
   newRunning
+  # the module deployed in the old core: the new module-manager knows its deployment, it runs
+  moduleDeployed "mgw_$S-v0_40_0-module-manager"
+  moduleRunning
   run "$DIR/current/ctrl.sh" status
   echo "$output"
   [[ "$output" == *"last update: success (migration $OLD_VERSION -> v0.40.0"* ]]
