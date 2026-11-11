@@ -159,3 +159,26 @@ ctrl_shipped() {
     [ "$status" -eq 1 ] || { echo "accepted $kv"; false; }
   done
 }
+
+@test "a restore that didn't finish needs repair" {
+  printf '%s\n' result=running > "$ROOT/state/restore"
+  run ctrl 'ctrlProblem "$ROOT"'
+  [ "$status" -eq 0 ]
+  [ "$output" = "a restore didn't finish (result 'running')" ]
+  printf '%s\n' result=failed > "$ROOT/state/restore"
+  run ctrl 'ctrlProblem "$ROOT"'
+  [ "$status" -eq 0 ]
+  printf '%s\n' result=success > "$ROOT/state/restore"
+  run ctrl 'ctrlProblem "$ROOT"'
+  [ "$status" -eq 1 ]
+}
+
+@test "the restore.sh to run: current's, or the copy a failed restore left" {
+  mkdir -p "$ROOT/v1_3_0" && ln -s assets/scripts/restore.sh "$ROOT/v1_3_0/restore.sh"
+  run ctrl 'ctrlRestoreCommand "$ROOT"'
+  [ "$output" = "$ROOT/current/restore.sh" ]
+  rm "$ROOT/current"
+  mkdir -p "$ROOT/.restore/assets/scripts" && printf '#!/bin/sh\n' > "$ROOT/.restore/assets/scripts/restore.sh" && chmod +x "$ROOT/.restore/assets/scripts/restore.sh"
+  run ctrl 'ctrlRestoreCommand "$ROOT"'
+  [ "$output" = "$ROOT/.restore/assets/scripts/restore.sh -path=$ROOT" ]
+}

@@ -104,11 +104,11 @@ ctrlBegin() {
   then
     if [ "$1" = "always" ]
     then
-      echo "note: the core needs repair ($ctrl_problem); run $core_root/current/restore.sh" >&2
+      echo "note: the core needs repair ($ctrl_problem); run $(ctrlRestoreCommand "$core_root")" >&2
       return 0
     fi
     echo "the core needs repair: $ctrl_problem" >&2
-    echo "run $core_root/current/restore.sh; ctrl.sh $command is refused until then" >&2
+    echo "run $(ctrlRestoreCommand "$core_root"); ctrl.sh $command is refused until then" >&2
     lockRelease
     exit 1
   fi

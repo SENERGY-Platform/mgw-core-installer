@@ -17,6 +17,12 @@
 # under the lock: a record saying "running" while this process holds the lock was left by a writer
 # that is gone. Returns 0 if it needs repair.
 ctrlProblem() {
+  recordClear ctrl_rst "result" ""
+  if recordLoad "$1/state/restore" ctrl_rst "" 2> /dev/null && [ "$ctrl_rst_result" != "success" ]
+  then
+    echo "a restore didn't finish (result '${ctrl_rst_result:-unknown}')"
+    return 0
+  fi
   recordClear ctrl_inst "result" ""
   if recordLoad "$1/state/install" ctrl_inst "" 2> /dev/null && [ "$ctrl_inst_result" != "success" ]
   then
@@ -41,6 +47,17 @@ ctrlProblem() {
     return 0
   fi
   return 1
+}
+
+# prints the restore.sh to run for the core root $1: current's, or after a failed restore the copy it
+# left in <core root>/.restore, when current is gone
+ctrlRestoreCommand() {
+  if ! [ -e "$1/current/restore.sh" ] && [ -x "$1/.restore/assets/scripts/restore.sh" ]
+  then
+    echo "$1/.restore/assets/scripts/restore.sh -path=$1"
+  else
+    echo "$1/current/restore.sh"
+  fi
 }
 
 # prints the report about the core root $1 (status), reading only. $2 is the running state ("running",
@@ -83,7 +100,7 @@ ctrlReport() {
   then
     echo ""
     echo "the core needs repair: $ctrl_problem"
-    echo "run $1/current/restore.sh"
+    echo "run $(ctrlRestoreCommand "$1")"
   fi
 }
 

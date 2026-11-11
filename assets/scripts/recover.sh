@@ -108,6 +108,22 @@ then
   recoverExit 1
 fi
 
+# --- an interrupted restore (m6-restore.md, finding 3) ---
+
+# a restore is repeatable: running it again is the repair; nothing is recovered automatically
+recordClear recover_rst "result" ""
+# a restore that was interrupted or failed left the core half rebuilt: nothing may start
+if recordLoad "$core_root/state/restore" recover_rst "" 2> /dev/null && [ "$recover_rst_result" != "success" ]
+then
+  if [ -x "$core_root/.restore/assets/scripts/restore.sh" ] && ! [ -e "$core_root/current/restore.sh" ]
+  then
+    echo "a restore didn't finish; run $core_root/.restore/assets/scripts/restore.sh -path=$core_root again" >&2
+  else
+    echo "a restore didn't finish; run $core_root/current/restore.sh again" >&2
+  fi
+  recoverExit 1
+fi
+
 # --- an interrupted update (14) ---
 
 record="$core_root/state/update"
