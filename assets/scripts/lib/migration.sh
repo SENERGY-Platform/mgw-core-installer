@@ -242,3 +242,150 @@ migrationOldStatus() {
     echo "warning: cannot write '$1/.update_status'" >&2
   fi
 }
+
+# --- changing the installation (migration.md steps 4 to 13) ---
+
+# the old installer's files in /etc besides its units (logrotate, cron, avahi), by the names its
+# handleLogrotate, handleCron and handleAvahi wrote; core name $1
+migrationOldEtcFiles() {
+  printf '%s\n' "$host_logrotated_path/${1}_core" "$host_cron_path/${1}_update" "$host_avahi_path/${1}_core.service"
+}
+
+# prints the images of the old installation $1 (its .options), one per line
+migrationOldImages() {
+  # shellcheck disable=SC1090,SC1091 # the old installation's own static file
+  (images=""; . "$1/.options" > /dev/null 2>&1; for migration_image in $images; do echo "${migration_image#*=}"; done)
+}
+
+# copies the host-manager's data files and their backups from the old installation $1 into
+# state/host-manager (migration.md step 5); the old files stay for a rollback
+migrationCopyHostManager() {
+  migration_hm="$1/bin/SENERGY-Platform/mgw-host-manager"
+  mkdir -p "$1/state/host-manager" || return 1
+  for migration_file in "$migration_hm"/applications.json* "$migration_hm"/net_itf_blacklist.json* "$migration_hm"/net_rng_blacklist.json*
+  do
+    if [ -f "$migration_file" ] && ! cp -p "$migration_file" "$1/state/host-manager/"
+    then
+      echo "cannot copy '$migration_file'" >&2
+      return 1
+    fi
+  done
+}
+
+# stops the old core of the installation $1 (migration.md step 7): the service units in .units (not
+# the mount unit: the secrets tmpfs stays mounted, S5), or the processes in .pid, then the old
+# containers (compose project <stack_name>)
+migrationStopOld() {
+  if [ "$(migrationOld systemd)" = "true" ]
+  then
+    migration_units="$(grep '\.service$' "$1/.units" 2> /dev/null)"
+    if [ "$migration_units" != "" ]
+    then
+      echo "stopping $(echo "$migration_units" | tr '\n' ' ')..."
+      # shellcheck disable=SC2086 # one argument per unit
+      systemctl stop $migration_units || return 1
+    fi
+  else
+    migration_pids=""
+    while IFS= read -r migration_pid || [ -n "$migration_pid" ]
+    do
+      case "$migration_pid" in
+        ""|*[!0-9]*)
+          continue
+      esac
+      case "$({ tr '\0' '\n' < "/proc/$migration_pid/cmdline" | head -n 1; } 2> /dev/null)" in
+        "$1/bin/"*)
+          migration_pids="$migration_pid $migration_pids"
+      esac
+    done < "$1/.pid"
+    if [ "$migration_pids" != "" ]
+    then
+      echo "stopping the host binaries ..."
+      coreKill "$migration_pids"
+    fi
+  fi
+  migration_ctrs="$(docker ps -q --filter "label=com.docker.compose.project=$(migrationOld stack_name)")"
+  if [ "$migration_ctrs" != "" ]
+  then
+    echo "stopping the old containers ..."
+    # shellcheck disable=SC2086 # one argument per container
+    docker stop $migration_ctrs > /dev/null || return 1
+  fi
+}
+
+# moves the old installer's files in /etc of the installation $1 aside into $2 (state/migration/etc,
+# migration.md step 8): the units in .units, disabled first, and the logrotate, cron and avahi files.
+# Each moved file is listed in $2/moved, so a rollback puts exactly these back. A plain file with the
+# name of a new link would block the link.
+migrationMoveAside() {
+  mkdir -p "$2" || return 1
+  migration_moved="$2/moved"
+  touch "$migration_moved" || return 1
+  if [ "$(migrationOld systemd)" = "true" ] && [ -r "$1/.units" ]
+  then
+    while IFS= read -r migration_unit || [ -n "$migration_unit" ]
+    do
+      [ "$migration_unit" != "" ] || continue
+      systemctl disable "$migration_unit" > /dev/null 2>&1
+      migrationMoveFile "$host_systemd_path/$migration_unit" "$2" || return 1
+    done < "$1/.units"
+  fi
+  for migration_file in $(migrationOldEtcFiles "$(migrationOld core_name)")
+  do
+    migrationMoveFile "$migration_file" "$2" || return 1
+  done
+}
+
+# moves the plain file $1 into the folder $2 and lists it in $2/moved; nothing to do for a missing
+# file or a link (not the old installer's)
+migrationMoveFile() {
+  if ! [ -f "$1" ] || [ -L "$1" ]
+  then
+    return 0
+  fi
+  if ! grep -qxF -- "$1" "$2/moved" && ! echo "$1" >> "$2/moved"
+  then
+    return 1
+  fi
+  mv -f "$1" "$2/${1##*/}"
+}
+
+# puts the files listed in $1/moved back (the rollback), then enables the old units of the
+# installation $2 again, as the old installer had them
+migrationMoveBack() {
+  [ -r "$1/moved" ] || return 0
+  while IFS= read -r migration_file || [ -n "$migration_file" ]
+  do
+    [ "$migration_file" != "" ] || continue
+    if [ -f "$1/${migration_file##*/}" ] && ! mv -f "$1/${migration_file##*/}" "$migration_file"
+    then
+      echo "cannot put '$migration_file' back" >&2
+      return 1
+    fi
+  done < "$1/moved"
+  if [ "$(migrationOld systemd)" = "true" ] && [ -r "$2/.units" ]
+  then
+    systemctl daemon-reload || return 1
+    while IFS= read -r migration_unit || [ -n "$migration_unit" ]
+    do
+      [ "$migration_unit" != "" ] || continue
+      systemctl enable "$migration_unit" > /dev/null 2>&1 || return 1
+    done < "$2/.units"
+  fi
+}
+
+# removes the old installation's files from $1 after a successful migration (migration.md step 13),
+# by an explicit list. Prints a line per leftover, returns 1 if something is left.
+migrationRemoveOld() {
+  migration_rm_rc=0
+  for migration_name in bin container scripts ctrl.sh update.sh uninstall.sh .options .version .binaries .units \
+    .settings .pid .update_status state/migration
+  do
+    if ! rm -rf "${1:?}/$migration_name"
+    then
+      echo "$1/$migration_name not removed"
+      migration_rm_rc=1
+    fi
+  done
+  return $migration_rm_rc
+}
