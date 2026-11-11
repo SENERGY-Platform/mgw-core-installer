@@ -12,8 +12,10 @@
 load ../unit/helpers
 load github
 
-# Subnets: only 10.x ranges, docker uses 172.17.0.0/16 and up for its own networks. Core and gateway
-# 10.<n>.0.0 and 10.<n>.1.0, module 10.<n+120>.0.0/16, with n from 20 to 119.
+# Subnets and ports: each file has ranges of its own, so files can run in parallel (tests/vm/run.sh
+# -j): core and gateway 10.<n>.0.0 and 10.<n>.1.0, module 10.<n+120>.0.0/16, with n in steps of ten
+# per file (setup 20, uninstall 35, ctrl 45, update 55, update_failures 65, recover 75, version 85);
+# gateway ports per file in thousands from 20000. Only 10.x: docker uses 172.17.0.0/16 and up.
 
 setup_file() {
   startGithubMock
@@ -23,7 +25,7 @@ setup_file() {
   export host_logrotated_path="$BATS_FILE_TMPDIR" host_cron_path="$BATS_FILE_TMPDIR" host_avahi_path="$BATS_FILE_TMPDIR"
   mkdir -p "$ROOT/state"
   # subnets of their own, so the test can't collide with the networks of a core on the VM
-  local n=$((RANDOM % 100 + 20))
+  local n=$((RANDOM % 8 + 85))
   printf '%s\n' "core_id=${CORE#mgwt}" "core_name=$CORE" "stack_name=$CORE" "host_dir_repository_path=$ROOT/repositories/host_dir" \
     core_usr_pw=userpassword core_db_pw=dbpassword core_db_root_pw=rootpassword \
     "subnet_core=10.$n.0.0" "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" \

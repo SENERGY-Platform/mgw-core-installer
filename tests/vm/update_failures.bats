@@ -9,7 +9,10 @@
 load ../unit/helpers
 load github
 
-# Subnets: only 10.x ranges, docker uses 172.17.0.0/16 and up for its own networks.
+# Subnets and ports: each file has ranges of its own, so files can run in parallel (tests/vm/run.sh
+# -j): core and gateway 10.<n>.0.0 and 10.<n>.1.0, module 10.<n+120>.0.0/16, with n in steps of ten
+# per file (setup 20, uninstall 35, ctrl 45, update 55, update_failures 65, recover 75, version 85);
+# gateway ports per file in thousands from 20000. Only 10.x: docker uses 172.17.0.0/16 and up.
 
 setup_file() {
   export REPO="$BATS_TEST_DIRNAME/../.."
@@ -21,8 +24,8 @@ setup_file() {
   "$REPO/tests/vm/build_release.sh" v0.40.0 "$MGW_TEST_RELEASES"
   mkdir -p "$BATS_FILE_TMPDIR/v0.40.0"
   tar -xzf "$MGW_TEST_RELEASES/mgw_core_installer_v0.40.0.tar.gz" -C "$BATS_FILE_TMPDIR/v0.40.0"
-  local n=$((RANDOM % 90 + 20))
-  printf '%s\n' "install_dir=$DIR" "core_id=$F" "gateway_port=$((20000 + RANDOM % 10000))" "subnet_core=10.$n.0.0" \
+  local n=$((RANDOM % 8 + 65))
+  printf '%s\n' "install_dir=$DIR" "core_id=$F" "gateway_port=$((24000 + RANDOM % 1000))" "subnet_core=10.$n.0.0" \
     "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" autostart=true start_core=true \
     logrotate=false cron=false advertise=false > "$BATS_FILE_TMPDIR/f.conf"
   "$BATS_FILE_TMPDIR/v0.40.0/setup.sh" -c "$BATS_FILE_TMPDIR/f.conf" > "$BATS_FILE_TMPDIR/f.log" 2>&1

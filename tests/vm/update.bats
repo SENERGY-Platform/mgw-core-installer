@@ -8,7 +8,10 @@
 load ../unit/helpers
 load github
 
-# Subnets: only 10.x ranges, docker uses 172.17.0.0/16 and up for its own networks.
+# Subnets and ports: each file has ranges of its own, so files can run in parallel (tests/vm/run.sh
+# -j): core and gateway 10.<n>.0.0 and 10.<n>.1.0, module 10.<n+120>.0.0/16, with n in steps of ten
+# per file (setup 20, uninstall 35, ctrl 45, update 55, update_failures 65, recover 75, version 85);
+# gateway ports per file in thousands from 20000. Only 10.x: docker uses 172.17.0.0/16 and up.
 
 setup_file() {
   export REPO="$BATS_TEST_DIRNAME/../.."
@@ -20,8 +23,8 @@ setup_file() {
   "$REPO/tests/vm/build_release.sh" v0.40.0 "$MGW_TEST_RELEASES"
   mkdir -p "$BATS_FILE_TMPDIR/v0.40.0"
   tar -xzf "$MGW_TEST_RELEASES/mgw_core_installer_v0.40.0.tar.gz" -C "$BATS_FILE_TMPDIR/v0.40.0"
-  local n=$((RANDOM % 90 + 20))
-  printf '%s\n' "install_dir=$DIR" "core_id=$U" "gateway_port=$((20000 + RANDOM % 10000))" "subnet_core=10.$n.0.0" \
+  local n=$((RANDOM % 8 + 55))
+  printf '%s\n' "install_dir=$DIR" "core_id=$U" "gateway_port=$((23000 + RANDOM % 1000))" "subnet_core=10.$n.0.0" \
     "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" autostart=true start_core=true \
     logrotate=false cron=false advertise=false > "$BATS_FILE_TMPDIR/u.conf"
   "$BATS_FILE_TMPDIR/v0.40.0/setup.sh" -c "$BATS_FILE_TMPDIR/u.conf" > "$BATS_FILE_TMPDIR/u.log" 2>&1
@@ -159,8 +162,14 @@ waitForRunning() {
   [ "$(systemctl is-active "mgw_$U-core-manager.service")" = "inactive" ]
   waitForRunning 0 "mgw_${U}_v0_42_0"
   grep -qx nginx:1.31.0-alpine "$ROOT/state/images"
-  ! grep -qx "$old_nginx" "$ROOT/state/images"
-  ! docker image inspect "$old_nginx" > /dev/null 2>&1
+  # removed, unless a container of another core still uses it (test files running in parallel): then
+  # docker refuses, and it stays listed for the next cleanup
+  if [ -z "$(docker ps -aq --filter "ancestor=$old_nginx")" ]; then
+    ! grep -qx "$old_nginx" "$ROOT/state/images"
+    ! docker image inspect "$old_nginx" > /dev/null 2>&1
+  else
+    grep -qx "$old_nginx" "$ROOT/state/images"
+  fi
 }
 
 @test "an unfinished install is recovered under the update's lock first" {

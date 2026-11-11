@@ -22,6 +22,7 @@ import json
 import os
 import shutil
 import sys
+import threading
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -53,7 +54,8 @@ os.makedirs(os.path.join(CACHE, "assets"), exist_ok=True)
 
 def fetch(url, dest, headers=None):
     req = urllib.request.Request(url, headers=headers or {})
-    tmp = dest + ".tmp"
+    # unique per process: test files running in parallel share the cache, each with a mock of its own
+    tmp = "%s.tmp.%d.%d" % (dest, os.getpid(), threading.get_ident())
     with urllib.request.urlopen(req, timeout=300) as resp, open(tmp, "wb") as f:
         shutil.copyfileobj(resp, f)
     os.replace(tmp, dest)

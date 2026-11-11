@@ -10,28 +10,32 @@
 load ../unit/helpers
 load github
 
-# Subnets: only 10.x ranges, docker uses 172.17.0.0/16 and up for its own networks. Core and gateway
-# 10.<n>.0.0 and 10.<n>.1.0, module 10.<n+120>.0.0/16, with n from 20 to 119.
+# Subnets and ports: each file has ranges of its own, so files can run in parallel (tests/vm/run.sh
+# -j): core and gateway 10.<n>.0.0 and 10.<n>.1.0, module 10.<n+120>.0.0/16, with n in steps of ten
+# per file (setup 20, uninstall 35, ctrl 45, update 55, update_failures 65, recover 75, version 85);
+# gateway ports per file in thousands from 20000. Only 10.x: docker uses 172.17.0.0/16 and up.
 
 setup_file() {
   startGithubMock
   export REPO="$BATS_TEST_DIRNAME/../.."
   export DIR="/var/tmp/mgwt-uninstall-$(od -An -N2 -tx1 /dev/urandom | tr -d ' \n')"
   export U="u$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')" V="v$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')"
-  local n=$((RANDOM % 93 + 20))
-  printf '%s\n' "install_dir=$DIR" "core_id=$U" "gateway_port=$((20000 + RANDOM % 10000))" "subnet_core=10.$n.0.0" \
+  local n=$((RANDOM % 8 + 35))
+  printf '%s\n' "install_dir=$DIR" "core_id=$U" "gateway_port=$((21000 + RANDOM % 1000))" "subnet_core=10.$n.0.0" \
     "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" autostart=true start_core=true \
     logrotate=false cron=false advertise=false > "$BATS_FILE_TMPDIR/u.conf"
   "$REPO/setup.sh" -c "$BATS_FILE_TMPDIR/u.conf" > "$BATS_FILE_TMPDIR/u.log" 2>&1
   n=$((n + 1))
-  printf '%s\n' "install_dir=$DIR" "core_id=$V" "gateway_port=$((20000 + RANDOM % 10000))" "subnet_core=10.$n.0.0" \
+  printf '%s\n' "install_dir=$DIR" "core_id=$V" "gateway_port=$((21000 + RANDOM % 1000))" "subnet_core=10.$n.0.0" \
     "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" autostart=false start_core=false \
     logrotate=false cron=false advertise=false > "$BATS_FILE_TMPDIR/v.conf"
   "$REPO/setup.sh" -c "$BATS_FILE_TMPDIR/v.conf" > "$BATS_FILE_TMPDIR/v.log" 2>&1
   # keepers for the core images, a module of core U, an image only core U lists
   local image i=0
   for image in $(cat "$DIR/$U/state/images"); do
-    docker create --name "mgwt-keep-$U-$i" "$image" > /dev/null 2>&1
+    # a tmpfs on every path the image declares as a volume, so the keeper gets no anonymous volumes
+    # (they would disturb the volume counts of test files running in parallel)
+    docker create --name "mgwt-keep-$U-$i" $(docker image inspect -f '{{range $p, $_ := .Config.Volumes}}--tmpfs {{$p}} {{end}}' "$image") "$image" > /dev/null 2>&1
     i=$((i + 1))
   done
   docker tag busybox:1.37 "mgwtest/$U-core:1"

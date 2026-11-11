@@ -11,16 +11,18 @@
 load ../unit/helpers
 load github
 
-# Subnets: only 10.x ranges, docker uses 172.17.0.0/16 and up for its own networks. Core and gateway
-# 10.<n>.0.0 and 10.<n>.1.0, module 10.<n+120>.0.0/16, with n from 20 to 119.
+# Subnets and ports: each file has ranges of its own, so files can run in parallel (tests/vm/run.sh
+# -j): core and gateway 10.<n>.0.0 and 10.<n>.1.0, module 10.<n+120>.0.0/16, with n in steps of ten
+# per file (setup 20, uninstall 35, ctrl 45, update 55, update_failures 65, recover 75, version 85);
+# gateway ports per file in thousands from 20000. Only 10.x: docker uses 172.17.0.0/16 and up.
 
 setup_file() {
   startGithubMock
   export REPO="$BATS_TEST_DIRNAME/../.."
   export DIR="/var/tmp/mgwt-install-$(od -An -N2 -tx1 /dev/urandom | tr -d ' \n')"
   export A="a$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')" B="b$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')"
-  local n=$((RANDOM % 93 + 20))
-  export NA="$n" NB="$((n + 1))" PA="$((20000 + RANDOM % 10000))"
+  local n=$((RANDOM % 5 + 20))
+  export NA="$n" NB="$((n + 1))" PA="$((20000 + RANDOM % 900))"
   export PB="$((PA + 1))"
 }
 

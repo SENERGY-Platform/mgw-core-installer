@@ -8,18 +8,21 @@
 load ../unit/helpers
 load github
 
-# Subnets: only 10.x ranges, docker uses 172.17.0.0/16 and up for its own networks.
+# Subnets and ports: each file has ranges of its own, so files can run in parallel (tests/vm/run.sh
+# -j): core and gateway 10.<n>.0.0 and 10.<n>.1.0, module 10.<n+120>.0.0/16, with n in steps of ten
+# per file (setup 20, uninstall 35, ctrl 45, update 55, update_failures 65, recover 75, version 85);
+# gateway ports per file in thousands from 20000. Only 10.x: docker uses 172.17.0.0/16 and up.
 
 setup_file() {
   startGithubMock
   export REPO="$BATS_TEST_DIRNAME/../.."
   export DIR="/var/tmp/mgwt-ctrl-$(od -An -N2 -tx1 /dev/urandom | tr -d ' \n')"
   export X="x$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')" Y="y$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')"
-  local n=$((RANDOM % 90 + 20)) id auto
+  local n=$((RANDOM % 8 + 45)) id auto
   for id in "$X" "$Y"; do
     auto=true
     [ "$id" = "$Y" ] && auto=false
-    printf '%s\n' "install_dir=$DIR" "core_id=$id" "gateway_port=$((20000 + RANDOM % 10000))" "subnet_core=10.$n.0.0" \
+    printf '%s\n' "install_dir=$DIR" "core_id=$id" "gateway_port=$((22000 + RANDOM % 500))" "subnet_core=10.$n.0.0" \
       "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" "autostart=$auto" start_core=false \
       logrotate=false cron=false advertise=false > "$BATS_FILE_TMPDIR/$id.conf"
     "$REPO/setup.sh" -c "$BATS_FILE_TMPDIR/$id.conf" > "$BATS_FILE_TMPDIR/$id.log" 2>&1
@@ -237,7 +240,7 @@ waitForRunning() {
 }
 
 @test "settings: the gateway port moves nginx" {
-  local port=$((30000 + RANDOM % 5000))
+  local port=$((22500 + RANDOM % 500))
   run "$DIR/$Y/current/ctrl.sh" settings set gateway_port "$port"
   echo "$output"
   [ "$status" -eq 0 ]
