@@ -66,3 +66,8 @@ semver() {
     [ "$status" -eq 0 ] || { echo "not ${ordered[$i]} < ${ordered[$((i + 1))]}"; false; }
   done
 }
+
+@test "alphas" {
+  run semver "semverIsAlpha v1.2.3-alpha.1 && semverIsAlpha v1.2.3-alpha2 && ! semverIsAlpha v1.2.3-beta.1 && ! semverIsAlpha v1.2.3 && ! semverIsAlpha dev-1"
+  [ "$status" -eq 0 ]
+}

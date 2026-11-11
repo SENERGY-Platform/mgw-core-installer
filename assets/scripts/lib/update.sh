@@ -13,13 +13,15 @@
 update_repo="SENERGY-Platform/mgw-core-installer"
 
 # prints the tag of the newest release in the GitHub release list $1 (JSON) that is newer than the
-# version $2, nothing if there is none. Drafts never count, pre-releases only if $3 is true; tags
-# that aren't release versions are ignored.
+# version $2, nothing if there is none. Drafts never count, betas only if $3 is true, alphas never:
+# an alpha is installed on purpose (setup.sh, restore.sh -path), as with the old installer. Tags that
+# aren't release versions are ignored.
 updatePickRelease() {
   update_best=""
   for update_tag in $(jq -r --argjson beta "$3" '.[] | select(.draft != true) | select($beta or .prerelease != true) | .tag_name' "$1")
   do
     semverValid "$update_tag" || continue
+    semverIsAlpha "$update_tag" && continue
     # a pre-release tag counts as one, also if the release isn't marked as such
     if semverIsPre "$update_tag" && [ "$3" != "true" ]
     then

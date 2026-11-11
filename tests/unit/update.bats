@@ -87,3 +87,20 @@ JSON
   run update_lib 'updatePickRelease "$R" v0.40.0 true'
   [ "$output" = "v0.41.0-beta.2" ]
 }
+
+@test "alphas are never picked, also with allow_beta; an installed alpha updates to a newer release" {
+  cat > "$R" <<'JSON'
+[
+  {"tag_name": "v0.42.0-alpha.1", "prerelease": true, "draft": false},
+  {"tag_name": "v0.41.0-alpha2", "prerelease": false, "draft": false},
+  {"tag_name": "v0.41.0-beta.1", "prerelease": true, "draft": false},
+  {"tag_name": "v0.40.0", "prerelease": false, "draft": false}
+]
+JSON
+  run update_lib 'updatePickRelease "$R" v0.39.0 true'
+  [ "$output" = "v0.41.0-beta.1" ]
+  run update_lib 'updatePickRelease "$R" v0.39.0 false'
+  [ "$output" = "v0.40.0" ]
+  run update_lib 'updatePickRelease "$R" v0.40.0-alpha.3 false'
+  [ "$output" = "v0.40.0" ]
+}

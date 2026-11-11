@@ -74,6 +74,11 @@ semverIsPre() {
   semverParse "$1" && [ "$semver_pre" -lt 2 ]
 }
 
+# returns 0 if $1 is an alpha
+semverIsAlpha() {
+  semverParse "$1" && [ "$semver_pre" -eq 0 ]
+}
+
 # prints -1, 0 or 1 as the version $1 is lower than, equal to or higher than $2; returns 1 if one
 # of them isn't a release version
 semverCompare() {
