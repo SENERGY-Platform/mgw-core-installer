@@ -37,11 +37,17 @@ teardown_file() {
   [ "$status" -eq 0 ]
   migrated
   grep -qx autostart=true "$DIR/state/settings" && grep -qx secrets_size=100M "$DIR/state/settings"
-  # the host-manager's data files, copied unchanged
-  for f in "$BATS_TEST_TMPDIR/hm"/*.json*; do
+  # the host-manager's data files, copied unchanged. A fresh old core has none (the host-manager
+  # writes them once something is registered), so this usually checks nothing but the empty folder;
+  # the copy itself is tested in tests/unit/migration.bats
+  [ -d "$DIR/state/host-manager" ]
+  local compared=0
+  for f in "$BATS_TEST_TMPDIR/hm"/applications.json* "$BATS_TEST_TMPDIR/hm"/net_*_blacklist.json*; do
     [ -e "$f" ] || continue
     cmp "$f" "$DIR/state/host-manager/${f##*/}"
+    compared=$((compared + 1))
   done
+  echo "# host-manager data files compared: $compared" >&3
   # the old volumes are the new core's: same volume, not created again
   [ "$(docker volume inspect -f '{{.CreatedAt}}' "mgw_${S}_mysqldb-data")" = "$vol_before" ]
   # the units are links into current now, the old plain files gone

@@ -196,3 +196,36 @@ mig() {
   [ "$(jq -r .finished "$OLD/.update_status")" != "" ]
   [ "$(stat -c %a "$OLD/.update_status")" = "644" ]
 }
+
+@test "the host-manager's data files and their backups are copied, the old ones stay" {
+  local hm="$OLD/bin/SENERGY-Platform/mgw-host-manager" f
+  mkdir -p "$hm/config"
+  for f in applications.json applications.json.bk net_itf_blacklist.json net_itf_blacklist.json.bk \
+    net_rng_blacklist.json net_rng_blacklist.json.bk; do
+    echo "{\"file\":\"$f\"}" > "$hm/$f"
+  done
+  chmod 600 "$hm/applications.json"
+  touch "$hm/bin" "$hm/config/conf.json" "$hm/other.json"
+  run mig 'migrationCopyHostManager "$OLD"'
+  [ "$status" -eq 0 ]
+  for f in applications.json applications.json.bk net_itf_blacklist.json net_itf_blacklist.json.bk \
+    net_rng_blacklist.json net_rng_blacklist.json.bk; do
+    cmp "$hm/$f" "$OLD/state/host-manager/$f"
+    [ -e "$hm/$f" ]
+  done
+  [ "$(stat -c %a "$OLD/state/host-manager/applications.json")" = "600" ]
+  # only the data files: not the binary, its config or anything else
+  [ "$(ls "$OLD/state/host-manager" | wc -l)" -eq 6 ]
+}
+
+@test "without data files, or without the host-manager's folder, state/host-manager is created empty" {
+  mkdir -p "$OLD/bin/SENERGY-Platform/mgw-host-manager/config"
+  touch "$OLD/bin/SENERGY-Platform/mgw-host-manager/bin"
+  run mig 'migrationCopyHostManager "$OLD"'
+  [ "$status" -eq 0 ]
+  [ -d "$OLD/state/host-manager" ] && [ -z "$(ls -A "$OLD/state/host-manager")" ]
+  rm -rf "$OLD/bin" "$OLD/state"
+  run mig 'migrationCopyHostManager "$OLD"'
+  [ "$status" -eq 0 ]
+  [ -d "$OLD/state/host-manager" ] && [ -z "$(ls -A "$OLD/state/host-manager")" ]
+}
