@@ -91,17 +91,24 @@ ask() {
   done
 }
 
-# asks the yes/no question $1; returns 0 for yes
+# asks the yes/no question $1; returns 0 for yes. Enter takes the default: yes, or no if $2 is "n"
 askYes() {
+  ask_default=y
+  ask_hint="Y/n"
+  if [ "$2" = "n" ]
+  then
+    ask_default=n
+    ask_hint="y/N"
+  fi
   while :
   do
-    printf '%s (y/n): ' "$1" >&2
+    printf '%s (%s): ' "$1" "$ask_hint" >&2
     read -r ask_answer || exit 1
-    case "$ask_answer" in
-      y)
+    case "${ask_answer:-$ask_default}" in
+      y|Y)
         return 0
         ;;
-      n)
+      n|N)
         return 1
         ;;
       *)
@@ -110,8 +117,9 @@ askYes() {
   done
 }
 
+# asks the yes/no question $1 (default as askYes, $2); prints true or false
 askBool() {
-  if askYes "$1"
+  if askYes "$1" "$2"
   then
     echo true
   else
@@ -159,7 +167,7 @@ else
   then
     exit 0
   fi
-  if askYes "change default settings?"
+  if askYes "change default settings?" n
   then
     setupSet install_dir "$(ask "install directory" /opt/mgw install_dir)"
     setupSet core_id "$(ask "core id (empty: generated)" "" "")"
@@ -192,7 +200,7 @@ else
   setupSet logrotate "$(askBool "enable log rotation?")"
   setupSet cron "$(askBool "enable automatic updates?")"
   setupSet advertise "$(askBool "enable mDNS advertisement?")"
-  setupSet allow_beta "$(askBool "allow beta releases?")"
+  setupSet allow_beta "$(askBool "allow beta releases?" n)"
   setupSet start_core "$(askBool "start the core after the installation?")"
 fi
 
