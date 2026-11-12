@@ -117,3 +117,11 @@ waitForRunning() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"is neither a core root (<install dir>/<core id>) nor an installation of the old installer"* ]]
 }
+
+@test "without -path, the archive's update.sh names both ways to run it" {
+  run "$BATS_FILE_TMPDIR/v0.43.0/update.sh"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"as <core root>/current/update.sh, to update the core to the newest release"* ]]
+  [[ "$output" == *"from an extracted release archive with -path=<core root>"* ]]
+  [[ "$output" == *"-path=<install dir> migrates an installation of the old installer"* ]]
+}

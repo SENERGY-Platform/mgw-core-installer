@@ -177,7 +177,10 @@ do
 done
 if [ "$core_root" = "" ]
 then
-  echo "no core found: run update.sh as <core root>/current/update.sh" >&2
+  echo "no core found. Run update.sh either" >&2
+  echo "  as <core root>/current/update.sh, to update the core to the newest release, or" >&2
+  echo "  from an extracted release archive with -path=<core root>, to update the core to the archive's" >&2
+  echo "  version (-path=<install dir> migrates an installation of the old installer)" >&2
   exit 1
 fi
 
