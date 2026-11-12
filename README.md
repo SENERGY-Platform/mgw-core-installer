@@ -24,6 +24,7 @@ systemd/cron/logrotate/avahi and creates the container stack via Docker Compose.
 * [Settings](#settings)
 * [Updating](#updating)
     * [Automatic and manual updates](#automatic-and-manual-updates)
+    * [Manual update from a downloaded release](#manual-update-from-a-downloaded-release)
     * [What an update does, and what happens when it fails](#what-an-update-does-and-what-happens-when-it-fails)
     * [Beta releases](#beta-releases)
     * [The result of an update](#the-result-of-an-update)
@@ -223,6 +224,22 @@ sudo /opt/mgw/<core_id>/current/update.sh
 An automatic run skips a version that failed `update_retry_limit` times (default 3) and never
 updates a `dev-` version. A manual run always tries, and resets the count.
 
+### Manual update from a downloaded release
+
+To update to a specific release, e.g. a beta without `allow_beta` or an alpha, which `update.sh`
+never picks by itself, unpack its archive anywhere and run its `update.sh` with the core root:
+
+```sh
+sudo ./update.sh -path=/opt/mgw/<core_id>
+```
+
+It works like any update, with the same rollback; only the version comes from the archive instead
+of GitHub. The host binaries and images are still downloaded. The archive's version must be newer
+than the running one: the same version is left as it is (`restore.sh` rebuilds it), an older one is
+refused (`restore.sh -downgrade` installs it, see [Recover and restore](#recover-and-restore)). The
+same command migrates an installation of the old installer, given its install directory (see
+[Migrating](#migrating-an-installation-of-the-old-installer)).
+
 ### What an update does, and what happens when it fails
 
 1. The running version (stage one) checks for a newer release, downloads it and copies it into
@@ -320,8 +337,10 @@ it there.
 Installations of the old installer (one flat directory, usually `/opt/mgw`, with `.settings`,
 `ctrl.sh`, `bin/` and `container/`) are migrated by their next update: the old `update.sh`,
 by cron or by hand, downloads the new release and hands over to it. Nothing has to be done by
-hand. The install directory becomes the core root (there is no `<core_id>` level), the volumes,
-the module deployments and the settings are taken over.
+hand. To migrate to a specific release instead, e.g. an alpha or a beta, unpack its archive and run
+`sudo ./update.sh -path=<install dir>` (e.g. `-path=/opt/mgw`). The install directory becomes the
+core root (there is no `<core_id>` level), the volumes, the module deployments and the settings are
+taken over.
 
 * **Minimum version:** installations from `v0.30.0-alpha1` on are migrated. An older one is
   refused without any change; update it first to an old-layout release from `v0.30.0` on:

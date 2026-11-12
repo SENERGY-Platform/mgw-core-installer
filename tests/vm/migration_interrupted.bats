@@ -90,7 +90,7 @@ nextRun() {
   [[ "$output" == *"the interrupted migration of $DIR was rolled back"* ]]
   grep -qx result=failed "$DIR/state/update" && grep -qx rolled_back=true "$DIR/state/update"
   grep -qx interrupted=true "$DIR/state/update"
-  grep -qx "warning=interrupted, recovered by the old update.sh" "$DIR/state/update"
+  grep -q "^warning=interrupted, recovered by update.sh from " "$DIR/state/update"
   nothingNew
   oldRunning
 }

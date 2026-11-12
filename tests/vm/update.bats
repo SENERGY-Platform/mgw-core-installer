@@ -12,7 +12,7 @@ load github
 # -j): core and gateway 10.<n>.0.0 and 10.<n>.1.0, module 10.<n+120>.0.0/16, with n in steps of ten
 # per file (setup 20, uninstall 35, ctrl 45, update 55, update_failures 65, recover 75, version 85,
 # restore 95, migration 105, migration_success 115, migration_nosystemd 125, migration_interrupted
-# 10);
+# 10, update_archive 15);
 # gateway ports per file in thousands from 20000. Only 10.x: docker uses 172.17.0.0/16 and up.
 
 setup_file() {
@@ -112,7 +112,7 @@ check() {
   [[ "$output" == *"not migrating: cannot read $BATS_TEST_TMPDIR/old/.version"* ]]
   [ ! -e "$BATS_TEST_TMPDIR/old/state" ]
   run "$REPO/assets/scripts/update.sh" -a "-path=$BATS_TEST_TMPDIR"
-  [[ "$output" == *"isn't an installation of the old installer"* ]]
+  [[ "$output" == *"is neither a core root (<install dir>/<core id>) nor an installation of the old installer"* ]]
 }
 
 # waits up to 5 minutes until $1 long-running containers of the project $2 run

@@ -88,6 +88,12 @@ close descriptor 9.
 two is the new version's code: it knows what it needs. The exit code is the only contract between
 the two (S4).
 
+From an extracted release archive, `update.sh -path=<core root>` (also `./update.sh` in the archive
+root) takes stage one's place: lock, recovery, the copy of the archive into `vX_Y_Z_tmp` (checked
+against the release's checksums), then the copy's stage two as usual. It only goes forward (the same
+version is left alone, an older one is refused and left to `restore.sh -downgrade`) and is always a
+manual run. Given the install directory of the old installer, the same command migrates it.
+
 Phases of stage two and their handling on failure (PLAN.md 13):
 
 - **B, preparing**: render, download the host binaries, rename to `vX_Y_Z`, pull the images,
@@ -179,7 +185,7 @@ in `migration.sh` and `lib/migration.sh`, so it can be removed again without tou
 
 `.github/build_release.sh` builds the archive (used by the release workflow and the VM tests):
 `assets/version`, `assets/checksums` (the recovery checks a version folder against it before handing
-over), the links `restore.sh` and `uninstall.sh` in the archive root, the asset name
+over), the links `update.sh`, `restore.sh` and `uninstall.sh` in the archive root, the asset name
 `mgw_core_installer_<version>.tar.gz` (the old stage one looks for `<version>.tar.gz`). Before it
 publishes, the workflow checks that every volume a core image declares is mounted
 (`.github/check_volumes.sh`): an unmounted declared path gets an anonymous volume, whose data is lost

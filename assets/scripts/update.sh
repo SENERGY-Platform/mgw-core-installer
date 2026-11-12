@@ -13,8 +13,11 @@
 #                                          stage two: the new version's code, internal. Inherits the
 #                                          lock. The exit code is the only contract between the two
 #                                          (S4).
-#   assets/scripts/update.sh [-a] -path=<dir>
-#                                          the old installer's hand-over to the migration (15)
+#   assets/scripts/update.sh -path=<dir>   from an extracted release archive (also ./update.sh in the
+#                                          archive root): with a core root, updates it to the
+#                                          archive's version; with the install dir of the old
+#                                          installer, migrates it (15). The old installer's stage one
+#                                          runs it that way after its download, with -a from cron.
 
 # the libraries' variables are used across files, which shellcheck can't follow
 # shellcheck disable=SC2034,SC2154
@@ -35,7 +38,7 @@ do
       old_path="${arg#-path=}"
       ;;
     -h)
-      echo "usage: $0 [-a]"
+      echo "usage: $0 [-a]   or, from an extracted release archive: $0 -path=<core root or old install dir>"
       echo "  -a  automatic run (cron): applies the retry limit, never updates a dev version"
       exit 0
       ;;
@@ -72,24 +75,94 @@ then
     echo "this release can't migrate the installation in '$old_path' yet" >&2
     exit 1
   fi
-  # the old update.sh run by hand after a migration got as far as current, and was interrupted: the
-  # recovery the next update.sh would run first, then the way to the new one (m7-migration.md,
-  # finding 8 c)
-  recordClear old_upd "kind result" ""
-  if [ -x "$old_path/current/assets/scripts/recover.sh" ] &&
-    recordLoad "$old_path/state/update" old_upd "" 2> /dev/null && [ "$old_upd_kind" = "migration" ]
+  if ! [ -f "$old_path/state/settings" ] || ! [ -L "$old_path/current" ]
   then
-    "$old_path/current/assets/scripts/recover.sh" -by="the old update.sh"
-    if [ -e "$old_path/current" ]
-    then
-      echo "$old_path has the new layout now: run $old_path/current/update.sh" >&2
-    else
-      echo "the interrupted migration of $old_path was rolled back; the next update tries again" >&2
-    fi
+    echo "'$old_path' is neither a core root (<install dir>/<core id>) nor an installation of the old installer" >&2
     exit 1
   fi
-  echo "'$old_path' isn't an installation of the old installer" >&2
-  exit 1
+
+  # --- an update from an extracted release archive (m9-release.md) ---
+  #
+  # The archive's version updates the core root given: this script does what stage one does after
+  # its download (the copy into vX_Y_Z_tmp), then hands over to the copy's stage two, with every
+  # guarantee of an update. Always a manual run: the retry count is reset, an alpha or beta can be
+  # chosen. Also reached when the old installer's update.sh is run by hand on a migration that got as
+  # far as current: the recovery below resolves it first (m7-migration.md, finding 8 c).
+  core_root="$(cd "$old_path" && pwd -P)" || exit 1
+  assets_dir="$(cd "$script_dir/.." && pwd -P)" || exit 1
+  new_version="$(cat "$assets_dir/version" 2> /dev/null)"
+  # a git clone has no assets/version, the release build writes it
+  [ "$new_version" != "" ] || new_version="dev-$(date +%s)"
+  new_folder="$(versionFolder "$new_version")" || exit 1
+  if ! settingsLoad "$core_root/current/assets/settings.defaults" "$core_root/state/settings"
+  then
+    exit 1
+  fi
+  lockAcquire "$core_root/state/lock" update || exit 1
+  # G5: an interrupted update, install or migration first, by the same recovery stage one runs
+  if ! "$core_root/current/assets/scripts/recover.sh" -by="update.sh from $assets_dir"
+  then
+    echo "the recovery failed or removed an unfinished install; not updating" >&2
+    exit 1
+  fi
+  if ! [ -e "$core_root/current" ]
+  then
+    echo "the interrupted migration of $core_root was rolled back; the next update tries again" >&2
+    exit 1
+  fi
+  lockWriteHolder "$core_root/state/lock" update "$$"
+  current_version="$(cat "$core_root/current/assets/version" 2> /dev/null)"
+  if [ "$current_version" = "" ]
+  then
+    echo "cannot read the version of $core_root/current" >&2
+    exit 1
+  fi
+  # a dev version on either side can't be compared: a different one is taken, with a warning
+  if semverValid "$current_version" && semverValid "$new_version"
+  then
+    case "$(semverCompare "$current_version" "$new_version")" in
+      0)
+        echo "$core_root runs $new_version already; to rebuild it, run $assets_dir/scripts/restore.sh -path=$core_root"
+        exit 0
+        ;;
+      1)
+        echo "$new_version is older than $current_version: an update never goes back (data migrations may have run); restore.sh -path=$core_root -downgrade does, from this archive" >&2
+        exit 1
+    esac
+  elif [ "$current_version" = "$new_version" ]
+  then
+    echo "$core_root runs $new_version already" >&2
+    exit 0
+  else
+    echo "warning: $current_version or $new_version is a dev version, they can't be compared; updating anyway" >&2
+  fi
+
+  echo "updating $current_version to $new_version from $assets_dir ..."
+  trap 'rm -rf "$core_root/${new_folder}_tmp"; exit 1' INT TERM HUP
+  if ! versionCreate "$core_root" "$assets_dir" "$new_version"
+  then
+    rm -rf "$core_root/${new_folder}_tmp"
+    echo "creating ${new_folder}_tmp failed" >&2
+    exit 1
+  fi
+  # the copy must be the release (the archive may have been changed or damaged since it was unpacked)
+  case "$new_version" in
+    dev-*)
+      echo "warning: $new_version is a dev version without checksums, the copy is unchecked" >&2
+      ;;
+    *)
+      if ! [ -f "$core_root/${new_folder}_tmp/assets/checksums" ] ||
+        ! (cd "$core_root/${new_folder}_tmp/assets" && sha256sum -c --quiet checksums > /dev/null 2>&1)
+      then
+        rm -rf "$core_root/${new_folder}_tmp"
+        echo "the files in $assets_dir don't match the release's checksums; unpack the archive again" >&2
+        exit 1
+      fi
+  esac
+  # stage two inherits the lock; while it runs, its own handling deals with a signal (as stage one)
+  trap ':' INT TERM HUP
+  "$core_root/${new_folder}_tmp/update.sh" -stage=2
+  exit $?
 fi
 
 # the core root: this script is <core root>/<version folder>/update.sh, a link

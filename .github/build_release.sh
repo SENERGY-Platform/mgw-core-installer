@@ -10,7 +10,7 @@
 # - assets/version holds the version
 # - assets/checksums: the sha256 of every other file under assets (sha256sum format, paths relative
 #   to assets), checked by recovery before it hands over to a version (PLAN.md 14)
-# - the archive root: setup.sh, LICENSE, README.md, assets/, and the links restore.sh and
+# - the archive root: setup.sh, LICENSE, README.md, assets/, and the links update.sh, restore.sh and
 #   uninstall.sh into assets/scripts
 # - the name mgw_core_installer_<version>.tar.gz
 #
@@ -33,5 +33,6 @@ echo "$version" > "$work/assets/version"
 (cd "$work/assets" && find . -type f ! -path ./checksums | sort | xargs sha256sum > checksums)
 ln -s assets/scripts/restore.sh "$work/restore.sh"
 ln -s assets/scripts/uninstall.sh "$work/uninstall.sh"
+ln -s assets/scripts/update.sh "$work/update.sh"
 mkdir -p "$out"
 tar -czf "$out/mgw_core_installer_$version.tar.gz" -C "$work" .
