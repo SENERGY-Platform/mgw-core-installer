@@ -307,6 +307,12 @@ volumes and networks, the units and files in `/etc`, the secrets tmpfs and the c
 are no options to keep data. It works on a broken or half-installed core as well; whatever it
 can't remove is listed at the end.
 
+A host-directory module repository (`host_dir_repository_path`) outside the core root is not
+removed: the installation was pointed at it, and other cores may use it too. This also applies to
+installations migrated from the old installer that had their own install directory: the old
+installer still put their repository in `/opt/mgw/repositories/host_dir`, and the migration keeps
+it there.
+
 ---
 
 ## Migrating an installation of the old installer
