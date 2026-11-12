@@ -322,7 +322,8 @@ sudo ./uninstall.sh -path=/opt/mgw/<core_id> [-y]        # from an unpacked rele
 Removes everything of the core: its containers and those of the deployed modules, its images,
 volumes and networks, the units and files in `/etc`, the secrets tmpfs and the core root. There
 are no options to keep data. It works on a broken or half-installed core as well; whatever it
-can't remove is listed at the end.
+can't remove is listed at the end, and the exit code is 1. An image that a container outside the
+core still uses (e.g. another core on the same host) is kept and named; that is no failure.
 
 A host-directory module repository (`host_dir_repository_path`) outside the core root is not
 removed: the installation was pointed at it, and other cores may use it too. This also applies to

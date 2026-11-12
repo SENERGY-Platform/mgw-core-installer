@@ -11,7 +11,8 @@
 #
 # It needs state/settings: the core's objects are found by the names stored there (core id, core name,
 # stack name) and by the label mgw_cid. Best effort: a step that fails doesn't stop the others; what
-# couldn't be removed is listed at the end and the exit code is 1.
+# couldn't be removed is listed at the end and the exit code is 1. An image a container outside the
+# core still uses is kept and named, without affecting the exit code.
 
 # the libraries' variables are used across files, which shellcheck can't follow
 # shellcheck disable=SC2034,SC2154
@@ -121,6 +122,8 @@ case $? in
 esac
 
 left=""
+# images kept because containers outside the core use them (step 3)
+kept=""
 # notes what couldn't be removed
 leftover() {
   echo "  could not remove: $*" >&2
@@ -167,13 +170,21 @@ do
   docker rm -f -v "$ctr" > /dev/null 2>&1 || leftover "container $ctr"
 done
 
-# 3. images: the recorded core images and the images of the removed containers
+# 3. images: the recorded core images and the images of the removed containers. An image a container
+# outside the core still uses (e.g. another core on the same host) is kept: that is correct, not a
+# failure, so it doesn't count as a leftover. Docker refuses to remove it either way (no -f).
 echo "removing images ..."
 for image in $({ imagesList "$core_root/state/images"; printf '%s' "$module_images"; } | sort -u | grep -v '^$')
 do
   if docker image inspect "$image" > /dev/null 2>&1 && ! docker image rm "$image" > /dev/null 2>&1
   then
-    leftover "image $image (still used by another container)"
+    if [ -n "$(docker ps -aq --filter "ancestor=$image" 2> /dev/null)" ]
+    then
+      echo "  kept: image $image, still used by another container"
+      kept="${kept}  image $image$state_nl"
+    else
+      leftover "image $image"
+    fi
   fi
 done
 
@@ -246,6 +257,11 @@ case "$host_dir" in
     echo "the module repository $host_dir is outside the core root and was left" >&2
 esac
 
+if [ "$kept" != "" ]
+then
+  echo "kept, still used by containers outside the core:"
+  printf '%s' "$kept"
+fi
 if [ "$left" != "" ]
 then
   echo "the core was removed, except:" >&2
