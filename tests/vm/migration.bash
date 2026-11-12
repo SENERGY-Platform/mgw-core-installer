@@ -56,8 +56,12 @@ installOld() {
   # the old setup.sh's own work folder, also fixed (/tmp/mgw-install)
   sed -i "s|wrk_spc=\"/tmp/mgw-install\"|wrk_spc=\"$WORK-install\"|" "$x/setup.sh"
   grep -q "wrk_spc=\"$WORK-install\"" "$x/setup.sh"
-  # the old config file is sourced shell code; logrotate on, so a file in /etc is moved aside
-  printf '%s\n' "base_path=$DIR" "core_id=$S" "gateway_port=$((MIG_PORT + RANDOM % 1000))" "subnet_core=10.$n.0.0" \
+  # the old config file is sourced shell code; logrotate on, so a file in /etc is moved aside. The
+  # host dir repository is set explicitly: the old installer derived its default from /opt/mgw before
+  # the config file set base_path, so every test file would share /opt/mgw/repositories/host_dir,
+  # which outlives the cores (README, uninstalling)
+  printf '%s\n' "base_path=$DIR" "host_dir_repository_path=$DIR/repositories/host_dir" "core_id=$S" \
+    "gateway_port=$((MIG_PORT + RANDOM % 1000))" "subnet_core=10.$n.0.0" \
     "subnet_gateway=10.$n.1.0" "subnet_module=10.$((n + 120)).0.0" "systemd=$sd" logrotate=true cron=false \
     advertise=false allow_beta=false skip_pgk_install_confirm=true start_core=true > "$BATS_FILE_TMPDIR/old.conf"
   "$x/setup.sh" -c "$BATS_FILE_TMPDIR/old.conf" > "$BATS_FILE_TMPDIR/old-setup.log" 2>&1 || { tail -n 30 "$BATS_FILE_TMPDIR/old-setup.log" >&3; return 1; }
@@ -227,6 +231,10 @@ services:
 MODFILE
   url="$(mmUrl "$1")"
   mmReady "$url"
+  # the module-manager only knows the modules its last refresh of the repository found; the module
+  # was written after it started
+  job="$(curl -fsS -X PATCH "$url/repositories?sources=localhost" | jq -r .id)"
+  mmJob "$url" "$job" repositories-refresh
   curl -fsS -X POST -H 'Content-Type: application/json' \
     -d "[{\"id\":\"$TEST_MODULE\",\"source\":\"localhost\",\"channel\":\"default\"}]" "$url/modules-change-request"
   echo
