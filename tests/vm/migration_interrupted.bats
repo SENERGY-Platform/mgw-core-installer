@@ -12,10 +12,10 @@ load github
 load migration
 
 # Subnets and ports: each file has ranges of its own, so files can run in parallel (tests/vm/run.sh
-# -j); migration_interrupted uses n from 10 and ports from 30000 (see the other files).
+# -j); migration_interrupted uses n from 130 and ports from 30000 (see the other files).
 
 setup_file() {
-  migrationSetupFile migration_interrupted 10 30000
+  migrationSetupFile migration_interrupted 130 30000
 }
 
 teardown_file() {
