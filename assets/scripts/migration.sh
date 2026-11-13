@@ -591,7 +591,7 @@ core_name="$(migrationOld core_name)"
 # 2. state/settings from the old .settings and container/.env
 step "writing state/settings" || migrationFailB "writing $record"
 migration_warnings="$core_root/state/.migration-warnings"
-if ! migrationSettings "$core_root" 2> "$migration_warnings" | fileWriteAtomic "$core_root/state/settings" ||
+if ! { settingsHeader; migrationSettings "$core_root" 2> "$migration_warnings"; } | fileWriteAtomic "$core_root/state/settings" ||
   ! [ -s "$core_root/state/settings" ]
 then
   migrationFailB "writing state/settings"

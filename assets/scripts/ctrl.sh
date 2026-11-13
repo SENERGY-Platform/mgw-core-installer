@@ -19,7 +19,8 @@ usage: ctrl.sh [-y] <command>
   stop           stop the core
   restart        stop, then start the core
   ctr-recreate   recreate the core's containers (a running core is stopped and started again)
-  settings list            show the settings; "(set)" marks the ones set for this core
+  settings list [-a]       show the settings that can be changed, with -a also the fixed ones;
+                           "(set)" marks the ones set for this core
   settings get <key>       show one setting
   settings set <key> <value>
                            change a setting and apply it
@@ -397,7 +398,17 @@ case "$command" in
   settings)
     case "$1" in
       list)
-        ctrlSettingsList
+        case "$2" in
+          "")
+            ctrlSettingsList
+            ;;
+          -a)
+            ctrlSettingsList all
+            ;;
+          *)
+            echo "usage: ctrl.sh settings list [-a]" >&2
+            exit 1
+        esac
         ;;
       get)
         if [ "$2" = "" ] || [ "$(ctrlSettingKind "$2")" = "unknown" ]

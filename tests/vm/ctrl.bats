@@ -194,9 +194,14 @@ waitForRunning() {
 @test "settings: list and get" {
   run "$DIR/$X/current/ctrl.sh" settings list
   [ "$status" -eq 0 ]
-  [[ "$output" == *"core_id=$X (set)"* ]]
-  [[ "$output" == *"core_db_pw=(hidden) (set)"* ]]
-  [[ "$output" == *"kratos_log_level=warning"* ]]
+  [[ "$output" == *"kratos_log_level=warning"* ]] && [[ "$output" == *"autostart=true (set)"* ]]
+  [[ "$output" != *"core_id="* ]]
+  run "$DIR/$X/current/ctrl.sh" settings list -a
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"core_id=$X (set) fixed"* ]]
+  [[ "$output" == *"core_db_pw=(hidden) (set) fixed"* ]]
+  # the install's comment at the top of state/settings
+  head -n 1 "$DIR/$X/state/settings" | grep -q "^# The settings set for this core"
   run "$DIR/$X/current/ctrl.sh" settings get core_name
   [ "$output" = "mgw_$X" ]
   run "$DIR/$X/current/ctrl.sh" settings get no_such_key

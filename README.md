@@ -168,7 +168,7 @@ sudo /opt/mgw/<core_id>/current/ctrl.sh <command>
 | `stop` | stops the core; the core-manager stops the containers first |
 | `restart` | stop, then start |
 | `ctr-recreate` | recreates the core's containers (a running core is stopped and started again) |
-| `settings list`, `settings get <key>` | shows the settings |
+| `settings list [-a]`, `settings get <key>` | shows the settings that can be changed; with `-a` also the fixed ones |
 | `settings set <key> <value>`, `settings reset <key>` | changes a setting and applies it, see [Settings](#settings) |
 | `status` | the core's state, its version, its last update and check, and who holds its lock |
 
@@ -190,6 +190,11 @@ choices and generated values, and what was changed later with `ctrl.sh settings 
 are `key=value` and parsed, never sourced. A new version may bring new settings with new
 defaults; an update adds a setting to `state/settings` only where the new default would change
 the behaviour of an existing core.
+
+Change settings with `ctrl.sh settings set`, not by editing `state/settings`: `ctrl.sh` checks a
+value and applies it (a comment at the top of the file says so). `ctrl.sh settings list` shows the
+settings that can be changed; "(set)" marks the ones set for this core, the others are the
+version's defaults. `ctrl.sh settings list -a` also shows the fixed ones, marked "fixed".
 
 What changing a setting with `ctrl.sh settings set` takes:
 

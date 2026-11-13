@@ -136,13 +136,25 @@ ctrl_shipped() {
   [[ "${lines[0]}" == *"identity"* ]] && [[ "${lines[1]}" == *"docker networks"* ]] && [[ "${lines[2]}" == *"credentials"* ]]
 }
 
-@test "settings: the list marks set values and hides passwords" {
-  printf '%s\n' 'core_id=abc' 'core_db_pw=secret123' 'allow_beta=true' > "$BATS_TEST_TMPDIR/settings"
+@test "settings: the list shows the changeable ones, marks set values, explains itself" {
+  { dsh 'settingsHeader' settings; printf '%s\n' 'core_id=abc' 'core_db_pw=secret123' 'allow_beta=true'; } > "$BATS_TEST_TMPDIR/settings"
   run dsh 'settingsLoad "$SHIPPED" "$BATS_TEST_TMPDIR/settings"; ctrlSettingsList' file settings state lock ctrl
-  [[ "$output" == *"core_id=abc (set)"* ]]
-  [[ "$output" == *"core_db_pw=(hidden) (set)"* ]]
-  [[ "$output" == *"allow_beta=true (set)"* ]]
-  [[ "$output" == *"gateway_port=8080"$'\n'* ]] || [[ "$output" == *"gateway_port=8080" ]]
+  [[ "$output" == *"allow_beta=true (set)"$'\n'* ]]
+  [[ "$output" == *"gateway_port=8080"$'\n'* ]]
+  # the fixed ones only with -a
+  [[ "$output" != *"core_id="* ]] && [[ "$output" != *"core_db_pw="* ]] && [[ "$output" != *"subnet_core="* ]]
+  [[ "$output" == *"(set): set for this core; the others are the version's defaults"* ]]
+  [[ "$output" == *"the core's identity, credentials and subnets are fixed: ctrl.sh settings list -a"* ]]
+}
+
+@test "settings: with -a also the fixed ones, marked, passwords hidden" {
+  printf '%s\n' 'core_id=abc' 'core_db_pw=secret123' 'allow_beta=true' > "$BATS_TEST_TMPDIR/settings"
+  run dsh 'settingsLoad "$SHIPPED" "$BATS_TEST_TMPDIR/settings"; ctrlSettingsList all' file settings state lock ctrl
+  [[ "$output" == *"core_id=abc (set) fixed"$'\n'* ]]
+  [[ "$output" == *"core_db_pw=(hidden) (set) fixed"$'\n'* ]]
+  [[ "$output" == *"subnet_core=10.0.0.0 fixed"$'\n'* ]]
+  [[ "$output" == *"allow_beta=true (set)"$'\n'* ]]
+  [[ "$output" == *"fixed: the core's identity, credentials and subnets, can't be changed"* ]]
   [[ "$output" != *"secret123"* ]]
 }
 

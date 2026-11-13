@@ -173,11 +173,19 @@ ctrlResettable() {
   return 1
 }
 
-# prints the effective settings, one "key=value" per line, "(set)" after the ones from state/settings,
-# passwords hidden
+# prints the effective settings, one "key=value" per line: "(set)" after the ones from state/settings
+# (set for this core, not the version's default), passwords hidden. Only the settings ctrl.sh can
+# change, unless $1 is "all": then also the fixed ones (identity, credentials, subnets), marked
+# "fixed". A legend follows.
 ctrlSettingsList() {
   for ctrl_key in ${settings_keys}
   do
+    ctrl_fixed=""
+    if [ "$(ctrlSettingKind "$ctrl_key")" = "refused" ]
+    then
+      [ "$1" = "all" ] || continue
+      ctrl_fixed=" fixed"
+    fi
     ctrl_value="$(settingsGet "$ctrl_key")"
     case "$ctrl_key" in
       *_pw)
@@ -185,9 +193,17 @@ ctrlSettingsList() {
     esac
     if settingsIsSet "$ctrl_key"
     then
-      echo "$ctrl_key=$ctrl_value (set)"
+      echo "$ctrl_key=$ctrl_value (set)$ctrl_fixed"
     else
-      echo "$ctrl_key=$ctrl_value"
+      echo "$ctrl_key=$ctrl_value$ctrl_fixed"
     fi
   done
+  echo ""
+  echo "(set): set for this core; the others are the version's defaults"
+  if [ "$1" = "all" ]
+  then
+    echo "fixed: the core's identity, credentials and subnets, can't be changed"
+  else
+    echo "the core's identity, credentials and subnets are fixed: ctrl.sh settings list -a"
+  fi
 }

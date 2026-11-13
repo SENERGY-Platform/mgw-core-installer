@@ -184,6 +184,7 @@ migrated() {
   [ ! -e "$WORK" ]
   [ -z "$(docker ps -aq --filter "label=com.docker.compose.project=mgw_$S")" ]
   grep -qx "core_id=$S" "$DIR/state/settings" && grep -qx "stack_name=mgw_$S" "$DIR/state/settings"
+  head -n 1 "$DIR/state/settings" | grep -q "^# The settings set for this core"
   [ "$(stat -c %a "$DIR/state/settings")" = "600" ]
 }
 

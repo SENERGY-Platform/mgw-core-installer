@@ -370,6 +370,7 @@ objects_record="$record"
 # --- 8. state/settings ---
 
 say "writing state/settings ..."
+settingsHeader | fileWriteAtomic "$core_root/state/settings" || setupAbort "cannot write state/settings"
 for setup_key in ${setup_pinned} ${setup_set}
 do
   if ! settingsKnown "$setup_key"

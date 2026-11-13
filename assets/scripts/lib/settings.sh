@@ -102,6 +102,13 @@ settingsLoad() {
   done < "$2"
 }
 
+# prints the comment at the top of a core's state/settings, written by the install and the migration
+settingsHeader() {
+  echo "# The settings set for this core, on top of the version's defaults (assets/settings.defaults)."
+  echo "# Change them with ctrl.sh settings set <key> <value>, not by editing this file: ctrl.sh checks"
+  echo "# a value and applies it. The core's identity, credentials and subnets are fixed."
+}
+
 # prints the effective value of the known key $1, returns 1 for an unknown key
 settingsGet() {
   if ! settingsKnown "$1"
