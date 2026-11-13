@@ -87,6 +87,21 @@ removeInstallation() {
   elif [ -x "$DIR/uninstall.sh" ]; then
     "$DIR/uninstall.sh" -path="$DIR" -y > /dev/null 2>&1 || true
   fi
+  # whatever an old setup.sh that stopped half way left (no uninstall.sh to remove it): everything
+  # carries the test core's name
+  local c="mgw_$S" u
+  for u in "$c-ce-wrapper.service" "$c-core-manager.service" "$c-host-manager.service" "$c-recover.service" \
+    "mnt-$c-secrets.mount"; do
+    [ -e "/etc/systemd/system/$u" ] || continue
+    systemctl stop "$u" > /dev/null 2>&1 || true
+    systemctl disable "$u" > /dev/null 2>&1 || true
+    rm -f "/etc/systemd/system/$u"
+  done
+  systemctl daemon-reload || true
+  rm -f "/etc/logrotate.d/${c}_core" "/etc/cron.daily/${c}_update" "/etc/avahi/services/${c}_core.service"
+  docker ps -aq --filter "name=^$c[-_]" | xargs -r docker rm -f > /dev/null 2>&1 || true
+  docker volume ls -q | grep "^${c}_" | xargs -r docker volume rm > /dev/null 2>&1 || true
+  docker network ls --format '{{.Name}}' | grep "^$c-" | xargs -r docker network rm > /dev/null 2>&1 || true
   umount "/mnt/mgw_$S/secrets" 2> /dev/null || true
   rm -rf "$DIR" "/mnt/mgw_$S" "$WORK" "$WORK-install"
 }
