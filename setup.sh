@@ -140,9 +140,9 @@ then
 fi
 hostPlatform > /dev/null || exit 1
 hostArch > /dev/null || exit 1
-if ! command -v docker > /dev/null 2>&1 || ! docker compose version > /dev/null 2>&1
+if ! setup_compose="$(dockerComposeCheck 2>&1)"
 then
-  fail "docker with the compose plugin is required, see https://docs.docker.com/engine/install"
+  fail "$setup_compose"
 fi
 if ! version_folder="$(versionFolder "$version")"
 then

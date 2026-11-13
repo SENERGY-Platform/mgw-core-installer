@@ -281,7 +281,9 @@ then
     attemptsReset "$core_root/state/attempts" "$new_folder" || recordWarn upd "could not reset state/attempts"
   fi
 
-  # B: preparation, the old core untouched
+  # B: preparation, the old core untouched. The compose plugin first: this version may need a newer
+  # one than the running version did
+  update_compose="$(dockerComposeCheck 2>&1)" || stageFail B "$update_compose"
   versionBuild "$core_root" "$new_version" "$pull_limit" "$ctr_limit" pin
   build_rc=$?
   [ $build_rc -eq 0 ] || stageFail B "preparing $new_version (exit code $build_rc)"

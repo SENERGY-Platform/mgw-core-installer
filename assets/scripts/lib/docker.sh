@@ -15,7 +15,7 @@
 # - Every image is added to state/images before its pull, so an image whose pull completes right
 #   before a kill is still listed for the cleanup (PLAN.md 9, 11).
 #
-# Only the compose plugin (docker compose) is supported; the compose file needs a current compose.
+# Only the compose plugin (docker compose) is supported, in the versions dockerComposeCheck accepts.
 #
 # Return codes like lib/net.sh: 0 success, 1 failed, 3 rate limited.
 #
@@ -44,6 +44,77 @@ limitRun() {
     echo "'$*' killed after ${limit_run_s}s" >&2
   fi
   return $limit_run_rc
+}
+
+# the compose plugin versions the scripts work with, tested against every release on Docker 20.10
+# (Debian 12's own package): 2.9.0 and newer (up --pull came with 2.8.0, which names a project's
+# volumes <project>-<volume> instead of <project>_<volume>), except the releases in
+# docker_compose_broken. docker-compose v1 isn't supported: it rejects the compose file's "name" and
+# its up --no-start waits for containers that never start.
+docker_compose_min=2.9.0
+# 2.19.0: recreating containers fails now and then ("is not connected to the network"); 2.25.0:
+# config ignores --format json; 5.1.0, 5.1.1: don't negotiate the API version (always 1.53), failed
+# with Docker 20.10 (API 1.41); refused with every engine, newer ones weren't tested
+docker_compose_broken="2.19.0 2.25.0 5.1.0 5.1.1"
+
+# returns 0 if the version $1 (2.8.0, v2.0.0, 2.24.6-desktop.1) is $2 (x.y.z) or newer
+dockerVersionAtLeast() {
+  docker_va="${1#v}"
+  docker_va="${docker_va%%[!0-9.]*}"
+  docker_vb="$2"
+  while [ "$docker_va$docker_vb" != "" ]
+  do
+    docker_a="${docker_va%%.*}"
+    docker_b="${docker_vb%%.*}"
+    case "$docker_va" in
+      *.*) docker_va="${docker_va#*.}" ;;
+      *) docker_va="" ;;
+    esac
+    case "$docker_vb" in
+      *.*) docker_vb="${docker_vb#*.}" ;;
+      *) docker_vb="" ;;
+    esac
+    if [ "${docker_a:-0}" -gt "${docker_b:-0}" ]
+    then
+      return 0
+    fi
+    if [ "${docker_a:-0}" -lt "${docker_b:-0}" ]
+    then
+      return 1
+    fi
+  done
+  return 0
+}
+
+# returns 0 if docker and a compose plugin the scripts work with are installed; otherwise prints why
+# to stderr and returns 1. Only reads: for the checks before anything is changed or downloaded.
+dockerComposeCheck() {
+  if ! command -v docker > /dev/null 2>&1
+  then
+    echo "docker is required, see https://docs.docker.com/engine/install" >&2
+    return 1
+  fi
+  docker_compose_v="$(docker compose version --short 2> /dev/null)"
+  if [ "$docker_compose_v" = "" ]
+  then
+    echo "the docker compose plugin is required (docker-compose v1 isn't supported), $docker_compose_min or newer, see https://docs.docker.com/compose/install/linux" >&2
+    return 1
+  fi
+  if ! dockerVersionAtLeast "$docker_compose_v" "$docker_compose_min"
+  then
+    echo "the docker compose plugin $docker_compose_v is too old, $docker_compose_min or newer is required, see https://docs.docker.com/compose/install/linux" >&2
+    return 1
+  fi
+  docker_compose_n="${docker_compose_v#v}"
+  docker_compose_n="${docker_compose_n%%[!0-9.]*}"
+  for docker_compose_b in ${docker_compose_broken}
+  do
+    if [ "$docker_compose_n" = "$docker_compose_b" ]
+    then
+      echo "the docker compose plugin $docker_compose_v has a bug the installer can't work with, update it, see https://docs.docker.com/compose/install/linux" >&2
+      return 1
+    fi
+  done
 }
 
 # runs docker compose with the arguments after $1, limited to $1 seconds (0: no limit)

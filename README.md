@@ -46,10 +46,13 @@ systemd/cron/logrotate/avahi and creates the container stack via Docker Compose.
 
 * **OS:** Linux, Debian/Ubuntu based distribution.
 * **Privileges:** root.
-* **Must already be present:** `apt`, and Docker with the Compose plugin (`docker compose`).
-  If Docker is missing, the installer stops and points to
-  <https://docs.docker.com/engine/install>. `systemctl` is additionally required when the core
-  starts at boot (`autostart`).
+* **Must already be present:** `apt`, and Docker with the Compose plugin (`docker compose`)
+  2.9.0 or newer, except 2.19.0, 2.25.0, 5.1.0 and 5.1.1, which have bugs the installer can't work
+  with. docker-compose v1 (`docker-compose`, Debian 12's own package) isn't supported. Without
+  them the installer stops and points to <https://docs.docker.com/engine/install> or
+  <https://docs.docker.com/compose/install/linux>; on Debian 12 with Debian's `docker.io`, the
+  plugin can be installed as a single binary in `/usr/local/lib/docker/cli-plugins`. `systemctl`
+  is additionally required when the core starts at boot (`autostart`).
 * **Installed automatically (after confirmation):** `curl`, `tar`, `gzip`, `jq`, `openssl`,
   `gettext-base` (for `envsubst`) — plus `logrotate` if log rotation is enabled, `cron` if
   automatic updates are, and `avahi-daemon` if mDNS advertisement is.
@@ -372,6 +375,10 @@ taken over.
   refused without any change; update it first to an old-layout release from `v0.30.0` on:
   download that release's archive, unpack it and run its `assets/scripts/update.sh
   -path=<install dir>`. The next update migrates it.
+* **Compose:** the old installer also worked with docker-compose v1 or an older plugin, the new
+  layout needs the plugin as under [Requirements](#requirements). Without it the migration is
+  refused before anything is downloaded or changed; install or update the plugin, the next update
+  migrates.
 * **Settings that don't fit:** the new layout derives its paths from the core root and uses the
   standard locations in `/etc`. An installation whose `.settings` points elsewhere is refused
   before anything is changed, naming the setting.
