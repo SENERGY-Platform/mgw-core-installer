@@ -229,3 +229,38 @@ mig() {
   [ "$status" -eq 0 ]
   [ -d "$OLD/state/host-manager" ] && [ -z "$(ls -A "$OLD/state/host-manager")" ]
 }
+
+# a fake docker for "docker volume inspect": the volumes named in $BATS_TEST_TMPDIR/volumes exist
+fake_volumes() {
+  mkdir -p "$BATS_TEST_TMPDIR/bin"
+  printf '%s\n' "$@" > "$BATS_TEST_TMPDIR/volumes"
+  printf '#!/bin/sh\n[ "$1 $2" = "volume inspect" ] && grep -qx "$3" "%s"\n' "$BATS_TEST_TMPDIR/volumes" \
+    > "$BATS_TEST_TMPDIR/bin/docker"
+  chmod +x "$BATS_TEST_TMPDIR/bin/docker"
+}
+
+TEMPLATE="$BATS_TEST_DIRNAME/../../assets/templates/container/docker-compose.yml.tmpl"
+
+@test "volumes only under compose 2.8.0's names (<stack_name>-<volume>) are found" {
+  fake_volumes mgw-mysqldb-data mgw-sm-data mgw_sm-data mgw_mm-data
+  PATH="$BATS_TEST_TMPDIR/bin:$PATH" run mig "migrationReadOld \"\$OLD\" && migrationHyphenVolumes '$TEMPLATE'"
+  [ "$status" -eq 0 ]
+  # sm-data exists under both names: the old core uses the new one, nothing is lost
+  [ "$output" = "mgw-mysqldb-data" ]
+}
+
+@test "volumes under the new layout's names, or missing, aren't reported" {
+  fake_volumes mgw_mysqldb-data mgw_sm-data
+  PATH="$BATS_TEST_TMPDIR/bin:$PATH" run mig "migrationReadOld \"\$OLD\" && migrationHyphenVolumes '$TEMPLATE'"
+  [ "$status" -eq 0 ]
+  [ "$output" = "" ]
+}
+
+@test "volumes missing under both names are listed for the warning, those under either name aren't" {
+  fake_volumes mgw-mysqldb-data mgw_sm-data
+  PATH="$BATS_TEST_TMPDIR/bin:$PATH" run mig "migrationReadOld \"\$OLD\" && migrationVolumesMissing '$TEMPLATE'"
+  [ "$status" -eq 0 ]
+  printf '%s\n' "$output" | grep -qx mgw_mm-data && printf '%s\n' "$output" | grep -qx mgw_kratos-data
+  ! printf '%s\n' "$output" | grep -E -x 'mgw[-_](mysqldb|sm)-data'
+  [ "$(printf '%s\n' "$output" | wc -l)" -eq 9 ]
+}

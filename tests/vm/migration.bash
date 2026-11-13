@@ -176,6 +176,8 @@ migrated() {
     ! grep '^warning=' "$DIR/state/update" | grep -v '^warning=cleanup: image .* still in use, not removed$'
   fi
   [ "$(readlink "$DIR/current")" = "v0_40_0" ] && [ ! -e "$DIR/v0_40_0_tmp" ]
+  # every old release has all the volumes the new layout uses
+  [ "${MIG_MISSING_OK:-}" = "true" ] || ! grep -q '^warning=volume .* created empty$' "$DIR/state/update"
   local f
   for f in bin container scripts ctrl.sh update.sh uninstall.sh .options .version .binaries .units .settings .pid \
     .update_status state/migration; do

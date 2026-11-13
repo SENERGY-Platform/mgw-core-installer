@@ -94,3 +94,20 @@ teardown_file() {
     newRunning
   done
 }
+
+@test "a volume the old installation doesn't have: created empty, named in the record" {
+  reinstallOld v0.33.0-beta2
+  local vol="mgw_${S}_kratosm-data"
+  # an old setup that stopped half way never created it; its containers are removed with it
+  docker ps -aq --filter "volume=$vol" | xargs -r docker rm -f > /dev/null
+  docker volume rm "$vol" > /dev/null
+  run "$DIR/update.sh" -a
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"warning: volume $vol doesn't exist, it is created empty"* ]]
+  MIG_MISSING_OK=true migrated
+  grep -qx "warning=volume $vol didn't exist, created empty" "$DIR/state/update"
+  docker volume inspect "$vol" > /dev/null
+  run "$DIR/current/ctrl.sh" status
+  [[ "$output" == *"warning: volume $vol didn't exist, created empty"* ]]
+}

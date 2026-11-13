@@ -246,6 +246,15 @@ then
   then
     refuse "$migration_compose"
   fi
+  # volumes created by compose 2.8.0 have names the new layout doesn't find: it would start with
+  # empty ones. Only copying the data by hand helps (docker can't rename a volume).
+  migration_hyphen="$(migrationHyphenVolumes "$assets_dir/templates/container/docker-compose.yml.tmpl")"
+  if [ "$migration_hyphen" != "" ]
+  then
+    say "these volumes were created by docker compose 2.8.0 under names the new layout doesn't use:" >&2
+    printf '%s\n' "$migration_hyphen" | sed 's/^/  /' >&2
+    refuse "the volumes are named <stack_name>-<volume>, the new layout needs <stack_name>_<volume> (e.g. $(printf '%s\n' "$migration_hyphen" | head -n 1)); copy their data into volumes with the new names, see the README (Migrating, Compose)"
+  fi
 
   # 4. the first changes: state/, the lock, the record, the copy
   mkdir -p "$core_root/state" || refuse "cannot create $core_root/state"
@@ -612,6 +621,13 @@ do
   mkdir -p "$core_root/$migration_folder" || migrationFailB "creating $migration_folder"
 done
 mkdir -p "$(migrationOld host_dir_repository_path)" || migrationFailB "creating the host dir repository"
+# a volume the old installation never had (a setup that stopped half way) is created empty by the
+# preparation (4); named in the record, so a core that starts without that data is visible
+for migration_vol in $(migrationVolumesMissing "$assets_dir/templates/container/docker-compose.yml.tmpl")
+do
+  say "warning: volume $migration_vol doesn't exist, it is created empty" >&2
+  recordWarn upd "volume $migration_vol didn't exist, created empty"
+done
 testKill settings
 
 # 4. the version, up to the created containers. state/images starts with the old version's images,

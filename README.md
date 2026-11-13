@@ -378,7 +378,18 @@ taken over.
 * **Compose:** the old installer also worked with docker-compose v1 or an older plugin, the new
   layout needs the plugin as under [Requirements](#requirements). Without it the migration is
   refused before anything is downloaded or changed; install or update the plugin, the next update
-  migrates.
+  migrates. Compose 2.8.0 named a project's volumes `<stack_name>-<volume>` instead of
+  `<stack_name>_<volume>`; an installation whose volumes exist only under such names is refused,
+  as the new layout would start with empty volumes. With the old core stopped
+  (`<install dir>/ctrl.sh stop`), copy each one into a volume with the new name, update again and
+  start the core (`<core root>/current/ctrl.sh start`; the migration keeps the stopped state):
+
+  ```sh
+  docker volume create <stack_name>_<volume>
+  docker run --rm -v <stack_name>-<volume>:/from -v <stack_name>_<volume>:/to alpine cp -a /from/. /to/
+  ```
+* **Missing volumes:** a volume the old installation doesn't have (e.g. a setup that stopped half
+  way) is created empty; the migration names it as a warning, shown by `current/ctrl.sh status`.
 * **Settings that don't fit:** the new layout derives its paths from the core root and uses the
   standard locations in `/etc`. An installation whose `.settings` points elsewhere is refused
   before anything is changed, naming the setting.

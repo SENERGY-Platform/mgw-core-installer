@@ -257,6 +257,37 @@ migrationOldImages() {
   (images=""; . "$1/.options" > /dev/null 2>&1; for migration_image in $images; do echo "${migration_image#*=}"; done)
 }
 
+# prints the volumes of the old installation that docker compose 2.8.0 created as <stack_name>-<volume>
+# (debian12-compose-v1.md), one per line: those only under that name, not as <stack_name>_<volume>,
+# the name the new layout uses. Such data would silently be replaced by empty volumes. $1 is the new
+# version's compose template, which names the volumes; the old values must be read.
+migrationHyphenVolumes() {
+  migrationVolumesMissing "$1" hyphen
+}
+
+# prints the volumes of the new layout (<stack_name>_<volume>, from the compose template $1) that
+# don't exist, one per line. With $2 "hyphen" only those that exist as <stack_name>-<volume> instead,
+# under that name; without, only those that don't exist under either name (an installation that
+# never had them, e.g. a setup that stopped half way): the migration creates them empty. The old
+# values must be read.
+migrationVolumesMissing() {
+  migration_stack="$(migrationOld stack_name)"
+  # shellcheck disable=SC2013,SC2016 # names without spaces; ${STACK_NAME} is the template's literal text
+  for migration_vol in $(grep -o 'name: ${STACK_NAME}_[a-z0-9_-]*' "$1" | sed 's/^name: ${STACK_NAME}_//')
+  do
+    if docker volume inspect "${migration_stack}_$migration_vol" > /dev/null 2>&1
+    then
+      continue
+    fi
+    if docker volume inspect "${migration_stack}-$migration_vol" > /dev/null 2>&1
+    then
+      [ "$2" != "hyphen" ] || echo "${migration_stack}-$migration_vol"
+    else
+      [ "$2" = "hyphen" ] || echo "${migration_stack}_$migration_vol"
+    fi
+  done
+}
+
 # copies the host-manager's data files and their backups from the old installation $1 into
 # state/host-manager (migration.md step 5); the old files stay for a rollback
 migrationCopyHostManager() {
