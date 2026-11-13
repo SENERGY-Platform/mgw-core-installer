@@ -37,6 +37,9 @@ logStart() {
   then
     return 1
   fi
+  # a reader killed with its script's whole process group (SIGKILL, e.g. a cron job stopped by
+  # systemd) can't remove its folder; one older than a day belongs to no running script
+  find "${TMPDIR:-/tmp}" -maxdepth 1 -type d -name 'mgw-log.*' -mmin +1440 -exec rm -rf {} + 2> /dev/null
   # a private folder with two FIFOs: in (the script's output), lines (tee's copy for the stamping)
   if ! log_dir="$(mktemp -d "${TMPDIR:-/tmp}/mgw-log.XXXXXXXX")" ||
     ! mkfifo -m 600 "$log_dir/in" "$log_dir/lines" 2> /dev/null

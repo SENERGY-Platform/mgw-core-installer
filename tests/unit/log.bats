@@ -127,3 +127,14 @@ sys.stdout.write(data.decode())
   grep -q ": through the socket$" "$LOGF"
   [ -z "$(ls -A "$TMPDIR")" ]
 }
+
+@test "folders of killed readers older than a day are removed, newer ones are left" {
+  export TMPDIR="$BATS_TEST_TMPDIR/tmp"
+  mkdir -p "$TMPDIR/mgw-log.old" "$TMPDIR/mgw-log.new" "$TMPDIR/other.old"
+  touch -d "2 days ago" "$TMPDIR/mgw-log.old" "$TMPDIR/other.old"
+  script a.sh 'logCore "$ROOT" a.sh; echo out'
+  run dash "$BATS_TEST_TMPDIR/a.sh"
+  [ "$status" -eq 0 ]
+  [ ! -e "$TMPDIR/mgw-log.old" ]
+  [ -d "$TMPDIR/mgw-log.new" ] && [ -d "$TMPDIR/other.old" ]
+}
