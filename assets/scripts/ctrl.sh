@@ -287,6 +287,14 @@ changeSetting() {
       return 0
     fi
   fi
+  # into the log (ctrl.sh logs settings set and reset from their start): what changes, from what to
+  # what. The changeable settings hold no secrets.
+  if [ "$3" = "reset" ]
+  then
+    echo "resetting $1 ($(settingsGet "$1")) to the default $(settingsDefault "$script_dir/../settings.defaults" "$1") ..."
+  else
+    echo "changing $1 from $(settingsGet "$1") to $2 ..."
+  fi
   if [ "$change_kind" = "port" ] && setupPortInUse "$2"
   then
     echo "port $2 is in use" >&2
@@ -424,6 +432,8 @@ case "$command" in
           echo "usage: ctrl.sh settings set <key> <value>" >&2
           exit 1
         fi
+        # logged from here, so a refused change is in the log too
+        logCore "$core_root" "ctrl.sh"
         changeSetting "$2" "$3"
         ;;
       reset)
@@ -432,6 +442,7 @@ case "$command" in
           echo "usage: ctrl.sh settings reset <key>" >&2
           exit 1
         fi
+        logCore "$core_root" "ctrl.sh"
         changeSetting "$2" "" reset
         ;;
       *)

@@ -221,6 +221,9 @@ waitForRunning() {
   [ "$status" -eq 1 ] && [[ "$output" == *"port 22 is in use"* ]]
   run "$DIR/$X/current/ctrl.sh" settings reset gateway_port
   [ "$status" -eq 1 ] && [[ "$output" == *"can't be reset"* ]]
+  # refused changes are logged too
+  grep -q " ctrl\.sh\[[0-9]*\]: core_id can't be changed: it is the core's identity" "$DIR/$X/log/scripts.log"
+  grep -q " ctrl\.sh\[[0-9]*\]: port 22 is in use" "$DIR/$X/log/scripts.log"
 }
 
 @test "settings: a stored-only setting, and a failed render keeps the old value" {
@@ -234,6 +237,10 @@ waitForRunning() {
   run "$DIR/$X/current/ctrl.sh" settings reset allow_beta
   [ "$status" -eq 0 ]
   ! grep -q '^allow_beta=' "$DIR/$X/state/settings"
+  # the log names every change with the old and the new value
+  grep -q " ctrl\.sh\[[0-9]*\]: changing allow_beta from false to true \.\.\.$" "$DIR/$X/log/scripts.log"
+  grep -q " ctrl\.sh\[[0-9]*\]: allow_beta is now true$" "$DIR/$X/log/scripts.log"
+  grep -q " ctrl\.sh\[[0-9]*\]: resetting allow_beta (true) to the default false \.\.\.$" "$DIR/$X/log/scripts.log"
 }
 
 @test "settings: a log level recreates the containers of a running core" {

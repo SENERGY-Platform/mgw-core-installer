@@ -151,3 +151,10 @@ settings() {
   # every non-comment line of the file is a setting
   [ "$(grep -cv '^\(#.*\)\?$' "$LIB/../../settings.defaults")" -eq "$(echo "${lines[0]}" | wc -w)" ]
 }
+
+@test "the default of a key, as the defaults file has it" {
+  printf '%s\n' '# a comment' 'a=1' 'b=' 'a=2' > "$BATS_TEST_TMPDIR/defaults"
+  run dsh 'settingsDefault "$BATS_TEST_TMPDIR/defaults" a; settingsDefault "$BATS_TEST_TMPDIR/defaults" b; echo end; settingsDefault "$BATS_TEST_TMPDIR/defaults" missing' file settings
+  [ "$status" -eq 0 ]
+  [ "$output" = "$(printf '%s\n' 2 '' end '')" ]
+}

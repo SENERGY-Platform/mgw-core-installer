@@ -102,6 +102,19 @@ settingsLoad() {
   done < "$2"
 }
 
+# prints the value of the key $2 in the defaults file $1 (the last one, as settingsLoad reads it)
+settingsDefault() {
+  settings_default=""
+  while IFS= read -r settings_default_line || [ -n "$settings_default_line" ]
+  do
+    if settingsParseLine "$settings_default_line" && [ "$settings_line_key" = "$2" ]
+    then
+      settings_default="$settings_line_value"
+    fi
+  done < "$1"
+  printf '%s\n' "$settings_default"
+}
+
 # prints the comment at the top of a core's state/settings, written by the install and the migration
 settingsHeader() {
   echo "# The settings set for this core, on top of the version's defaults (assets/settings.defaults)."
