@@ -24,7 +24,7 @@ then
 fi
 
 lib=./assets/scripts/lib
-for setup_lib in file settings state lock host render reconcile net docker objects core version setup
+for setup_lib in file settings state lock log host render reconcile net docker objects core version setup
 do
   # shellcheck disable=SC1090
   . "$lib/$setup_lib.sh" || exit 1
@@ -387,6 +387,9 @@ for setup_folder in deployments log mounts/nginx mounts/kratos sockets state/hos
 do
   objectsFolder "$core_root" "$setup_folder" || setupAbort "cannot create $setup_folder"
 done
+# from here the install's output also goes to log/scripts.log (the questions and checks before it
+# only to the terminal)
+logCore "$core_root" setup.sh
 setup_hd="$(settingsGet host_dir_repository_path)"
 case "$setup_hd" in
   "$core_root"/*)
@@ -460,7 +463,8 @@ say "log into the web ui with:"
 say "  user:     $(settingsGet core_usr)"
 if [ "$auto" = "false" ]
 then
-  say "  password: $(settingsGet core_usr_pw)"
+  # never into the log
+  logTerminalOnly "  password: $(settingsGet core_usr_pw)"
 else
   say "  password: core_usr_pw in $core_root/state/settings"
 fi

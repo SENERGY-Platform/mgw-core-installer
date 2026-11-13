@@ -68,7 +68,7 @@ fi
 # the script's own folder (assets/scripts): its version is the one restored
 script_dir="$(dirname "$(readlink -f "$0")")"
 assets_dir="$(cd "$script_dir/.." && pwd -P)"
-for restore_lib in file settings state lock host semver render reconcile net docker objects core version update setup
+for restore_lib in file settings state lock log host semver render reconcile net docker objects core version update setup
 do
   # shellcheck disable=SC1090
   . "$script_dir/lib/$restore_lib.sh" || exit 1
@@ -154,10 +154,11 @@ fi
 
 # --- the lock and the records ---
 
-if ! mkdir -p "$core_root/state"
+if ! mkdir -p "$core_root/state" "$core_root/log"
 then
   exit 1
 fi
+logCore "$core_root" restore.sh
 lockAcquire "$core_root/state/lock" restore.sh || exit 1
 record="$core_root/state/update"
 

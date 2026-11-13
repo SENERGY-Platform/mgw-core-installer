@@ -54,11 +54,12 @@ then
 fi
 own_folder="$(basename "$(dirname "$(dirname "$script_dir")")")"
 own_folder="${own_folder%_tmp}"
-for recover_lib in file settings state lock host render reconcile net docker objects core version update
+for recover_lib in file settings state lock log host render reconcile net docker objects core version update
 do
   # shellcheck disable=SC1090
   . "$script_dir/lib/$recover_lib.sh" || exit 1
 done
+logCore "$core_root" recover.sh
 
 recover_inherited=false
 if lockInherited "$core_root/state/lock" recover

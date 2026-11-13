@@ -56,7 +56,7 @@ fi
 
 # the script's own folder (assets/scripts), also when started through the link in a version folder
 script_dir="$(dirname "$(readlink -f "$0")")"
-for update_lib in file settings state lock host semver render reconcile net docker objects core version setup update
+for update_lib in file settings state lock log host semver render reconcile net docker objects core version setup update
 do
   # shellcheck disable=SC1090
   . "$script_dir/lib/$update_lib.sh" || exit 1
@@ -89,6 +89,7 @@ then
   # chosen. Also reached when the old installer's update.sh is run by hand on a migration that got as
   # far as current: the recovery below resolves it first (m7-migration.md, finding 8 c).
   core_root="$(cd "$old_path" && pwd -P)" || exit 1
+  logCore "$core_root" update.sh
   assets_dir="$(cd "$script_dir/.." && pwd -P)" || exit 1
   new_version="$(cat "$assets_dir/version" 2> /dev/null)"
   # a git clone has no assets/version, the release build writes it
@@ -182,6 +183,12 @@ then
   echo "  from an extracted release archive with -path=<core root>, to update the core to the archive's" >&2
   echo "  version (-path=<install dir> migrates an installation of the old installer)" >&2
   exit 1
+fi
+if [ "$stage" = "2" ]
+then
+  logCore "$core_root" update.sh-stage2
+else
+  logCore "$core_root" update.sh
 fi
 
 if [ "$stage" = "2" ]

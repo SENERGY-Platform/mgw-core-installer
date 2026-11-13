@@ -242,7 +242,7 @@ coreStartBins() {
     # shellcheck disable=SC2016 # expanded by the inner shell
     setsid sh -c 'echo $$ >> "$4"; exec "$1" -config="$2" < /dev/null >> "$3" 2>&1' \
       sh "$(coreBinPath "$1" "$core_repo")" "$1/current/config/host-binaries/$core_repo/conf.json" \
-      "$1/log/${core_item##*:}_out.log" "$1/state/pid" 9>&- &
+      "$1/log/${core_item##*:}_out.log" "$1/state/pid" 9>&- 7>&- &
   done
   # the binaries record themselves asynchronously: wait until all are recorded and running, so the
   # next look at the core (status, a stop) sees them. Returns as soon as they are, gives up after 5s.

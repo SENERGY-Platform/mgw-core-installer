@@ -29,6 +29,7 @@ systemd/cron/logrotate/avahi and creates the container stack via Docker Compose.
     * [Beta releases](#beta-releases)
     * [The result of an update](#the-result-of-an-update)
 * [Recover and restore](#recover-and-restore)
+* [Logs](#logs)
 * [Uninstalling](#uninstalling)
 * [Migrating an installation of the old installer](#migrating-an-installation-of-the-old-installer)
 * [Services in the core](#services-in-the-core)
@@ -214,8 +215,8 @@ Updates come from the GitHub releases of this repository. Tags follow semantic v
 
 ### Automatic and manual updates
 
-With `cron=true`, `/etc/cron.daily/<core_name>_update` runs `current/update.sh -a` once a day,
-logging to `log/core_update.log`. By hand:
+With `cron=true`, `/etc/cron.daily/<core_name>_update` runs `current/update.sh -a` once a day; its
+output goes to the [scripts' log](#logs). By hand:
 
 ```sh
 sudo /opt/mgw/<core_id>/current/update.sh
@@ -309,6 +310,24 @@ Restore reuses every object of the core that exists and recreates missing ones; 
 data. A volume that is missing is created empty and named in the output and in `state/restore`:
 its data is lost. Without `state/settings` (or a copy with `-s`) a core can't be restored: the
 data in the volumes only works with the passwords it was created with.
+
+---
+
+## Logs
+
+Everything is in `<core root>/log`:
+
+| File | Written by |
+| --- | --- |
+| `scripts.log` | the installer's scripts: `setup.sh` (from the moment the core root exists), `update.sh` (both stages, also from an archive), the migration, the recovery, `restore.sh`, and `ctrl.sh` with a changing command. Every line with the time (UTC), the script and its process id, e.g. `2026-11-12T13:06:48Z update.sh[1234]: preparing v0.40.0 ...`. The output still goes to the terminal as well. |
+| `ce_wrapper.log`, `c_manager.log`, `h_manager.log` | the host binaries |
+| `*_out.log` | without `autostart`: what the host binaries print outside their own log |
+
+The core-manager serves all of them through its log API. With
+`logrotate=true`, they are rotated monthly once they exceed 10 MB, twelve are kept. The recovery
+unit at boot also writes to the journal (`journalctl -u <core_name>-recover.service`). The
+uninstall removes the log folder with the core; its own output only goes to the terminal. The
+interactive install's password is printed to the terminal only, never into the log.
 
 ---
 

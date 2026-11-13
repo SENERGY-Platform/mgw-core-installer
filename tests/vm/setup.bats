@@ -97,6 +97,8 @@ waitForContainers() {
   [ "$(findmnt -n -o FSTYPE "/mnt/mgw_$A/secrets")" = "tmpfs" ]
   [ "$(systemctl is-active "$(systemd-escape --path --suffix=mount "/mnt/mgw_$A/secrets")")" = "active" ]
   waitForContainers "$A"
+  # the install's log, from the moment the core root exists
+  grep -Eq '^[0-9T:-]+Z setup\.sh\[[0-9]+\]: installation of dev-[0-9]+ successful' "$root/log/scripts.log"
 }
 
 @test "core B: interactive, without systemd, in the same install directory" {
@@ -108,6 +110,9 @@ waitForContainers() {
   grep -qx result=success "$root/state/install"
   grep -qx autostart=false "$root/state/settings"
   [[ "$output" == *"password: "[0-9a-f]* ]]
+  # the password is shown, but never logged
+  grep -q " setup\.sh\[[0-9]*\]: installation of " "$root/log/scripts.log"
+  ! grep -qF "$(grep '^core_usr_pw=' "$root/state/settings" | cut -d= -f2)" "$root/log/scripts.log"
   [ "$(wc -l < "$root/state/pid")" -eq 3 ]
   [ "$(findmnt -n -o FSTYPE "/mnt/mgw_$B/secrets")" = "tmpfs" ]
   [ -z "$(find /etc/systemd/system -name "mgw_$B-*")" ]

@@ -58,7 +58,7 @@ esac
 
 # the script's own folder (assets/scripts), also when started through the link in the version folder
 script_dir="$(dirname "$(readlink -f "$0")")"
-for ctrl_lib in file settings state lock host render reconcile net docker objects core version setup ctrl
+for ctrl_lib in file settings state lock log host render reconcile net docker objects core version setup ctrl
 do
   # shellcheck disable=SC1090
   . "$script_dir/lib/$ctrl_lib.sh" || exit 1
@@ -90,6 +90,8 @@ fi
 
 # takes the lock and refuses if the core needs repair; $1 allows the command also then (stop)
 ctrlBegin() {
+  # the changing commands are logged, the reading ones aren't
+  logCore "$core_root" "ctrl.sh"
   lockAcquire "$core_root/state/lock" ctrl.sh
   case $? in
     0)

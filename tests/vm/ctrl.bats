@@ -77,6 +77,9 @@ waitForRunning() {
   run "$DIR/$X/current/ctrl.sh" status
   [[ "$output" == *"running:     running"* ]]
   [[ "$output" == *"containers:  7 of 7 running"* ]]
+  # start is logged, status isn't
+  grep -q " ctrl\.sh\[[0-9]*\]: starting " "$DIR/$X/log/scripts.log"
+  ! grep -q "running:     running" "$DIR/$X/log/scripts.log"
 }
 
 @test "with autostart: restart brings the core back" {

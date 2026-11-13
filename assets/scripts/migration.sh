@@ -77,7 +77,7 @@ then
 fi
 
 script_dir="$(dirname "$(readlink -f "$0")")"
-for migration_lib in file settings state lock host semver render reconcile net docker objects core version setup update migration
+for migration_lib in file settings state lock log host semver render reconcile net docker objects core version setup update migration
 do
   # shellcheck disable=SC1090
   . "$script_dir/lib/$migration_lib.sh" || exit 1
@@ -103,6 +103,7 @@ else
     exit 1
   fi
 fi
+logCore "$core_root" migration.sh
 assets_dir="$(cd "$script_dir/.." && pwd -P)"
 new_version="$(cat "$assets_dir/version" 2> /dev/null)"
 # a git clone has no assets/version, the release build writes it
@@ -428,7 +429,7 @@ migrationStartOld() {
       --description="$core_name: start the old core after a rolled back migration" "$core_root/ctrl.sh" start
     return
   fi
-  (cd "$core_root" && ./ctrl.sh start) 9>&-
+  (cd "$core_root" && ./ctrl.sh start) 9>&- 7>&-
 }
 
 # C: the old core was stopped; nothing of the old installation was changed but its files in /etc,
