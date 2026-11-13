@@ -11,6 +11,7 @@
 #   aborted with Ctrl-C.
 # - Image pulls are retried like network requests (lib/net.sh: net_retry_delays), except when the
 #   image doesn't exist or the registry's rate limit is reached.
+# - An image already on the host is not pulled again (dockerPullImages).
 # - Every image is added to state/images before its pull, so an image whose pull completes right
 #   before a kill is still listed for the cleanup (PLAN.md 9, 11).
 #
@@ -107,6 +108,11 @@ dockerPull() {
 
 # pulls the images after $2, each listed in the images file $1 before its pull. Each pull attempt is
 # limited to $2 seconds (0: no limit; docker_pull_limit in automatic runs). Stops at the first failure.
+#
+# An image already on the host under its tag is used as it is, not pulled again (decided 2026-11-12,
+# PLAN.md 18): every pull asks the registry, which counts against Docker Hub's rate limit per IP, and
+# the tags in options are pinned versions. A tag that was pushed again with new content is then never
+# fetched. It is listed all the same: it belongs to the core for the cleanup and the uninstall.
 dockerPullImages() {
   docker_images_file="$1"
   docker_images_limit="$2"
@@ -117,6 +123,11 @@ dockerPullImages() {
     then
       echo "cannot record $docker_image in '$docker_images_file', not pulling it" >&2
       return 1
+    fi
+    if docker image inspect "$docker_image" > /dev/null 2>&1
+    then
+      echo "$docker_image is present"
+      continue
     fi
     echo "pulling $docker_image ..."
     dockerPull "$docker_image" "$docker_images_limit"

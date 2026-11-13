@@ -48,3 +48,15 @@ docker_lib() {
   [ "$status" -eq 0 ]
   [ "$output" = "s" ]
 }
+
+@test "an image already on the host is used as it is, not pulled, and still recorded" {
+  # a tag that exists only locally: a pull would fail, the registry has no such repository
+  docker tag busybox:1.37 mgwtest/local-only:1
+  run docker_lib 'dockerPullImages "$I" 600 mgwtest/local-only:1'
+  docker image rm mgwtest/local-only:1 > /dev/null 2>&1 || true
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"mgwtest/local-only:1 is present"* ]]
+  [[ "$output" != *"pulling"* ]]
+  [ "$(cat "$I")" = "mgwtest/local-only:1" ]
+}
