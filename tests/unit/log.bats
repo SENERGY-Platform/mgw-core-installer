@@ -2,13 +2,13 @@
 
 # Copyright (c) 2026 InfAI (CC SES)
 
-# lib/log.sh: the scripts' log, <core root>/log/scripts.log. The scripts under test are written into
-# the test's folder and run under dash.
+# lib/log.sh: the installer's log, <core root>/log/core_installer.log. The scripts under test are
+# written into the test's folder and run under dash.
 
 load helpers
 
 setup() {
-  export ROOT="$BATS_TEST_TMPDIR/root" LOGF="$BATS_TEST_TMPDIR/root/log/scripts.log"
+  export ROOT="$BATS_TEST_TMPDIR/root" LOGF="$BATS_TEST_TMPDIR/root/log/core_installer.log"
   mkdir -p "$ROOT/log"
   unset MGW_LOG_PID MGW_LOG_READER
 }

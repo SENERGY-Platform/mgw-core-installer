@@ -153,10 +153,10 @@ that exists. It records itself in `state/restore`; a restore that didn't finish 
 (ctrl.sh and the recovery refuse) until it is run again, from the copy of itself it leaves in
 `<core root>/.restore` when `current` is gone. Restoring an older version needs `-downgrade`.
 
-## The scripts' log
+## The installer's log
 
-Every script that changes a core writes its output into `<core root>/log/scripts.log` as well as to
-the terminal (`lib/log.sh`), each line stamped with the time, the script and its pid. Stdout and
+Every script that changes a core writes its output into `<core root>/log/core_installer.log` as well
+as to the terminal (`lib/log.sh`), each line stamped with the time, the script and its pid. Stdout and
 stderr go into a FIFO; a reader in the background passes the bytes on to the terminal at once (a
 prompt without a line break shows) and stamps whole lines into the file. The terminal stays on
 descriptor 7, so a logging script started by another one logs with its own name, and a script that

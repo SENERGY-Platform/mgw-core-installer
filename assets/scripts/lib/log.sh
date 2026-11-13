@@ -2,9 +2,9 @@
 
 # Copyright (c) 2026 InfAI (CC SES)
 
-# The scripts' log (m9-release.md): every script that changes a core writes its output, stdout and
-# stderr, into <core root>/log/scripts.log as well as to the terminal, each line with the time, the
-# script's name and its process id:
+# The installer's log (m9-release.md): every script that changes a core writes its output, stdout
+# and stderr, into <core root>/log/core_installer.log as well as to the terminal, each line with the
+# time, the script's name and its process id:
 #
 #   2026-11-12T13:06:48Z update.sh[1234]: preparing v0.40.0-alpha.3 ...
 #
@@ -97,7 +97,7 @@ logStop() {
 # starts the log of the core root $1 for the script named $2 and makes sure it is ended when the
 # script exits, keeping the exit code. A script without a log folder goes on without a log.
 logCore() {
-  if logStart "$1/log/scripts.log" "$2"
+  if logStart "$1/log/core_installer.log" "$2"
   then
     # shellcheck disable=SC2154 # log_rc is set in the trap itself
     trap 'log_rc=$?; logStop; exit $log_rc' EXIT

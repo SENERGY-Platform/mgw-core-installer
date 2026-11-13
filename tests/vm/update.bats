@@ -150,11 +150,11 @@ waitForRunning() {
   [ "$(systemctl is-active "mgw_$U-core-manager.service")" = "active" ]
   [ -z "$(docker ps -aq --filter "label=com.docker.compose.project=mgw_${U}_v0_40_0")" ]
   waitForRunning 7 "mgw_${U}_v0_41_0"
-  # the scripts' log: stage one and stage two, each with its own name
-  grep -q " update\.sh\[[0-9]*\]: checking for a new release" "$ROOT/log/scripts.log"
-  grep -q " update\.sh-stage2\[[0-9]*\]: updated to v0.41.0" "$ROOT/log/scripts.log"
+  # the installer's log: stage one and stage two, each with its own name
+  grep -q " update\.sh\[[0-9]*\]: checking for a new release" "$ROOT/log/core_installer.log"
+  grep -q " update\.sh-stage2\[[0-9]*\]: updated to v0.41.0" "$ROOT/log/core_installer.log"
   # the core-manager serves it
-  grep -q '"path": "'"$ROOT"'/log/scripts.log"' "$ROOT/current/config/host-binaries/SENERGY-Platform/mgw-core-manager/log_hdl.json"
+  grep -q '"path": "'"$ROOT"'/log/core_installer.log"' "$ROOT/current/config/host-binaries/SENERGY-Platform/mgw-core-manager/log_hdl.json"
 }
 
 @test "an update of a stopped core: it stays stopped, unused images are removed" {

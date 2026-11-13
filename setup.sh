@@ -388,8 +388,8 @@ for setup_folder in deployments log mounts/nginx mounts/kratos sockets state/hos
 do
   objectsFolder "$core_root" "$setup_folder" || setupAbort "cannot create $setup_folder"
 done
-# from here the install's output also goes to log/scripts.log (the questions and checks before it
-# only to the terminal)
+# from here the install's output also goes to log/core_installer.log (the questions and checks
+# before it only to the terminal)
 logCore "$core_root" setup.sh
 setup_hd="$(settingsGet host_dir_repository_path)"
 case "$setup_hd" in

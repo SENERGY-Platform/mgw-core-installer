@@ -221,7 +221,7 @@ Updates come from the GitHub releases of this repository. Tags follow semantic v
 ### Automatic and manual updates
 
 With `cron=true`, `/etc/cron.daily/<core_name>_update` runs `current/update.sh -a` once a day; its
-output goes to the [scripts' log](#logs). By hand:
+output goes to the [installer's log](#logs). By hand:
 
 ```sh
 sudo /opt/mgw/<core_id>/current/update.sh
@@ -324,11 +324,12 @@ Everything is in `<core root>/log`:
 
 | File | Written by |
 | --- | --- |
-| `scripts.log` | the installer's scripts: `setup.sh` (from the moment the core root exists), `update.sh` (both stages, also from an archive), the migration, the recovery, `restore.sh`, and `ctrl.sh` with a changing command. Every line with the time (UTC), the script and its process id, e.g. `2026-11-12T13:06:48Z update.sh[1234]: preparing v0.40.0 ...`. The output still goes to the terminal as well. |
+| `core_installer.log` | the installer's scripts: `setup.sh` (from the moment the core root exists), `update.sh` (both stages, also from an archive), the migration, the recovery, `restore.sh`, and `ctrl.sh` with a changing command. Every line with the time (UTC), the script and its process id, e.g. `2026-11-12T13:06:48Z update.sh[1234]: preparing v0.40.0 ...`. The output still goes to the terminal as well. |
 | `ce_wrapper.log`, `c_manager.log`, `h_manager.log` | the host binaries |
 | `*_out.log` | without `autostart`: what the host binaries print outside their own log |
 
-The core-manager serves all of them through its log API. With
+The core-manager serves all of them through its log API; the installer's log appears there as
+`core-installer`. With
 `logrotate=true`, they are rotated monthly once they exceed 10 MB, twelve are kept. The recovery
 unit at boot also writes to the journal (`journalctl -u <core_name>-recover.service`). The
 uninstall removes the log folder with the core; its own output only goes to the terminal. The
