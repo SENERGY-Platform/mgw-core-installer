@@ -16,7 +16,8 @@
 # the script links in a version folder (PLAN.md 3)
 version_links="ctrl.sh update.sh restore.sh uninstall.sh"
 
-# set by versionActivate when the avahi reload failed, for the caller's record
+# set by versionActivate when the avahi reload failed, for the caller to record or print
+# shellcheck disable=SC2034 # read by the callers
 version_warning=""
 
 # prepares the version $3 (e.g. v1.3.0) in the core root $1 from the assets folder $2: versionCreate,
@@ -236,7 +237,7 @@ versionCoreObjects() {
 
 # points current of the core root $1 at the version folder $2 (atomically: a new link renamed over
 # the old one), reconciles /etc and reloads avahi. A failed avahi reload is a warning
-# (version_warning), not a failure (PLAN.md 5).
+# (version_warning, for the caller to record or print), not a failure (PLAN.md 5).
 versionActivate() {
   version_warning=""
   if ! [ -d "$1/$2" ]
@@ -261,8 +262,8 @@ versionActivate() {
   then
     if ! { systemctl reload avahi-daemon 2> /dev/null || avahi-daemon --reload 2> /dev/null; }
     then
+      # shellcheck disable=SC2034 # read by the callers
       version_warning="avahi reload failed"
-      echo "warning: $version_warning" >&2
     fi
   fi
 }

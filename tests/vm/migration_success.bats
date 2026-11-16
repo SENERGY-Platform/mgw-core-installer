@@ -106,7 +106,7 @@ teardown_file() {
   run "$DIR/update.sh" -a
   echo "$output"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"warning: volume $vol doesn't exist, it is created empty"* ]]
+  [[ "$output" == *"warning: volume $vol didn't exist, created empty"* ]]
   MIG_MISSING_OK=true migrated
   grep -qx "warning=volume $vol didn't exist, created empty" "$DIR/state/update"
   docker volume inspect "$vol" > /dev/null

@@ -280,7 +280,9 @@ releases as usual.
 `ctrl.sh status` shows the last update and the last check. The details are in
 `state/update` (the update: versions, phase, result, whether it was rolled back or interrupted,
 the failed step, warnings) and `state/check` (the last look for a release). The core-manager
-reports both through its health API.
+reports both through its health API. A record keeps at most 20 warnings of at most 200 characters
+and counts the rest (`warnings_omitted`); the installer's log (`log/core_installer.log`, in the web
+UI as `core-installer`) has every warning in full.
 
 ---
 

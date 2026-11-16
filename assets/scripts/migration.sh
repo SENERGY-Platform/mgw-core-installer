@@ -539,7 +539,6 @@ migrationCleanup() {
   then
     while IFS= read -r cleanup_line
     do
-      say "warning: $cleanup_line" >&2
       recordWarn upd "$cleanup_line"
     done <<CLEANUP
 $cleanup_out
@@ -612,7 +611,6 @@ then
 fi
 while IFS= read -r migration_warning
 do
-  say "$migration_warning" >&2
   recordWarn upd "${migration_warning#warning: }"
 done < "$migration_warnings"
 rm -f "$migration_warnings"
@@ -625,7 +623,6 @@ mkdir -p "$(migrationOld host_dir_repository_path)" || migrationFailB "creating 
 # preparation (4); named in the record, so a core that starts without that data is visible
 for migration_vol in $(migrationVolumesMissing "$assets_dir/templates/container/docker-compose.yml.tmpl")
 do
-  say "warning: volume $migration_vol doesn't exist, it is created empty" >&2
   recordWarn upd "volume $migration_vol didn't exist, created empty"
 done
 testKill settings

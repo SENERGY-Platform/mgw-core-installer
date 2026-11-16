@@ -429,6 +429,7 @@ testFail units || setupAbort "setting up the core-owned units failed"
 # --- 11. activate version ---
 
 versionActivate "$core_root" "$version_folder" || setupAbort "activating $version failed"
+[ "$version_warning" = "" ] || say "warning: $version_warning" >&2
 testFail activate || setupAbort "activating $version failed"
 
 # --- 12. success ---

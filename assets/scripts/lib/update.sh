@@ -181,6 +181,7 @@ updateHandleC() {
   settingsLoad "$core_root/$old_folder/assets/settings.defaults" "$core_root/state/settings" ||
     updateHandlingFailed "reading the settings of $old_folder" "$1"
   versionActivate "$core_root" "$old_folder" || updateHandlingFailed "activating $old_folder" "$1"
+  [ "$version_warning" = "" ] || recordWarn upd "$version_warning"
   # at boot the units start by themselves right after the recovery unit; starting them from it would
   # deadlock (m5-update.md, finding 2)
   if [ "$was_running" = "true" ] && [ "$update_start_allowed" = "true" ]

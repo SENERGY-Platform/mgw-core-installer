@@ -352,10 +352,6 @@ then
   fi
   if [ "$cleanup_out" != "" ]
   then
-    printf '%s\n' "$cleanup_out" | while IFS= read -r cleanup_line
-    do
-      echo "warning: $cleanup_line" >&2
-    done
     # a heredoc, not a pipe: the loop must run in this shell to keep the warnings
     while IFS= read -r cleanup_line
     do

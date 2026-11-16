@@ -170,8 +170,11 @@ recordAppend() {
 }
 
 # adds the warning $2 to the record $1: at most state_max_warnings, each at most
-# state_max_warning_len characters. Further warnings are only counted, in warnings_omitted.
+# state_max_warning_len characters. Further warnings are only counted, in warnings_omitted. Every
+# warning is also printed in full ("warning: ..." on stderr), so the installer's log
+# (core_installer.log) has those the record cuts or leaves out; callers don't print it themselves.
 recordWarn() {
+  printf 'warning: %s\n' "$2" >&2
   eval "record_warn_list=\${$1_warning}"
   record_warn_count=0
   if [ "$record_warn_list" != "" ]

@@ -167,3 +167,14 @@ state() {
   run state "imagesRemove '$I' nginx:1.31.1-alpine && imagesList '$I'"
   [ "$output" = "nginx:1x31.1-alpine" ]
 }
+
+@test "every warning is printed in full, also those the record cuts or leaves out" {
+  run state '
+    i=0
+    while [ $i -lt 22 ]; do recordWarn u "warning $i $(head -c 300 /dev/zero | tr "\0" w)"; i=$((i + 1)); done
+    recordWrite "$F" u "warnings_omitted" warning'
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 22 ]
+  [ "${lines[21]}" = "warning: warning 21 $(head -c 300 /dev/zero | tr "\0" w)" ]
+  grep -qx 'warnings_omitted=2' "$F"
+}
