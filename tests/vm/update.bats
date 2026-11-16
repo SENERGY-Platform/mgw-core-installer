@@ -156,6 +156,9 @@ waitForRunning() {
   [ "$(systemctl is-active "mgw_$U-core-manager.service")" = "active" ]
   [ -z "$(docker ps -aq --filter "label=com.docker.compose.project=mgw_${U}_v0_40_0")" ]
   waitForRunning 7 "mgw_${U}_v0_41_0"
+  # the core-manager reports the update record, the count of omitted warnings included
+  curl -fsS --unix-socket "$ROOT/sockets/c_manager.sock" http://localhost/health |
+    jq -e '.update.result == "success" and .update.kind == "update" and .update.warnings_omitted == 0'
   # the new version folder is root's: assets from the archive, host binaries, rendered files
   [ -z "$(notRootOwned "$ROOT/v0_41_0")" ]
   # the installer's log: stage one and stage two, each with its own name

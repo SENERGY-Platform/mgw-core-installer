@@ -23,6 +23,7 @@ docker_lib() {
 
 @test "an image that doesn't exist fails at once, but stays recorded" {
   run docker_lib 'dockerPullImages "$I" 600 mgwtest/does-not-exist:1 busybox:1.37'
+  echo "$output"
   [ "$status" -eq 1 ]
   [[ "$output" == *"pulling mgwtest/does-not-exist:1 failed: "*"repository does not exist"* ]]
   [[ "$output" != *"retrying"* ]]
