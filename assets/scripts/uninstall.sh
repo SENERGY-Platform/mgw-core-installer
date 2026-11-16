@@ -244,12 +244,11 @@ fi
 objectsRemove "$core_root" "mount:/mnt/$core_name/secrets" || leftover "the tmpfs /mnt/$core_name/secrets"
 objectsRemove "$core_root" "dir:/mnt/$core_name" || leftover "/mnt/$core_name"
 
-# 9. the core root, and 10. the update's working space
+# 9. the core root, with the update's working space (.update) in it
 host_dir="$(settingsGet host_dir_repository_path)"
 echo "removing $core_root ..."
 lockRelease
 objectsRemove "$core_root" "folder:." || leftover "$core_root"
-objectsRemove "$core_root" "dir:/tmp/$core_name" || leftover "/tmp/$core_name"
 case "$host_dir" in
   ""|"$core_root"/*)
     ;;

@@ -38,7 +38,7 @@ teardown_file() {
   stopGithubMock
   rm -f "$ROOT/state/images"
   "$REPO/assets/scripts/uninstall.sh" -path="$ROOT" -y > /dev/null 2>&1 || true
-  rm -rf "$DIR" "/tmp/mgw_$S"
+  rm -rf "$DIR"
 }
 
 waitForRunning() {

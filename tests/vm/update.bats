@@ -39,7 +39,7 @@ teardown_file() {
     rm -f "$ROOT/state/images"
     "$ROOT/current/uninstall.sh" -y > /dev/null 2>&1 || true
   fi
-  rm -rf "$DIR" "/tmp/mgw_$U"
+  rm -rf "$DIR"
 }
 
 check() {
@@ -59,7 +59,7 @@ check() {
   echo "$output"
   [ "$status" -eq 0 ]
   check check_result=up_to_date
-  [ ! -e "/tmp/mgw_$U" ]
+  [ ! -e "$ROOT/.update" ]
 }
 
 @test "a beta isn't taken without allow_beta" {
@@ -131,10 +131,16 @@ waitForRunning() {
 
 @test "an update of a running core: switched, started, old version cleaned up" {
   waitForRunning 7 "mgw_${U}_v0_40_0"
+  # a killed run's working space, and a folder another user created under the old fixed path in /tmp
+  mkdir -p "$ROOT/.update/extract" "/tmp/mgw_$U"
+  echo '[]' > "/tmp/mgw_$U/releases.json"
+  chown -R nobody "/tmp/mgw_$U"
   run "$ROOT/current/update.sh" -a
   echo "$output"
+  rm -rf "/tmp/mgw_$U"
   [ "$status" -eq 0 ]
   [ "$(readlink "$ROOT/current")" = "v0_41_0" ]
+  [ ! -e "$ROOT/.update" ]
   [ ! -e "$ROOT/v0_40_0" ] && [ ! -e "$ROOT/v0_41_0_tmp" ]
   # the record
   grep -qx result=success "$ROOT/state/update"

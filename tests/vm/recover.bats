@@ -41,7 +41,7 @@ teardown_file() {
     rm -f "$ROOT/state/images"
     "$ROOT/current/uninstall.sh" -y > /dev/null 2>&1 || "$REPO/assets/scripts/uninstall.sh" -path="$ROOT" -y > /dev/null 2>&1 || true
   fi
-  rm -rf "$DIR" "/tmp/mgw_$R"
+  rm -rf "$DIR"
 }
 
 rec() {

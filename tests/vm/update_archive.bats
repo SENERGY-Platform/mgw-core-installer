@@ -33,7 +33,7 @@ setup_file() {
 teardown_file() {
   rm -f "$ROOT/state/images"
   "$REPO/assets/scripts/uninstall.sh" -path="$ROOT" -y > /dev/null 2>&1 || true
-  rm -rf "$DIR" "/tmp/mgw_$A"
+  rm -rf "$DIR"
 }
 
 # waits up to 5 minutes until the 7 long-running containers of the version folder $1 run

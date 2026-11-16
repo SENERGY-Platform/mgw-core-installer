@@ -381,7 +381,11 @@ then
   exit 1
 fi
 core_name="$(settingsGet core_name)"
-work="/tmp/$core_name"
+# the working space for the release list and the archive: in the core root, which only root can write
+# to. A fixed path under /tmp could be created by another user first, who could then swap the release
+# list root reads. A fixed name: a killed run's leftovers are removed by the next run, and by uninstall
+# with the core root.
+work="$core_root/.update"
 
 # ends stage one with the check record $1 (result), $2 (version), $3 (step) and exit code $4. A
 # check record that can't be written fails the run (S2).

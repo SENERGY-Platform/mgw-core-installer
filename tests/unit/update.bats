@@ -61,12 +61,12 @@ update_lib() {
 }
 
 @test "the check record" {
-  run update_lib 'updateCheckRecord "$C" failed v0.41.1 "downloading release v0.41.1" "could not delete /tmp/mgw_abc"'
+  run update_lib 'updateCheckRecord "$C" failed v0.41.1 "downloading release v0.41.1" "could not delete /opt/mgw/abc/.update"'
   [ "$status" -eq 0 ]
   grep -qx check_result=failed "$C"
   grep -qx check_version=v0.41.1 "$C"
   grep -qx "check_step=downloading release v0.41.1" "$C"
-  grep -qx "warning=could not delete /tmp/mgw_abc" "$C"
+  grep -qx "warning=could not delete /opt/mgw/abc/.update" "$C"
   grep -q '^check_time=20' "$C"
   run update_lib 'updateCheckRecord "$C" up_to_date "" ""'
   ! grep -q '^warning=' "$C"
