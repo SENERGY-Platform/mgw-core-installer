@@ -331,7 +331,7 @@ then
   then
     exit 0
   fi
-  # no questions from apt or a package, also without a terminal: needrestart (Debian, Ubuntu) only
+  # no questions from apt or a package, also without a terminal: needrestart (Debian) only
   # lists what uses replaced libraries (mode l), it doesn't ask or restart anything
   # shellcheck disable=SC2086 # one argument per package
   if ! apt-get update || ! DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=l apt-get install -y $setup_missing

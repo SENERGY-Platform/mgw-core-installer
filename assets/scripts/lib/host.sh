@@ -2,7 +2,7 @@
 
 # Copyright (c) 2026 InfAI (CC SES)
 
-# Locations on the host. Fixed on the supported systems (Debian, Ubuntu), so they are no settings. The
+# Locations on the host. Fixed on the supported system (Debian 13), so they are no settings. The
 # tests may set them before sourcing this file, to work on temporary folders; nothing else does.
 
 # shellcheck disable=SC2034 # used by the files sourcing this one

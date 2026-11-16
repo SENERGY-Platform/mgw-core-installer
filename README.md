@@ -44,15 +44,14 @@ systemd/cron/logrotate/avahi and creates the container stack via Docker Compose.
 
 ### Requirements
 
-* **OS:** Linux, Debian/Ubuntu based distribution.
+* **OS:** Debian 13 (trixie).
 * **Privileges:** root.
-* **Must already be present:** `apt`, and Docker with the Compose plugin (`docker compose`)
-  2.9.0 or newer, except 2.19.0, 2.25.0, 5.1.0 and 5.1.1, which have bugs the installer can't work
-  with. docker-compose v1 (`docker-compose`, Debian 12's own package) isn't supported. Without
-  them the installer stops and points to <https://docs.docker.com/engine/install> or
-  <https://docs.docker.com/compose/install/linux>; on Debian 12 with Debian's `docker.io`, the
-  plugin can be installed as a single binary in `/usr/local/lib/docker/cli-plugins`. `systemctl`
-  is additionally required when the core starts at boot (`autostart`).
+* **Must already be present:** Docker with the Compose plugin (`docker compose`): Debian's own
+  packages (`apt install docker.io docker-compose`) or Docker's
+  (<https://docs.docker.com/engine/install/debian>). The installer checks the plugin's version: 2.9.0
+  or newer, except 2.19.0, 2.25.0, 5.1.0 and 5.1.1, which have bugs it can't work with; Debian 13
+  has 2.26.1. docker-compose v1 isn't supported. `systemctl` is additionally required when the core
+  starts at boot (`autostart`).
 * **Installed automatically (after confirmation):** `curl`, `tar`, `gzip`, `jq`, `openssl`,
   `gettext-base` (for `envsubst`) — plus `logrotate` if log rotation is enabled, `cron` if
   automatic updates are, and `avahi-daemon` if mDNS advertisement is.

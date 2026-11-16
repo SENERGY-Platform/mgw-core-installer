@@ -214,7 +214,7 @@ v0.33.0-beta2). Installations are migrated automatically; these are the differen
 | `setup.sh -c config.ini`, a sourced shell file (`assets/config.suggestion.ini`) | `setup.sh -c <file>` in the settings format, parsed: `key=value`, no quotes, no comments after a value, unknown keys fail (`assets/setup.conf.example`) |
 | the setting `systemd` | `autostart` |
 | `skip_pgk_install_confirm` (misspelt) | `skip_pkg_install_confirm` |
-| the path settings (`base_path`, `secrets_path`, `log_path`, `systemd_path`, ...) and the environment overrides `SYSTEMD_PATH`, `LOGROTATED_PATH`, `CRON_PATH` | gone: paths are derived from the core root, the `/etc` locations are fixed (Debian, Ubuntu) |
+| the path settings (`base_path`, `secrets_path`, `log_path`, `systemd_path`, ...) and the environment overrides `SYSTEMD_PATH`, `LOGROTATED_PATH`, `CRON_PATH` | gone: paths are derived from the core root, the `/etc` locations are fixed (Debian 13) |
 | `ctr_restart_policy` | gone: the containers have no restart policy, the core-manager owns their lifecycle |
 | `<base_path>/.settings`, sourced | `state/settings`, parsed, only what was set (the defaults come from the version) |
 | `container/.env` (log levels, delays) | settings, changed with `ctrl.sh settings set` |

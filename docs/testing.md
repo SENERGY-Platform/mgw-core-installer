@@ -31,7 +31,8 @@ tests/vm/run.sh [-j <jobs>] [tests/vm/<file>.bats ...]
 `run.sh` builds the fake host binary (`tests/vm/fakebin`), copies the repository to the VM and runs
 `sudo bats` there, on all files or the ones given. `MGW_TEST_VM` (default
 `mgw-user@192.168.122.253`) and `MGW_TEST_VM_KEY` (default `~/.ssh/mgw_test_vm_ed25519`) select the
-VM; it needs Debian or Ubuntu with Docker, the compose plugin, bats, and GNU parallel for `-j`.
+VM; it needs Debian 13 with Docker, the compose plugin (Debian's packages are enough), bats, and GNU
+parallel for `-j`.
 `-j 6` runs the files in parallel (the whole suite in about ten minutes); the tests within a file
 always run in order, each file builds on its own previous tests.
 
