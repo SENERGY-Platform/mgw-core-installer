@@ -102,16 +102,18 @@ any more: see the [breaking changes](docs/design.md#breaking-changes-from-the-ol
 
 ### What the installer does
 
-1. Checks everything before it changes anything: Docker, the settings, the install directory,
-   and collisions with existing units, volumes, networks, the port and the subnets.
+1. Checks everything before it changes anything: the system (Debian 13), Docker and the version of
+   its Compose plugin, the settings, the install directory, and collisions with existing units,
+   volumes, networks, the port and the subnets.
 2. Installs the missing packages.
 3. Creates the core root `<install_dir>/<core_id>` and writes `state/settings`. From here on,
    every object it creates (folders, units, volumes, networks, containers) is recorded in
    `state/install` first. If the install fails, it removes exactly what it created; an install
    that was killed is cleaned up by the next `setup.sh` or at the next boot.
 4. Builds the version folder: copies the release's assets, renders the configuration, downloads
-   the host binaries, creates the core's networks and volumes, pulls the images and creates the
-   containers.
+   the host binaries, creates the core's networks and volumes, pulls the images (an image already
+   on the host is used as it is) and creates the containers. The version folder belongs to root
+   and isn't writable by group or others, whoever owned the unpacked archive.
 5. Writes the secrets mount unit and the recovery unit, points `current` at the version and links
    the units and the logrotate, cron and avahi files into `/etc`.
 6. Records the success and, if asked, starts the core.
@@ -122,6 +124,8 @@ At the end it prints how to control the core and how to log in.
 
 ```
 /opt/mgw/<core_id>              the core root
+├── .update/, .restore/         working space of an update and of restore.sh while they run; a
+│                               failed restore keeps .restore/ for the next run
 ├── v1_2_3/                     one folder per version (dots become underscores)
 │   ├── assets/                 the release's files, never modified
 │   ├── bin/                    the host binaries of this version
@@ -129,7 +133,7 @@ At the end it prints how to control the core and how to log in.
 │   └── ctrl.sh, update.sh, restore.sh, uninstall.sh   links into assets/scripts
 ├── current -> v1_2_3           the active version, switched atomically by updates
 ├── deployments/                module deployment data (shared with the module-manager)
-├── log/                        logs of the host binaries and of the updates
+├── log/                        the logs of the host binaries and of the installer's scripts
 ├── mounts/                     config fragments the core-manager writes (gateway, identity server)
 ├── repositories/host_dir/      the host-directory module repository
 ├── sockets/                    unix sockets of the host binaries
@@ -242,7 +246,8 @@ sudo ./update.sh -path=/opt/mgw/<core_id>
 ```
 
 It works like any update, with the same rollback; only the version comes from the archive instead
-of GitHub. The host binaries and images are still downloaded. The archive's version must be newer
+of GitHub. The host binaries are still downloaded, and the images that aren't on the host yet are
+pulled. The archive's version must be newer
 than the running one: the same version is left as it is (`restore.sh` rebuilds it), an older one is
 refused (`restore.sh -downgrade` installs it, see [Recover and restore](#recover-and-restore)). The
 same command migrates an installation of the old installer, given its install directory (see
@@ -270,9 +275,10 @@ by the recovery unit at the next boot, or by the next `update.sh`, before it loo
 ### Beta releases
 
 With `allow_beta=true` (`ctrl.sh settings set allow_beta true`) updates also take beta releases.
-Alpha releases are never taken by `update.sh`, also not by hand: an alpha is installed on purpose,
-with `setup.sh` or `restore.sh -path=` from its archive. A core on an alpha updates to newer
-releases as usual.
+Alpha releases are never taken by `update.sh` from GitHub, also not by a manual run: an alpha is
+installed on purpose from its archive, with `setup.sh` or `update.sh -path=` (see
+[Manual update from a downloaded release](#manual-update-from-a-downloaded-release)). A core on an
+alpha updates to newer releases as usual.
 
 ### The result of an update
 
