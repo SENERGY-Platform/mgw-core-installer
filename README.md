@@ -376,6 +376,9 @@ taken over.
   refused without any change; update it first to an old-layout release from `v0.30.0` on:
   download that release's archive, unpack it and run its `assets/scripts/update.sh
   -path=<install dir>`. The next update migrates it.
+* **Debian 13:** the old installer also ran on older systems; the migration refuses anything but
+  Debian 13 before anything is downloaded or changed, naming the system. Upgrade the gateway to
+  Debian 13 first (the old core keeps running on it), the next update migrates.
 * **Compose:** the old installer also worked with docker-compose v1 or an older plugin, the new
   layout needs the plugin as under [Requirements](#requirements). Without it the migration is
   refused before anything is downloaded or changed; install or update the plugin, the next update

@@ -139,6 +139,10 @@ then
   fail "root privileges required"
 fi
 hostPlatform > /dev/null || exit 1
+if ! setup_os="$(hostSupported 2>&1)"
+then
+  fail "$setup_os"
+fi
 hostArch > /dev/null || exit 1
 if ! setup_compose="$(dockerComposeCheck 2>&1)"
 then

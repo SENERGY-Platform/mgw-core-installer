@@ -241,6 +241,11 @@ then
     printf '%s\n' "$migration_problems" | sed 's/^/  /' >&2
     refuse "the settings don't fit the new layout: $(printf '%s\n' "$migration_problems" | head -n 1)"
   fi
+  # the old installer ran on older systems too (Debian 12); the new layout only on Debian 13
+  if ! migration_os="$(hostSupported 2>&1)"
+  then
+    refuse "$migration_os; upgrade the system to Debian 13 first, the next update migrates"
+  fi
   # the old installer also worked with docker-compose v1 or an old plugin; the new layout doesn't
   if ! migration_compose="$(dockerComposeCheck 2>&1)"
   then

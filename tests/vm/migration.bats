@@ -42,6 +42,17 @@ teardown_file() {
   oldRunning
 }
 
+@test "a system other than Debian 13: refused before anything changes" {
+  printf '%s\n' 'PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"' 'VERSION_ID="12"' 'ID=debian' > "$BATS_TEST_TMPDIR/os-release"
+  run env host_os_release="$BATS_TEST_TMPDIR/os-release" "$DIR/update.sh" -a
+  echo "$output"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Debian 13 is required, this is Debian GNU/Linux 12 (bookworm); upgrade the system"* ]]
+  [[ "$(oldStatus step)" == *"Debian 13 is required"* ]]
+  [ ! -e "$DIR/state" ]
+  oldRunning
+}
+
 @test "an installation older than v0.30.0-alpha1: refused with the way forward" {
   echo v0.23.0 > "$DIR/.version"
   run "$DIR/update.sh" -a
