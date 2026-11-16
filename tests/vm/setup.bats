@@ -98,6 +98,8 @@ waitForContainers() {
   [ "$(findmnt -n -o FSTYPE "/mnt/mgw_$A/secrets")" = "tmpfs" ]
   [ "$(systemctl is-active "$(systemd-escape --path --suffix=mount "/mnt/mgw_$A/secrets")")" = "active" ]
   waitForContainers "$A"
+  # the version folder is root's, though the repository copy belongs to the test user
+  [ -z "$(notRootOwned "$root/$(readlink "$root/current")")" ]
   # the install's log, from the moment the core root exists
   grep -Eq '^[0-9T:-]+Z setup\.sh\[[0-9]+\]: installation of dev-[0-9]+ successful' "$root/log/core_installer.log"
 }

@@ -30,9 +30,14 @@ then
   cp -a "$overlay/." "$work/assets/"
 fi
 echo "$version" > "$work/assets/version"
+# the archive carries modes and owners: no write permission for group and others whatever the
+# checkout's umask, the root folder readable (its entry sets the mode of the folder it's extracted
+# into), and root as owner (root's tar keeps an archive's owners)
+chmod -R go-w "$work"
+chmod 755 "$work"
 (cd "$work/assets" && find . -type f ! -path ./checksums | sort | xargs sha256sum > checksums)
 ln -s assets/scripts/restore.sh "$work/restore.sh"
 ln -s assets/scripts/uninstall.sh "$work/uninstall.sh"
 ln -s assets/scripts/update.sh "$work/update.sh"
 mkdir -p "$out"
-tar -czf "$out/mgw_core_installer_$version.tar.gz" -C "$work" .
+tar -czf "$out/mgw_core_installer_$version.tar.gz" --owner=0 --group=0 --numeric-owner -C "$work" .

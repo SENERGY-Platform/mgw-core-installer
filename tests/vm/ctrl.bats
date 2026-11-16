@@ -272,7 +272,9 @@ waitForRunning() {
   echo "$output"
   [ "$status" -eq 0 ]
   [ -L "/etc/logrotate.d/mgw_${X}_core" ]
-  logrotate -d "/etc/logrotate.d/mgw_${X}_core" > /dev/null 2>&1
+  run logrotate -d "/etc/logrotate.d/mgw_${X}_core"
+  echo "$output" | grep -iv "^warning: logrotate in debug mode" | grep -i "error" || true
+  [ "$status" -eq 0 ]
   run "$DIR/$X/current/ctrl.sh" settings set logrotate false
   [ "$status" -eq 0 ]
   [ ! -e "/etc/logrotate.d/mgw_${X}_core" ]

@@ -56,6 +56,8 @@ teardown_file() {
   systemctl is-active --quiet "mgw_$S-core-manager.service"
   [ "$(stat -f -c %T "/mnt/mgw_$S/secrets")" = "tmpfs" ]
   newRunning
+  # the version folder is root's, though the old stage one extracted the archive with its owners
+  [ -z "$(notRootOwned "$DIR/v0_40_0")" ]
   # the module deployed in the old core: the new module-manager knows its deployment, it runs
   moduleDeployed "mgw_$S-v0_40_0-module-manager"
   moduleRunning

@@ -50,6 +50,15 @@ render() {
   [ "$(cat "$V/config/cron/mgw_abc_update")" = "$(printf '%s\n' '#!/bin/sh' "$ROOT/current/update.sh -a")" ]
 }
 
+@test "output files are never writable by group or others, whatever the template's mode" {
+  chmod 775 "$V/assets/templates/cron/update.tmpl"
+  chmod 666 "$V/assets/templates/host-binaries/x/"*
+  run render 'renderVersion "$V" "$ROOT" v1.3.0 v1_3_0'
+  [ "$status" -eq 0 ]
+  [ "$(stat -c %a "$V/config/cron/mgw_abc_update")" = "755" ]
+  [ -z "$(find "$V/config" -type f -perm /022)" ]
+}
+
 @test "only enabled integrations are rendered" {
   run render 'renderVersion "$V" "$ROOT" v1.3.0 v1_3_0'
   [ -e "$V/config/cron/mgw_abc_update" ]

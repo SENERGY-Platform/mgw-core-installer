@@ -148,6 +148,8 @@ renderVersion() {
         *)
           cp -p "$render_rel" "$render_out" || exit 1
       esac
+      # the template's mode, but never writable by group or others (versionSecure)
+      chmod go-w "$render_out" || exit 1
     done
   )
   then

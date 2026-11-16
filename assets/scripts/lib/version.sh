@@ -42,8 +42,22 @@ versionRemoveLeftover() {
   objectsRemove "$1" "folder:$2"
 }
 
+# makes everything in the folder $1 root's: owner and group root, no write permission for group and
+# others. Release archives carry their builder's owner (uid 1001, GitHub's runner, for the installer
+# and the host binaries), which root's tar and cp -a keep, and a checkout may be group-writable: a
+# user with that uid or group could change scripts and binaries root runs, and logrotate ignores a
+# group-writable config. The scripts run as root; without root (the unit tests) the files stay the
+# caller's, who can't give them away.
+versionSecure() {
+  if { [ "$(id -u)" = "0" ] && ! chown -R -h 0:0 "$1"; } || ! chmod -R go-w "$1"
+  then
+    echo "cannot make '$1' root's" >&2
+    return 1
+  fi
+}
+
 # creates vX_Y_Z_tmp for the version $3 in the core root $1 with the assets from $2 and the script
-# links; leftovers with the target names are removed first (S3)
+# links, root's (versionSecure); leftovers with the target names are removed first (S3)
 versionCreate() {
   if ! version_folder="$(versionFolder "$3")"
   then
@@ -71,6 +85,7 @@ versionCreate() {
       return 1
     fi
   done
+  versionSecure "$version_tmp"
 }
 
 # builds the version $2 in the core root $1 from its vX_Y_Z_tmp up to the created containers: the
@@ -112,6 +127,8 @@ versionBuild() {
   then
     return $version_rc
   fi
+  # the host binaries and the rendered files
+  versionSecure "$version_tmp" || return 1
   versionRemoveLeftover "$1" "$version_folder" || return 1
   objectsRecord "folder:$version_folder" || return 1
   if ! mv -T "$version_tmp" "$version_dir"
@@ -185,7 +202,7 @@ versionDownloadBins() {
     netDownload "$version_url" "$version_dl/bin.tar.gz"
     version_rc=$?
     [ $version_rc -eq 0 ] || return $version_rc
-    if ! tar -xzf "$version_dl/bin.tar.gz" -C "$version_dl/x" || ! [ -f "$version_dl/x/$version_arch/bin" ]
+    if ! tar -xzf "$version_dl/bin.tar.gz" --no-same-owner -C "$version_dl/x" || ! [ -f "$version_dl/x/$version_arch/bin" ]
     then
       echo "the release of $version_repo $version_tag has no binary for $version_arch" >&2
       return 1

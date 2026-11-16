@@ -15,3 +15,9 @@ dsh() {
   done
   dash -c "$pre$code"
 }
+
+# prints what in the folder $1 isn't root's: not owned by root, or writable by group or others
+# (symbolic links aside, their mode means nothing). Empty for a version folder (versionSecure).
+notRootOwned() {
+  find "$1" \( ! -user root -o ! -group root -o \( ! -type l -perm /022 \) \) -printf '%u:%g %m %p\n'
+}

@@ -489,7 +489,7 @@ then
   rm -rf "$work"
   finish failed "$new_version" "downloading release $new_version" 1
 fi
-if ! tar -xzf "$work/release.tar.gz" -C "$work/extract" || ! [ -f "$work/extract/assets/scripts/update.sh" ]
+if ! tar -xzf "$work/release.tar.gz" --no-same-owner -C "$work/extract" || ! [ -f "$work/extract/assets/scripts/update.sh" ]
 then
   rm -rf "$work"
   finish failed "$new_version" "extracting release $new_version" 1
