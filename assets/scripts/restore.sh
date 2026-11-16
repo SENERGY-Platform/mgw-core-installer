@@ -318,7 +318,10 @@ restoreStep "copying the assets of $target_version"
 work="$core_root/.restore"
 if [ "$assets_dir" != "$work/assets" ]
 then
-  if ! rm -rf "$work" || ! mkdir -p "$work" || ! cp -a "$assets_dir" "$work/assets"
+  # root's like a version folder (versionSecure): root runs the restore.sh in it again, and the
+  # archive may have been unpacked by another user
+  if ! rm -rf "$work" || ! mkdir -p "$work" || ! cp -a "$assets_dir" "$work/assets" ||
+    ! versionSecure "$work"
   then
     restoreFail "copying the assets of $target_version"
   fi

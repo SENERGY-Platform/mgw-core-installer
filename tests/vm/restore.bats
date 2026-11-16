@@ -180,10 +180,15 @@ restored() {
 }
 
 @test "a failed restore: ctrl.sh and the recovery refuse, the copy in .restore repeats it" {
-  run env MGW_TEST_FAIL_AT=restore "$ROOT/current/restore.sh" -y
+  # from an archive another user unpacked: the copy root runs again must be root's
+  local x="$BATS_TEST_TMPDIR/unpacked-by-nobody"
+  cp -a "$A40" "$x"
+  chown -R nobody "$x"
+  run env MGW_TEST_FAIL_AT=restore "$x/restore.sh" -path="$ROOT" -y
   echo "$output"
   [ "$status" -eq 1 ]
   [[ "$output" == *"run $ROOT/.restore/assets/scripts/restore.sh -path=$ROOT again"* ]]
+  [ -z "$(notRootOwned "$ROOT/.restore")" ]
   grep -qx result=failed "$ROOT/state/restore"
   [ ! -e "$ROOT/current" ]
   run "$ROOT/v0_40_0/assets/scripts/recover.sh"
