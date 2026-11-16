@@ -14,12 +14,6 @@ server {
     location ~ ^(.*)/$ {
         return 301 $1$is_args$args;
     }
-    location = /core-manager/health {
-        limit_except GET { deny all; }
-        proxy_pass http://c_manager_sock/restricted/health;
-        allow ${SUBNET_MODULE}/16;
-        deny all;
-    }
     location /c-manager {
         rewrite /c-manager(.*) /$1 break;
         proxy_pass http://c_manager_sock$1$is_args$args;
@@ -44,14 +38,22 @@ server {
         allow ${SUBNET_MODULE}/16;
         deny all;
     }
-    location /host-info {
-        proxy_pass http://h_manager_sock/host-info;
-        allow ${SUBNET_MODULE}/16;
-        deny all;
-    }
     location /module-manager {
         rewrite /module-manager(.*) /$1 break;
         proxy_pass http://$module_mngr/restricted$1$is_args$args;
+        allow ${SUBNET_MODULE}/16;
+        deny all;
+    }
+    location = /core-health {
+        limit_except GET { deny all; }
+        proxy_pass http://c_manager_sock/restricted/health;
+        allow ${SUBNET_MODULE}/16;
+        deny all;
+    }
+    # Deprecated, replaced by /core-health
+    location = /core-manager/health {
+        limit_except GET { deny all; }
+        proxy_pass http://c_manager_sock/restricted/health;
         allow ${SUBNET_MODULE}/16;
         deny all;
     }
