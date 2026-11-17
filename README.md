@@ -1,68 +1,51 @@
 mgw-core-installer
 =======
 
-The multi-gateway (MGW) core is the base layer of an edge gateway. It is not a
-single application but a set of host processes and containers that together provide
-container orchestration, module (application) lifecycle management, secret storage,
-identity/authentication and an HTTP entry point for users and modules.
+The multi-gateway (MGW) core is the base layer of an edge gateway: it runs the gateway's modules
+(device connectors and other add-ons), stores their secrets, manages logins and provides the web UI.
 
-This repository does not contain the core itself — it contains the **installer** that
-assembles a core on a host, keeps it updated and repairs it: it fetches the release binaries
-from GitHub, renders all configuration files from templates, wires up
-systemd/cron/logrotate/avahi and creates the container stack via Docker Compose.
+This repository contains the **installer** for the core. It installs a core on a host, keeps it
+up to date and repairs it if something goes wrong. Everything is done with a few scripts that you
+run as root.
 
 ## Table of contents
 
+* [Requirements](#requirements)
 * [Installing](#installing)
-    * [Requirements](#requirements)
-    * [Interactive installation](#interactive-installation)
-    * [Non-interactive installation](#non-interactive-installation)
-    * [What the installer does](#what-the-installer-does)
-    * [Resulting layout](#resulting-layout)
-    * [After the installation](#after-the-installation)
-* [Controlling the core: `ctrl.sh`](#controlling-the-core-ctrlsh)
+* [Everyday use](#everyday-use)
 * [Settings](#settings)
-* [Updating](#updating)
-    * [Automatic and manual updates](#automatic-and-manual-updates)
-    * [Manual update from a downloaded release](#manual-update-from-a-downloaded-release)
-    * [What an update does, and what happens when it fails](#what-an-update-does-and-what-happens-when-it-fails)
-    * [Beta releases](#beta-releases)
-    * [The result of an update](#the-result-of-an-update)
-* [Recover and restore](#recover-and-restore)
+* [Updates](#updates)
+* [When something is wrong](#when-something-is-wrong)
 * [Logs](#logs)
 * [Uninstalling](#uninstalling)
-* [Migrating an installation of the old installer](#migrating-an-installation-of-the-old-installer)
-* [Services in the core](#services-in-the-core)
-    * [Host binaries](#host-binaries)
-    * [Containers](#containers)
-    * [Networks and how the services interact](#networks-and-how-the-services-interact)
+* [Moving from the old installer](#moving-from-the-old-installer)
 * [Further documentation](#further-documentation)
+
+---
+
+## Requirements
+
+* **Debian 13 (trixie)** and **root** access.
+* **Docker with the Compose plugin**, version 2.9.0 or newer. Debian's own packages are enough:
+
+  ```sh
+  sudo apt install docker.io docker-compose
+  ```
+
+  Docker's own packages work as well (<https://docs.docker.com/engine/install/debian>). The old
+  `docker-compose` v1 doesn't, and neither do the Compose releases 2.19.0, 2.25.0, 5.1.0 and 5.1.1,
+  which have bugs the installer can't work with. The installer checks this before it changes
+  anything.
+* **Internet access** to GitHub and to the container registries (Docker Hub, `ghcr.io`).
+* The install directory (default `/opt/mgw`) on the root file system.
+
+The installer installs the other tools it needs (`curl`, `jq`, `openssl`, ...) after asking you.
 
 ---
 
 ## Installing
 
-### Requirements
-
-* **OS:** Debian 13 (trixie).
-* **Privileges:** root.
-* **Must already be present:** Docker with the Compose plugin (`docker compose`): Debian's own
-  packages (`apt install docker.io docker-compose`) or Docker's
-  (<https://docs.docker.com/engine/install/debian>). The installer checks the plugin's version: 2.9.0
-  or newer, except 2.19.0, 2.25.0, 5.1.0 and 5.1.1, which have bugs it can't work with; Debian 13
-  has 2.26.1. docker-compose v1 isn't supported. `systemctl` is additionally required when the core
-  starts at boot (`autostart`).
-* **Installed automatically (after confirmation):** `curl`, `tar`, `gzip`, `jq`, `openssl`,
-  `gettext-base` (for `envsubst`) — plus `logrotate` if log rotation is enabled, `cron` if
-  automatic updates are, and `avahi-daemon` if mDNS advertisement is.
-* **Disk:** the install directory must be on the root file system: systemd reads the unit files
-  linked from there at boot.
-* **Network:** outbound HTTPS to GitHub (release binaries) and to the container registries
-  (Docker Hub, `ghcr.io`).
-
-### Interactive installation
-
-Download and unpack a release archive, then run the installer as root:
+Download and unpack a release, then run the installer:
 
 ```sh
 curl -LO https://github.com/SENERGY-Platform/mgw-core-installer/releases/download/<version>/mgw_core_installer_<version>.tar.gz
@@ -72,449 +55,276 @@ cd mgw_core_installer_<version>
 sudo ./setup.sh
 ```
 
-The installer asks whether to change the default settings (install directory, default
-`/opt/mgw`; core id; web UI user; database passwords; gateway port, default `8080`; the three
-subnets; the host-directory module repository), then whether the core starts at boot, log
-rotation, automatic updates, mDNS advertisement, beta releases, and whether to start the core
-right away. Anything left empty keeps its default; the core id and the passwords are generated.
+Take `<version>` from the [releases page](https://github.com/SENERGY-Platform/mgw-core-installer/releases),
+e.g. `v0.40.0`.
 
-Running `setup.sh` from a clone of this repository works as well. There is no release version
-to take, so the core is labelled `dev-<unix timestamp>`; automatic updates never touch such a
-core, a manual update moves it to the newest release.
+The installer asks a few questions. Pressing Enter takes the default, which is right for most
+gateways:
 
-### Non-interactive installation
+* whether to change the default settings (install directory, web UI user and passwords, gateway
+  port, network ranges). Passwords left empty are generated;
+* whether the core should start at boot, rotate its logs, update itself daily, and announce itself
+  in the local network;
+* whether to take beta releases, and whether to start the core right away.
 
-Pass a config file with `-c`:
+It checks everything before it changes anything. If something is in the way (a port in use, a
+network range that is taken, missing Docker), it stops and tells you what. If the install fails
+half way, it removes what it created.
+
+### Without questions
+
+To install without questions, e.g. from a script, put the settings into a file and pass it with
+`-c`. [`assets/setup.conf.example`](assets/setup.conf.example) is a starting point with every
+setting explained:
 
 ```sh
 sudo ./setup.sh -c /path/to/setup.conf
 ```
 
-[`assets/setup.conf.example`](assets/setup.conf.example) is a ready-to-edit starting point. The
-file has the format of the settings: `key=value`, one per line, the value taken literally (no
-quotes, no comment after a value). It is parsed, not sourced. A key left out keeps its default,
-an unknown key fails the install, and every value is checked before anything is changed.
-`skip_pkg_install_confirm=true` installs missing packages without asking, `start_core=true`
-starts the core at the end.
-
-The config files of the old installer (`config.suggestion.ini`, sourced as shell) don't work
-any more: see the [breaking changes](docs/design.md#breaking-changes-from-the-old-installer).
-
-### What the installer does
-
-1. Checks everything before it changes anything: the system (Debian 13), Docker and the version of
-   its Compose plugin, the settings, the install directory, and collisions with existing units,
-   volumes, networks, the port and the subnets.
-2. Installs the missing packages.
-3. Creates the core root `<install_dir>/<core_id>` and writes `state/settings`. From here on,
-   every object it creates (folders, units, volumes, networks, containers) is recorded in
-   `state/install` first. If the install fails, it removes exactly what it created; an install
-   that was killed is cleaned up by the next `setup.sh` or at the next boot.
-4. Builds the version folder: copies the release's assets, renders the configuration, downloads
-   the host binaries, creates the core's networks and volumes, pulls the images (an image already
-   on the host is used as it is) and creates the containers. The version folder belongs to root
-   and isn't writable by group or others, whoever owned the unpacked archive.
-5. Writes the secrets mount unit and the recovery unit, points `current` at the version and links
-   the units and the logrotate, cron and avahi files into `/etc`.
-6. Records the success and, if asked, starts the core.
-
-At the end it prints how to control the core and how to log in.
-
-### Resulting layout
-
-```
-/opt/mgw/<core_id>              the core root
-├── .update/, .restore/         working space of an update and of restore.sh while they run; a
-│                               failed restore keeps .restore/ for the next run
-├── v1_2_3/                     one folder per version (dots become underscores)
-│   ├── assets/                 the release's files, never modified
-│   ├── bin/                    the host binaries of this version
-│   ├── config/                 rendered from assets/templates
-│   └── ctrl.sh, update.sh, restore.sh, uninstall.sh   links into assets/scripts
-├── current -> v1_2_3           the active version, switched atomically by updates
-├── deployments/                module deployment data (shared with the module-manager)
-├── log/                        the logs of the host binaries and of the installer's scripts
-├── mounts/                     config fragments the core-manager writes (gateway, identity server)
-├── repositories/host_dir/      the host-directory module repository
-├── sockets/                    unix sockets of the host binaries
-└── state/
-    ├── settings                the settings set for this core (overriding the version's defaults)
-    ├── update, check           the last update and the last check for a release
-    ├── install, restore        the records of the install and of the last restore
-    ├── target_state            whether the core is meant to run
-    ├── images, attempts        the pulled core images, failures for the retry limit
-    ├── host-manager/           the host-manager's data
-    ├── pid                     only without autostart: the host binaries' processes
-    └── lock                    the core's lock
-/mnt/<core_name>/secrets        tmpfs, shared between the secret-manager and the modules
-```
-
-Everything outside the version folders survives updates. In `/etc`, the service units, the
-logrotate, cron and avahi files are links into `current/config`; the mount unit and the recovery
-unit are plain files the core owns.
-
 ### After the installation
 
-The web UI is reachable at `http://<host>:<gateway_port>/` — the root path redirects to
-`/core/web-ui`, which requires a login with `core_usr` and `core_usr_pw` (stored in
-`state/settings`). If mDNS advertisement is enabled, the core announces itself as
-`_snrgy-mgwcore._tcp` with the API, auth and discovery paths and the core id as TXT records.
+The installer prints where the core is installed, `/opt/mgw/<core id>`, and how to log in.
+
+* **Web UI:** `http://<gateway address>:8080/` (or the port you chose). Log in with the user
+  `core-user`.
+* **Password:** printed at the end of an interactive install. It is also stored with the core's
+  settings:
+
+  ```sh
+  sudo grep '^core_usr_pw=' /opt/mgw/<core id>/state/settings
+  ```
+
+**Keep a copy of `/opt/mgw/<core id>/state/settings`** in a safe place. It holds the passwords
+the core's data was created with; without it, a core whose folder is lost can't be restored.
 
 ---
 
-## Controlling the core: `ctrl.sh`
+## Everyday use
+
+Everything is done with `ctrl.sh` in the core's folder:
 
 ```sh
-sudo /opt/mgw/<core_id>/current/ctrl.sh <command>
+sudo /opt/mgw/<core id>/current/ctrl.sh <command>
 ```
 
 | Command | What it does |
 | --- | --- |
-| `start` | starts the core: the host binaries; the core-manager starts the containers |
-| `stop` | stops the core; the core-manager stops the containers first |
-| `restart` | stop, then start |
-| `ctr-recreate` | recreates the core's containers (a running core is stopped and started again) |
-| `settings list [-a]`, `settings get <key>` | shows the settings that can be changed; with `-a` also the fixed ones |
-| `settings set <key> <value>`, `settings reset <key>` | changes a setting and applies it, see [Settings](#settings) |
-| `status` | the core's state, its version, its last update and check, and who holds its lock |
+| `status` | shows the version, whether the core runs, the last update, and whether the core needs a repair |
+| `start`, `stop`, `restart` | starts, stops or restarts the core |
+| `settings list` | shows the settings you can change, see [Settings](#settings) |
+| `settings set <key> <value>` | changes a setting and applies it |
+| `settings reset <key>` | goes back to the default |
+| `ctr-recreate` | recreates the core's containers |
 
-`-y` answers every confirmation with yes. The changing commands take the core's lock, so they
-never run at the same time as an update. They don't repair anything: if the core needs repair
-(an interrupted update that couldn't be recovered, a failed restore), they refuse and name the
-`restore.sh` to run.
+A core you stopped stays stopped, also after an update. After a reboot it starts by itself if it
+was installed to start at boot (`autostart`).
 
-`start` and `stop` also record whether the core is meant to run: a core stopped on purpose stays
-stopped after an update. After a reboot, `autostart` decides.
+If a command answers *"the core needs repair"*, see [When something is wrong](#when-something-is-wrong).
 
 ---
 
 ## Settings
 
-The effective settings are the version's defaults (`assets/settings.defaults`) with
-`state/settings` on top. `state/settings` holds what was set for this core: the install's
-choices and generated values, and what was changed later with `ctrl.sh settings set`. Both files
-are `key=value` and parsed, never sourced. A new version may bring new settings with new
-defaults; an update adds a setting to `state/settings` only where the new default would change
-the behaviour of an existing core.
+Change settings with `ctrl.sh settings set`, never by editing files: `ctrl.sh` checks the value
+and applies it. `ctrl.sh settings list` shows the settings you can change; the ones marked "(set)"
+were changed for this core, the others have the default.
 
-Change settings with `ctrl.sh settings set`, not by editing `state/settings`: `ctrl.sh` checks a
-value and applies it (a comment at the top of the file says so). `ctrl.sh settings list` shows the
-settings that can be changed; "(set)" marks the ones set for this core, the others are the
-version's defaults. `ctrl.sh settings list -a` also shows the fixed ones, marked "fixed".
+| Setting | Default | What changing it does |
+| --- | --- | --- |
+| `gateway_port` | `8080` | the port of the web UI and the API. The core restarts its containers; the new port must be free. |
+| `autostart` | `true` | whether the core starts at boot and is restarted after a crash. The core is restarted. |
+| `cron` | `true` | whether the core updates itself daily. |
+| `allow_beta` | `false` | whether updates also take beta releases. Takes effect with the next update. |
+| `update_retry_limit` | `3` | how often an automatic update tries a release that failed, before it waits for the next one. |
+| `logrotate` | `true` | whether the logs are rotated (monthly once they exceed 10 MB, twelve are kept). |
+| `advertise` | `true` | whether the core announces itself in the local network (mDNS), so apps can find it. |
+| `secrets_size` | `100M` | the memory reserved for the modules' secrets. Takes effect at the next reboot. |
+| the `*_log_level` settings, `module_manager_http_access_log`, the startup delays | | how much the core's services log, and timings of the module-manager. The core restarts its containers. |
 
-What changing a setting with `ctrl.sh settings set` takes:
-
-| Settings | Effect |
-| --- | --- |
-| `allow_beta`, `update_retry_limit` | stored, effective with the next update |
-| the log levels, `module_manager_http_access_log`, the startup delays | the containers are recreated |
-| `gateway_port` | the new port must be free; the containers are recreated |
-| `logrotate`, `cron`, `advertise` | the package is installed if missing, the file in `/etc` is linked or removed |
-| `secrets_size` | the mount unit is rewritten; effective at the next reboot |
-| `autostart` | switches between systemd services and detached processes; the core is stopped and started again |
-| `core_id`, `core_name`, `stack_name`, the passwords, `core_usr`, the subnets, `host_dir_repository_path` | refused: they are part of the existing volumes, networks, databases and containers |
-
-`ctrl.sh settings reset <key>` goes back to the version's default; only the first two rows
-follow the defaults, the others keep the value the install wrote.
+Some settings are fixed at the install and can't be changed later, because the core's data and
+networks depend on them: the core id and name, the passwords and the web UI user, the network
+ranges and the module repository folder. `ctrl.sh settings list -a` shows them as well, marked "fixed".
 
 ---
 
-## Updating
+## Updates
 
-Updates come from the GitHub releases of this repository. Tags follow semantic versioning:
-`vX.Y.Z`, `vX.Y.Z-beta.N`, `vX.Y.Z-alpha.N` (older tags have the form `vX.Y.Z-betaN`).
+### Automatic updates
 
-### Automatic and manual updates
+With `cron` on (the default), the core checks for a new release once a day and updates itself. It
+takes regular releases, and beta releases if `allow_beta` is on. It never takes an alpha release.
 
-With `cron=true`, `/etc/cron.daily/<core_name>_update` runs `current/update.sh -a` once a day; its
-output goes to the [installer's log](#logs). By hand:
-
-```sh
-sudo /opt/mgw/<core_id>/current/update.sh
-```
-
-An automatic run skips a version that failed `update_retry_limit` times (default 3) and never
-updates a `dev-` version. A manual run always tries, and resets the count.
-
-### Manual update from a downloaded release
-
-To update to a specific release, e.g. a beta without `allow_beta` or an alpha, which `update.sh`
-never picks by itself, unpack its archive anywhere and run its `update.sh` with the core root:
+To update right away, run:
 
 ```sh
-sudo ./update.sh -path=/opt/mgw/<core_id>
+sudo /opt/mgw/<core id>/current/update.sh
 ```
 
-It works like any update, with the same rollback; only the version comes from the archive instead
-of GitHub. The host binaries are still downloaded, and the images that aren't on the host yet are
-pulled. The archive's version must be newer
-than the running one: the same version is left as it is (`restore.sh` rebuilds it), an older one is
-refused (`restore.sh -downgrade` installs it, see [Recover and restore](#recover-and-restore)). The
-same command migrates an installation of the old installer, given its install directory (see
-[Migrating](#migrating-an-installation-of-the-old-installer)).
+### Installing a specific release
 
-### What an update does, and what happens when it fails
+To install a particular release, e.g. a beta or an alpha, download and unpack it as for the
+install, then run its `update.sh` with the core's folder:
 
-1. The running version (stage one) checks for a newer release, downloads it and copies it into
-   a new version folder `vX_Y_Z_tmp`, then hands over to the new version's `update.sh`.
-2. The new version (stage two) prepares itself while the old core keeps running: renders its
-   configuration, downloads its host binaries, pulls its images, creates its containers. A
-   failure here removes what it created; the old core never noticed.
-3. It stops the old core and points `current` at the new version. A failure here rolls back to
-   the old version, which is started again if it was running.
-4. It starts the new core, if the old one was meant to run. Once the first host binary of the new
-   version has started, there is no rollback any more: it may have migrated data the old version
-   can't read. A failure from here on is recorded and the new version stays.
-5. On success it removes the old version folder, its containers and the images no longer used.
-   The volumes, the settings and everything outside the version folders stay.
+```sh
+sudo ./update.sh -path=/opt/mgw/<core id>
+```
 
-A failed rollback, which should never happen, stops everything and points to `restore.sh`. An
-update that was interrupted (power loss, a killed process) is completed or undone automatically:
-by the recovery unit at the next boot, or by the next `update.sh`, before it looks for a release.
+This only goes forward: an older release is refused (see [When something is wrong](#when-something-is-wrong)
+to go back).
 
-### Beta releases
+### If an update fails
 
-With `allow_beta=true` (`ctrl.sh settings set allow_beta true`) updates also take beta releases.
-Alpha releases are never taken by `update.sh` from GitHub, also not by a manual run: an alpha is
-installed on purpose from its archive, with `setup.sh` or `update.sh -path=` (see
-[Manual update from a downloaded release](#manual-update-from-a-downloaded-release)). A core on an
-alpha updates to newer releases as usual.
+An update never leaves you with a half-installed core:
 
-### The result of an update
+* Until the new version starts, the update can be undone completely. If it fails up to that point,
+  the core goes back to the version it had and keeps running as before.
+* Once the new version has started, it stays: it may already have converted data that the old
+  version can't read. A failure from then on is recorded, and the new version keeps running as far
+  as it can.
+* If the power fails or the update is killed, the core finishes or undoes the update by itself:
+  at the next boot (if it starts at boot, `autostart`), or with the next update.
 
-`ctrl.sh status` shows the last update and the last check. The details are in
-`state/update` (the update: versions, phase, result, whether it was rolled back or interrupted,
-the failed step, warnings) and `state/check` (the last look for a release). The core-manager
-reports both through its health API. A record keeps at most 20 warnings of at most 200 characters
-and counts the rest (`warnings_omitted`); the installer's log (`log/core_installer.log`, in the web
-UI as `core-installer`) has every warning in full.
+`ctrl.sh status` shows how the last update went ("last update: ..."), with warnings if there were
+any. A gateway connected to the platform reports it there as well. An automatic update tries a release that failed
+up to three times (`update_retry_limit`), then waits for the next release. Running `update.sh` by
+hand always tries again.
 
 ---
 
-## Recover and restore
+## When something is wrong
 
-Both repair a core, but they react to different things.
-
-* **Recover** (`assets/scripts/recover.sh`, internal) finishes an interrupted operation. It only
-  acts if a record says an install or update was interrupted, and does exactly what that
-  operation's own error handling would have done at that point: interrupted while preparing, the
-  half-built version is removed; while switching, it rolls back to the previous version; while
-  starting, the new version stays; an unfinished install is removed completely. It runs by itself
-  (the recovery unit at boot, `update.sh` before it updates), needs no network, and does nothing
-  if nothing was interrupted.
-* **Restore** (`restore.sh`) repairs a broken core, whatever happened. It doesn't ask what went
-  wrong: it rebuilds one version onto the core's existing data (the volumes and
-  `state/settings`). It needs downloads and is started by a person.
-
-Recover is the cheap first attempt, restore the step after it. `restore.sh` is the one repair
-command to run; it tries the recovery first and only rebuilds if that isn't enough.
+**1. Check the status:**
 
 ```sh
-sudo /opt/mgw/<core_id>/current/restore.sh               # rebuild the current version
-sudo ./restore.sh -path=/opt/mgw/<core_id>               # from an unpacked release archive: its version
+sudo /opt/mgw/<core id>/current/ctrl.sh status
 ```
+
+If it says *"the core needs repair"*, it names the command to run, usually:
+
+```sh
+sudo /opt/mgw/<core id>/current/restore.sh
+```
+
+This happens only if an update or a repair went wrong in a way the core couldn't undo by itself.
+Until the repair, `ctrl.sh` refuses commands that change the core.
+
+**2. Repair with `restore.sh`:** it rebuilds the core's current version and keeps all its data:
+the modules and their data, the users, the settings. It first checks whether an interrupted update
+can simply be finished; only if that's not enough, it rebuilds. It downloads what it needs and asks
+before it starts. Use it whenever the core is broken, whatever the cause.
 
 | Option | Meaning |
 | --- | --- |
-| `-y` | answer yes to the confirmation |
-| `-start` | start the core afterwards, whatever its target state says |
-| `-downgrade` | allow restoring a version older than the one the core ran |
-| `-s=<file>` | a copy of `state/settings`, for a core root that is lost while the volumes survived |
+| `-y` | don't ask, just do it |
+| `-start` | start the core afterwards |
+| `-downgrade` | allow going back to an older version (see below) |
+| `-s=<file>` | use a copy of the settings file, if the core's folder is lost (see below) |
 
-Restore reuses every object of the core that exists and recreates missing ones; it never removes
-data. A volume that is missing is created empty and named in the output and in `state/restore`:
-its data is lost. Without `state/settings` (or a copy with `-s`) a core can't be restored: the
-data in the volumes only works with the passwords it was created with.
+To restore a particular version, run `restore.sh` from its unpacked release archive:
+
+```sh
+sudo ./restore.sh -path=/opt/mgw/<core id>
+```
+
+**Going back to an older version** works the same way, with `-downgrade`. Be careful: a newer
+version may have converted data that the older one can't read.
+
+**If the core's folder is lost** but Docker still has its data, restore from a release archive
+with your copy of the settings file:
+
+```sh
+sudo ./restore.sh -path=/opt/mgw/<core id> -s=/path/to/copy/of/settings
+```
+
+Without that file the core can't be restored: its data only works with the passwords it was
+created with. If some of the core's data is missing, the restore says so: that part starts empty.
 
 ---
 
 ## Logs
 
-Everything is in `<core root>/log`:
+All logs are in `/opt/mgw/<core id>/log`:
 
-| File | Written by |
-| --- | --- |
-| `core_installer.log` | the installer's scripts: `setup.sh` (from the moment the core root exists), `update.sh` (both stages, also from an archive), the migration, the recovery, `restore.sh`, and `ctrl.sh` with a changing command. Every line with the time (UTC), the script and its process id, e.g. `2026-11-12T13:06:48Z update.sh[1234]: preparing v0.40.0 ...`. The output still goes to the terminal as well. |
-| `ce_wrapper.log`, `c_manager.log`, `h_manager.log` | the host binaries |
-| `*_out.log` | without `autostart`: what the host binaries print outside their own log |
+* `core_installer.log`: what the installer did: installs, updates, repairs and changes made with
+  `ctrl.sh`, each line with its time (UTC). This is the first place to look when an update failed.
+  It also has every warning in full.
+* `ce_wrapper.log`, `c_manager.log`, `h_manager.log`: the core's own services.
 
-The core-manager serves all of them through its log API; the installer's log appears there as
-`core-installer`. With
-`logrotate=true`, they are rotated monthly once they exceed 10 MB, twelve are kept. The recovery
-unit at boot also writes to the journal (`journalctl -u <core_name>-recover.service`). The
-uninstall removes the log folder with the core; its own output only goes to the terminal. The
-interactive install's password is printed to the terminal only, never into the log.
+The core also offers these logs through its API, where the installer's log is called
+`core-installer`. With `logrotate` on, old logs are rotated and compressed.
 
 ---
 
 ## Uninstalling
 
 ```sh
-sudo /opt/mgw/<core_id>/current/uninstall.sh [-y]
-sudo ./uninstall.sh -path=/opt/mgw/<core_id> [-y]        # from an unpacked release archive
+sudo /opt/mgw/<core id>/current/uninstall.sh
 ```
 
-Removes everything of the core: its containers and those of the deployed modules, its images,
-volumes and networks, the units and files in `/etc`, the secrets tmpfs and the core root. There
-are no options to keep data. It works on a broken or half-installed core as well; whatever it
-can't remove is listed at the end, and the exit code is 1. An image that a container outside the
-core still uses (e.g. another core on the same host) is kept and named; that is no failure.
+This removes the core completely: its modules and **all their data**, the users, the containers,
+images, settings and logs. There is no undo. It asks first (`-y` skips the question). It also works
+on a broken core; whatever it can't remove, it lists at the end.
 
-A host-directory module repository (`host_dir_repository_path`) outside the core root is not
-removed: the installation was pointed at it, and other cores may use it too. This also applies to
-installations migrated from the old installer that had their own install directory: the old
-installer still put their repository in `/opt/mgw/repositories/host_dir`, and the migration keeps
-it there.
+A module repository folder outside the core's folder is kept, and so is a Docker image another
+container on the host still uses.
 
 ---
 
-## Migrating an installation of the old installer
+## Moving from the old installer
 
-Installations of the old installer (one flat directory, usually `/opt/mgw`, with `.settings`,
-`ctrl.sh`, `bin/` and `container/`) are migrated by their next update: the old `update.sh`,
-by cron or by hand, downloads the new release and hands over to it. Nothing has to be done by
-hand. To migrate to a specific release instead, e.g. an alpha or a beta, unpack its archive and run
-`sudo ./update.sh -path=<install dir>` (e.g. `-path=/opt/mgw`). The install directory becomes the
-core root (there is no `<core_id>` level), the volumes, the module deployments and the settings are
-taken over.
+Gateways installed with the old installer (one folder, usually `/opt/mgw`, with `ctrl.sh` and
+`.settings` in it) **move to the new installer by themselves** with their next daily update. Their
+modules, data and settings are kept, and the core stays in its folder (`/opt/mgw`). There is no way
+back to the old installer.
 
-* **Minimum version:** installations from `v0.30.0-alpha1` on are migrated. An older one is
-  refused without any change; update it first to an old-layout release from `v0.30.0` on:
-  download that release's archive, unpack it and run its `assets/scripts/update.sh
-  -path=<install dir>`. The next update migrates it.
-* **Debian 13:** the old installer also ran on older systems; the migration refuses anything but
-  Debian 13 before anything is downloaded or changed, naming the system. Upgrade the gateway to
-  Debian 13 first (the old core keeps running on it), the next update migrates.
-* **Compose:** the old installer also worked with docker-compose v1 or an older plugin, the new
-  layout needs the plugin as under [Requirements](#requirements). Without it the migration is
-  refused before anything is downloaded or changed; install or update the plugin, the next update
-  migrates. Compose 2.8.0 named a project's volumes `<stack_name>-<volume>` instead of
-  `<stack_name>_<volume>`; an installation whose volumes exist only under such names is refused,
-  as the new layout would start with empty volumes. With the old core stopped
-  (`<install dir>/ctrl.sh stop`), copy each one into a volume with the new name, update again and
-  start the core (`<core root>/current/ctrl.sh start`; the migration keeps the stopped state):
+**Before that, make sure the gateway runs Debian 13 with Docker and the Compose plugin 2.9.0 or
+newer** (see [Requirements](#requirements)). When you upgrade a gateway to Debian 13, check
+afterwards that Docker is still installed: if Docker came only with the old `docker-compose`
+package, the upgrade can remove it.
 
-  ```sh
-  docker volume create <stack_name>_<volume>
-  docker run --rm -v <stack_name>-<volume>:/from -v <stack_name>_<volume>:/to alpine cp -a /from/. /to/
-  ```
-* **Missing volumes:** a volume the old installation doesn't have (e.g. a setup that stopped half
-  way) is created empty; the migration names it as a warning, shown by `current/ctrl.sh status`.
-* **Settings that don't fit:** the new layout derives its paths from the core root and uses the
-  standard locations in `/etc`. An installation whose `.settings` points elsewhere is refused
-  before anything is changed, naming the setting.
-* **Where to look:** a refusal or a failure is written to the old `.update_status` as well, so
-  the old core-manager reports it. After the migration, `current/ctrl.sh status` shows it.
-* **When it fails:** a failure before the new core starts rolls back to the old installation,
-  which is started again with its own `ctrl.sh`; the next update tries again (the retry limit
-  applies). An interrupted migration is recovered by the next update or at boot.
-* **Known gap:** if the migration fails or is interrupted after the first host binary of the new
-  version has started, the new layout stays (no rollback, as for any update) and the old
-  installation's leftovers are never removed: its files (`bin/`, `container/`, `scripts/`, the old
-  scripts and dot files), its stopped containers and its images. They take disk space, nothing
-  else; `uninstall.sh` removes them with the core.
+If a gateway isn't ready, it isn't moved: it keeps its old core, running as before, and tries
+again every day. The reason is shown in the old core's update status and reported to the platform.
 
-What changed for users and scripts compared to the old installer is listed in the
+| Reason shown | What to do |
+| --- | --- |
+| Debian 13 is required | upgrade the gateway to Debian 13 |
+| the docker compose plugin is required / too old / has a bug | install or update the Compose plugin |
+| older than v0.30.0-alpha1 | update the old core once by hand to a release from v0.30.0 on: unpack that release and run its `assets/scripts/update.sh -path=/opt/mgw` |
+| the settings don't fit the new layout | the old core was set up with folders outside its install folder (the message names the setting); such a gateway can't be moved automatically |
+| volumes named `<stack_name>-<volume>` | see below |
+
+**Volumes created by Compose 2.8.0.** That release named the core's data volumes differently. The
+move is refused so that the new core doesn't start with empty data. Stop the old core
+(`/opt/mgw/ctrl.sh stop`), copy each volume the message names into one with the new name, run the
+update again and start the core:
+
+```sh
+docker volume create <stack_name>_<volume>
+docker run --rm -v <stack_name>-<volume>:/from -v <stack_name>_<volume>:/to alpine cp -a /from/. /to/
+sudo /opt/mgw/update.sh              # the old core's update, moves it
+sudo /opt/mgw/current/ctrl.sh start  # the moved core stays stopped, as the old one was
+```
+
+To move a gateway right away, or to a particular release, unpack the release and run
+`sudo ./update.sh -path=/opt/mgw`.
+
+After the move, control the core with `/opt/mgw/current/ctrl.sh`; `ctrl.sh status` shows how the
+move went. If the move fails before the new core starts, the old core is started again and the
+next daily update tries once more.
+
+What changed compared to the old installer (commands, settings, files) is listed in the
 [breaking changes](docs/design.md#breaking-changes-from-the-old-installer).
 
 ---
 
-## Services in the core
-
-The core is split into two layers. **Host binaries** need direct access to the host (Docker
-socket, network interfaces, hostname, systemd) and therefore run as plain processes,
-managed by systemd or by `ctrl.sh`. They expose their APIs on unix sockets in
-`<core root>/sockets`. **Containers** run inside the Compose stack and talk to each other
-over Docker networks. Everything is tied together by the nginx gateway, which is the only
-component reachable from outside and the only bridge between the containers and the unix
-sockets of the host binaries.
-
-### Host binaries
-
-| Service | Repository | Socket | Purpose |
-| --- | --- | --- | --- |
-| **container-engine-wrapper** | `SENERGY-Platform/mgw-container-engine-wrapper` | `ce_wrapper.sock` | Abstracts the container engine. It is the only component with access to `/var/run/docker.sock` and creates, starts, stops and inspects module containers, networks and volumes on behalf of the module-manager. Also sets the container log driver and log limits. |
-| **host-manager** | `SENERGY-Platform/mgw-host-manager` | `h_manager.sock` | Provides information about the host itself — network interfaces, addresses, hostname and registered host applications — to modules and to the core. A blacklist keeps the core's own subnets, the Docker socket and blacklisted interfaces out of the data handed to modules. Its data lives in `state/host-manager`. |
-| **core-manager** | `SENERGY-Platform/mgw-core-manager` | `c_manager.sock` | Manages the core itself: it starts the core containers when it starts and stops them when it stops, restarts crashed ones, rewrites the gateway's public endpoint fragment (`mounts/nginx/dep_endpoints.location`) and the dynamic identity-server config (`mounts/kratos/config.json`), serves the log files of the host binaries, and reports the state of updates and checks through its health API. |
-
-With `autostart=true` they run as systemd services `<core_name>-ce-wrapper`,
-`<core_name>-host-manager` and `<core_name>-core-manager`, restarted after a crash. They run after
-the recovery unit `<core_name>-recover.service`, which completes or undoes an interrupted install
-or update at boot, and the core-manager and host-manager are `PartOf=` the ce-wrapper unit,
-which is `PartOf=` `docker.service`. Without autostart, `ctrl.sh start` starts them as detached
-processes, recorded in `state/pid`. A mount unit provides the tmpfs at
-`/mnt/<core_name>/secrets` (`secrets_size`, default 100M).
-
-### Containers
-
-| Service | Image | Networks | Purpose |
-| --- | --- | --- | --- |
-| **nginx** (gateway) | `nginx` | gateway, core, module (aliased `core-api`) | The single entry point. Publishes the public API on `gateway_port` (TCP and UDP) and an internal API on port 80. Terminates authentication via `auth_request` against the identity server, routes to all core services and — through the unix sockets it mounts — to the host binaries. Serves module endpoints under `/endpoints` from the fragment maintained by the core-manager. |
-| **mysqldb** | `mysql` | core (aliased `core-db`) | Shared database. The init script creates the `module_manager`, `secret_manager` and `kratos` schemas and grants them to `core_user`. |
-| **kratos** (identity-server) | `oryd/kratos` | core (aliased `identity-server`) | Ory Kratos. Owns human and machine identities, login/logout self-service flows and session validation. Its static config ships with the core, a second config file is written dynamically by the core-manager. |
-| **kratos-migrate** | `oryd/kratos` | core | One-shot job that applies the Kratos SQL migrations before the identity server starts. |
-| **auth-service** | `ghcr.io/senergy-platform/mgw-auth-service` | core | Sits in front of the identity server's admin API. Handles user management and the device pairing flow (`/pairing/request` is the one public endpoint that needs no session). Authenticates against Kratos with the generated `core-user` credentials. |
-| **module-manager-migration** | `ghcr.io/senergy-platform/mgw-module-manager-migration` | core | One-shot job that migrates the module-manager's data before it starts. |
-| **module-manager** | `ghcr.io/senergy-platform/mgw-module-manager` | core | The heart of the core: manages module repositories (GitHub and a host directory), module installation, deployments and auxiliary deployments. Translates a module definition into containers, volumes and secrets by calling the ce-wrapper, core-manager, host-manager and secret-manager, and serves the discovery API. |
-| **secret-manager** | `ghcr.io/senergy-platform/mgw-secret-manager` | core | Stores secrets (certificates, credentials) in the database, keyed by a master key on its own volume, and materialises them into the shared secrets tmpfs so that module containers can mount them as files. |
-| **web-ui** | `ghcr.io/senergy-platform/mgw-gui` | module | The browser UI. It is deliberately placed on the module network and reachable only through the gateway at `/core/web-ui`, so every request passes the session check. |
-
-Image tags and binary versions are pinned per release in [`assets/options`](assets/options).
-The containers belong to the compose project `<core_name>_<version folder>`, so each version has
-containers of its own, while the volumes (`<stack_name>_<name>`) and networks are shared by all
-versions and survive updates. The containers have no restart policy of their own: the
-core-manager owns their lifecycle. Log levels and a few module-manager timings are
-[settings](#settings).
-
-### Networks and how the services interact
-
-Three Docker networks separate the traffic:
-
-| Network | Name | Size | Members |
-| --- | --- | --- | --- |
-| gateway | `<core_name>-0-gateway-net` | `/28` | nginx only — the outward-facing side. |
-| core | `<core_name>-1-core-net` | `/28` | All core containers plus nginx. |
-| module | `<core_name>-2-module-net` | `/16` | Module containers, the web UI and nginx. |
-
-The gateway enforces the boundary between them. On the **internal API** (port 80) the
-paths `/c-manager`, `/ce-wrapper` and `/h-manager` are restricted to the core subnet, while
-`/module-manager` and `/host-manager` are restricted to the module subnet and are proxied to
-the `/restricted` prefix of the respective service — modules therefore only ever see the
-reduced API surface. `/core-health` (`GET` only, also from the module subnet) is the
-core-manager's health report, e.g. for a module that reports the gateway's health to the cloud;
-`/core-manager/health` is the same, kept for modules written for older installers. On the
-**public API** the module subnet is denied
-outright, and everything under `/core/api`, `/core/web-ui`, `/core/swagger` and
-`/endpoints` requires a valid Kratos session; unauthenticated browsers are redirected to
-`/core/web-ui/login`.
-
-The typical flows are:
-
-* **User login** — the browser hits the public API, nginx sends the request to
-  `/core/auth/login`, which is proxied to the identity server's self-service flow. On
-  success Kratos sets a session cookie; every later request is validated by nginx through
-  an internal `auth_request` to `identity-server/sessions/whoami`.
-* **Deploying a module** — the web UI (or an external client) calls
-  `/core/api/module-manager`. The module-manager reads the module from a repository, asks
-  the **secret-manager** to provide the required secrets in the shared tmpfs, asks the
-  **host-manager** for host resources the module requested, and then instructs the
-  **ce-wrapper** to create the volumes and containers.
-* **Publishing a module endpoint** — when a deployment exposes an endpoint, the
-  **core-manager** writes it into `mounts/nginx/dep_endpoints.location` and restarts the
-  gateway through the ce-wrapper. The endpoint then appears under `/endpoints` on the
-  public API, behind the same session check.
-* **A module calling the core** — module containers reach only `core-api` on the module
-  network and can use `/module-manager` and `/host-manager`, both limited to the
-  restricted API surface, and read `/core-health`.
-* **Persistence** — the module-manager, secret-manager and Kratos share the `mysqldb`
-  instance with one schema each; everything else lives in named volumes or in the secrets
-  tmpfs (which is intentionally volatile and is repopulated by the secret-manager).
-
 ## Further documentation
 
-* [docs/design.md](docs/design.md) — how the installer works and why: the layout, the state
-  files, the update phases and their guarantees, recovery, restore, the migration, and the
-  breaking changes from the old installer.
-* [docs/adding-a-setting.md](docs/adding-a-setting.md) — what a new setting has to touch.
-* [docs/testing.md](docs/testing.md) — the unit and VM tests, and how to test the release
-  workflow.
+For developers:
+
+* [docs/architecture.md](docs/architecture.md): the services of a core, its networks and the
+  gateway's routes, and how modules reach the core.
+* [docs/design.md](docs/design.md): how the installer works and why: the layout on disk, the
+  update and its guarantees, recovery and restore, the migration, releases, and the breaking
+  changes from the old installer.
+* [docs/adding-a-setting.md](docs/adding-a-setting.md): what a new setting has to touch.
+* [docs/testing.md](docs/testing.md): the unit and VM tests, and how to test the release workflow.

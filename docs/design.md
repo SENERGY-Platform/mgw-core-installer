@@ -48,6 +48,59 @@ writes, or what it does when something fails. Not for adding a setting (see
 - **`stack_name`** exists only for compatibility: the old installer named the volumes after it,
   and docker volumes can't be renamed. It equals `core_name` on every new installation.
 
+A core root after the install:
+
+```
+/opt/mgw/<core_id>              the core root
+├── .update/, .restore/         working space of an update and of restore.sh while they run; a
+│                               failed restore keeps .restore/ for the next run
+├── v1_2_3/                     one folder per version (dots become underscores)
+│   ├── assets/                 the release's files, never modified
+│   ├── bin/                    the host binaries of this version
+│   ├── config/                 rendered from assets/templates
+│   └── ctrl.sh, update.sh, restore.sh, uninstall.sh   links into assets/scripts
+├── current -> v1_2_3           the active version, switched atomically by updates
+├── deployments/                module deployment data (shared with the module-manager)
+├── log/                        the logs of the host binaries and of the installer's scripts
+├── mounts/                     config fragments the core-manager writes (gateway, identity server)
+├── repositories/host_dir/      the host-directory module repository
+├── sockets/                    unix sockets of the host binaries
+└── state/
+    ├── settings                the settings set for this core (overriding the version's defaults)
+    ├── update, check           the last update and the last check for a release
+    ├── install, restore        the records of the install and of the last restore
+    ├── target_state            whether the core is meant to run
+    ├── images, attempts        the pulled core images, failures for the retry limit
+    ├── host-manager/           the host-manager's data
+    ├── pid                     only without autostart: the host binaries' processes
+    └── lock                    the core's lock
+/mnt/<core_name>/secrets        tmpfs, shared between the secret-manager and the modules
+```
+
+Everything outside the version folders survives updates. Version folders, and the `.restore` copy,
+belong to root and aren't writable by group or others, whoever owned the release archive they came
+from (`versionSecure`).
+
+## The install
+
+`setup.sh`, from a release archive or a clone (then the version is `dev-<unix timestamp>`):
+
+1. Checks everything before it changes anything: the system (Debian 13), Docker and the version of
+   its Compose plugin, the settings, the install directory, and collisions with existing units,
+   volumes, networks, the port and the subnets.
+2. Installs the missing packages.
+3. Creates the core root `<install_dir>/<core_id>` and writes `state/settings`. From here on,
+   every object it creates (folders, units, volumes, networks, containers) is recorded in
+   `state/install` first. If the install fails, it removes exactly what it created; an install
+   that was killed is cleaned up by the next `setup.sh` or at the next boot.
+4. Builds the version folder: copies the release's assets, renders the configuration, downloads
+   the host binaries, creates the core's networks and volumes, pulls the images (an image already
+   on the host is used as it is) and creates the containers. The version folder belongs to root
+   and isn't writable by group or others, whoever owned the unpacked archive.
+5. Writes the secrets mount unit and the recovery unit, points `current` at the version and links
+   the units and the logrotate, cron and avahi files into `/etc`.
+6. Records the success and, if asked, starts the core.
+
 ## State files (`state/`)
 
 | File | Written by | Content |

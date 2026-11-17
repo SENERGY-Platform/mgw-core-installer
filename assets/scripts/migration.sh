@@ -258,7 +258,7 @@ then
   then
     say "these volumes were created by docker compose 2.8.0 under names the new layout doesn't use:" >&2
     printf '%s\n' "$migration_hyphen" | sed 's/^/  /' >&2
-    refuse "the volumes are named <stack_name>-<volume>, the new layout needs <stack_name>_<volume> (e.g. $(printf '%s\n' "$migration_hyphen" | head -n 1)); copy their data into volumes with the new names, see the README (Migrating, Compose)"
+    refuse "the volumes are named <stack_name>-<volume>, the new layout needs <stack_name>_<volume> (e.g. $(printf '%s\n' "$migration_hyphen" | head -n 1)); copy their data into volumes with the new names, see the README (Moving from the old installer)"
   fi
 
   # 4. the first changes: state/, the lock, the record, the copy
