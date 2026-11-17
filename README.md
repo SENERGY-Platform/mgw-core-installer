@@ -478,9 +478,12 @@ Three Docker networks separate the traffic:
 
 The gateway enforces the boundary between them. On the **internal API** (port 80) the
 paths `/c-manager`, `/ce-wrapper` and `/h-manager` are restricted to the core subnet, while
-`/module-manager`, `/host-manager` and `/host-info` are restricted to the module subnet and
-are proxied to the `/restricted` prefix of the respective service — modules therefore only
-ever see the reduced API surface. On the **public API** the module subnet is denied
+`/module-manager` and `/host-manager` are restricted to the module subnet and are proxied to
+the `/restricted` prefix of the respective service — modules therefore only ever see the
+reduced API surface. `/core-health` (`GET` only, also from the module subnet) is the
+core-manager's health report, e.g. for a module that reports the gateway's health to the cloud;
+`/core-manager/health` is the same, kept for modules written for older installers. On the
+**public API** the module subnet is denied
 outright, and everything under `/core/api`, `/core/web-ui`, `/core/swagger` and
 `/endpoints` requires a valid Kratos session; unauthenticated browsers are redirected to
 `/core/web-ui/login`.
@@ -501,8 +504,8 @@ The typical flows are:
   gateway through the ce-wrapper. The endpoint then appears under `/endpoints` on the
   public API, behind the same session check.
 * **A module calling the core** — module containers reach only `core-api` on the module
-  network and can use `/module-manager`, `/host-manager` and `/host-info`, all limited to
-  the restricted API surface.
+  network and can use `/module-manager` and `/host-manager`, both limited to the
+  restricted API surface, and read `/core-health`.
 * **Persistence** — the module-manager, secret-manager and Kratos share the `mysqldb`
   instance with one schema each; everything else lives in named volumes or in the secrets
   tmpfs (which is intentionally volatile and is repopulated by the secret-manager).

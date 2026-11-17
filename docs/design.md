@@ -229,5 +229,7 @@ v0.33.0-beta2). Installations are migrated automatically; these are the differen
 | container names `<core_name>-<service>`, compose project `<stack_name>` | `<core_name>-<version folder>-<service>`, project `<core_name>_<version folder>` |
 | the host-manager's data in `bin/SENERGY-Platform/mgw-host-manager/` | `state/host-manager/` |
 | tags `vX.Y.Z-betaN` | `vX.Y.Z-beta.N` (SemVer); both are understood |
+| the internal API path `/host-info` for modules | gone: modules read the host information at `/host-manager/host-info` |
+| the core-manager's health for modules at `/core-manager/health` | `/core-health`; the old path still works |
 | Debian or Ubuntu, any release | Debian 13 only; setup and the migration refuse other systems before anything changes, updates don't check |
 | docker-compose v1 or any Compose plugin | the Compose plugin 2.9.0 or newer (not 2.19.0, 2.25.0, 5.1.0, 5.1.1); checked by setup, migration and update before anything changes |
