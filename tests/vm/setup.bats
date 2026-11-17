@@ -104,6 +104,30 @@ waitForContainers() {
   grep -Eq '^[0-9T:-]+Z setup\.sh\[[0-9]+\]: installation of dev-[0-9]+ successful' "$root/log/core_installer.log"
 }
 
+# prints the HTTP status of the gateway path $2, asked from a container on the network $1 (busybox
+# wget of the nginx image the core already pulled); $3 "post" sends a POST
+gatewayStatus() {
+  local post=""
+  [ "${3:-}" = "post" ] && post="--post-data=x"
+  docker run --rm --network "$1" nginx:1.31.1-alpine wget -S $post -O /dev/null "http://core-api$2" 2>&1 |
+    grep -o 'HTTP/1.1 [0-9]*' | tail -n 1 | cut -d' ' -f2
+}
+
+@test "core A: the internal API for modules: /core-health, the deprecated health route, no /host-info" {
+  local m="mgw_$A-2-module-net" c="mgw_$A-1-core-net" body
+  # the core-manager's health, for modules at both routes, GET only
+  body="$(docker run --rm --network "$m" nginx:1.31.1-alpine wget -q -O- http://core-api/core-health)"
+  echo "$body"
+  printf '%s' "$body" | jq -e '.state == 1 and (.services | length) > 0' > /dev/null
+  [ "$(gatewayStatus "$m" /core-manager/health)" = "200" ]
+  [ "$(gatewayStatus "$m" /core-health post)" = "403" ]
+  # not from the core network
+  [ "$(gatewayStatus "$c" /core-health)" = "403" ]
+  # the host information only through the host-manager's restricted API
+  [ "$(gatewayStatus "$m" /host-info)" = "404" ]
+  [ "$(gatewayStatus "$m" /host-manager/host-info)" = "200" ]
+}
+
 @test "core B: interactive, without systemd, in the same install directory" {
   answers=(y y "$DIR" "$B" "" "" "" "$PB" "10.$NB.0.0" "10.$((NB + 120)).0.0" "10.$NB.1.0" "" n n n n n y)
   run sh -c "printf '%s\n' \"\$@\" | '$REPO/setup.sh'" sh "${answers[@]}"
