@@ -5,8 +5,9 @@ name: Release
 # every volume a core image declares is mounted.
 #
 # Tags follow SemVer: vX.Y.Z, vX.Y.Z-beta.N, vX.Y.Z-alpha.N; alphas and betas are published as
-# pre-releases. To test this workflow, push to a fork and tag there: gateways only ask this
-# repository for releases (docs/testing.md).
+# pre-releases without a description, a release vX.Y.Z as a regular release whose description is
+# the message of the tagged commit. To test this workflow, push to a fork and tag there: gateways
+# only ask this repository for releases (docs/testing.md).
 
 on:
   push:
@@ -40,8 +41,13 @@ jobs:
           .github/check_volumes.sh
       - name: Build the archive
         run: .github/build_release.sh "$GITHUB_REF_NAME" dist
+      # a regular release: the message of the tagged commit (GITHUB_SHA) becomes its description
+      - name: Release notes
+        if: ${{ !contains(github.ref_name, '-') }}
+        run: git log -1 --format=%B "$GITHUB_SHA" > release-notes.md
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/mgw_core_installer_${{ github.ref_name }}.tar.gz
           prerelease: ${{ contains(github.ref_name, '-') }}
+          body_path: ${{ !contains(github.ref_name, '-') && 'release-notes.md' || '' }}

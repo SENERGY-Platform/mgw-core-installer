@@ -201,7 +201,9 @@ over), the links `update.sh`, `restore.sh` and `uninstall.sh` in the archive roo
 `mgw_core_installer_<version>.tar.gz` (the old stage one looks for `<version>.tar.gz`). Before it
 publishes, the workflow checks that every volume a core image declares is mounted
 (`.github/check_volumes.sh`): an unmounted declared path gets an anonymous volume, whose data is lost
-with every update. Alphas and betas are published as pre-releases; `update.sh` never picks an alpha.
+with every update. Alphas and betas are published as pre-releases without a description;
+`update.sh` never picks an alpha. A release `vX.Y.Z` is a regular release, its description the
+message of the tagged commit: tag a commit whose message is the release note.
 
 ## Breaking changes from the old installer
 
