@@ -81,9 +81,28 @@ setting explained:
 sudo ./setup.sh -c /path/to/setup.conf
 ```
 
+### Your core's folder
+
+Everything about a core is in one folder, called `<core folder>` in the commands below:
+
+* **Installed with this installer:** `/opt/mgw/<core id>`, e.g. `/opt/mgw/a1b2c3d4` (or
+  `<install directory>/<core id>` if you chose another install directory). The installer prints it
+  at the end.
+* **Moved from the old installer:** the old install folder itself, usually `/opt/mgw`, **without**
+  a core id folder. The old layout had none, and the core stays where it was. See
+  [Moving from the old installer](#moving-from-the-old-installer).
+
+If you are not sure, look at the install directory: the core folder is the one that contains
+`current`.
+
+```sh
+ls /opt/mgw               # shows "current": this is the core folder (moved from the old installer)
+ls -d /opt/mgw/*/current  # otherwise: the folder in front of "/current" is the core folder
+```
+
 ### After the installation
 
-The installer prints where the core is installed, `/opt/mgw/<core id>`, and how to log in.
+The installer prints where the core is installed and how to log in.
 
 * **Web UI:** `http://<gateway address>:8080/` (or the port you chose). Log in with the user
   `core-user`.
@@ -91,10 +110,10 @@ The installer prints where the core is installed, `/opt/mgw/<core id>`, and how 
   settings:
 
   ```sh
-  sudo grep '^core_usr_pw=' /opt/mgw/<core id>/state/settings
+  sudo grep '^core_usr_pw=' <core folder>/state/settings
   ```
 
-**Keep a copy of `/opt/mgw/<core id>/state/settings`** in a safe place. It holds the passwords
+**Keep a copy of `<core folder>/state/settings`** in a safe place. It holds the passwords
 the core's data was created with; without it, a core whose folder is lost can't be restored.
 
 ---
@@ -104,7 +123,7 @@ the core's data was created with; without it, a core whose folder is lost can't 
 Everything is done with `ctrl.sh` in the core's folder:
 
 ```sh
-sudo /opt/mgw/<core id>/current/ctrl.sh <command>
+sudo <core folder>/current/ctrl.sh <command>
 ```
 
 | Command | What it does |
@@ -157,7 +176,7 @@ takes regular releases, and beta releases if `allow_beta` is on. It never takes 
 To update right away, run:
 
 ```sh
-sudo /opt/mgw/<core id>/current/update.sh
+sudo <core folder>/current/update.sh
 ```
 
 ### Installing a specific release
@@ -166,7 +185,7 @@ To install a particular release, e.g. a beta or an alpha, download and unpack it
 install, then run its `update.sh` with the core's folder:
 
 ```sh
-sudo ./update.sh -path=/opt/mgw/<core id>
+sudo ./update.sh -path=<core folder>
 ```
 
 This only goes forward: an older release is refused (see [When something is wrong](#when-something-is-wrong)
@@ -196,13 +215,13 @@ hand always tries again.
 **1. Check the status:**
 
 ```sh
-sudo /opt/mgw/<core id>/current/ctrl.sh status
+sudo <core folder>/current/ctrl.sh status
 ```
 
 If it says *"the core needs repair"*, it names the command to run, usually:
 
 ```sh
-sudo /opt/mgw/<core id>/current/restore.sh
+sudo <core folder>/current/restore.sh
 ```
 
 This happens only if an update or a repair went wrong in a way the core couldn't undo by itself.
@@ -223,7 +242,7 @@ before it starts. Use it whenever the core is broken, whatever the cause.
 To restore a particular version, run `restore.sh` from its unpacked release archive:
 
 ```sh
-sudo ./restore.sh -path=/opt/mgw/<core id>
+sudo ./restore.sh -path=<core folder>
 ```
 
 **Going back to an older version** works the same way, with `-downgrade`. Be careful: a newer
@@ -233,7 +252,7 @@ version may have converted data that the older one can't read.
 with your copy of the settings file:
 
 ```sh
-sudo ./restore.sh -path=/opt/mgw/<core id> -s=/path/to/copy/of/settings
+sudo ./restore.sh -path=<core folder> -s=/path/to/copy/of/settings
 ```
 
 Without that file the core can't be restored: its data only works with the passwords it was
@@ -243,7 +262,7 @@ created with. If some of the core's data is missing, the restore says so: that p
 
 ## Logs
 
-All logs are in `/opt/mgw/<core id>/log`:
+All logs are in `<core folder>/log`:
 
 * `core_installer.log`: what the installer did: installs, updates, repairs and changes made with
   `ctrl.sh`, each line with its time (UTC). This is the first place to look when an update failed.
@@ -258,7 +277,7 @@ The core also offers these logs through its API, where the installer's log is ca
 ## Uninstalling
 
 ```sh
-sudo /opt/mgw/<core id>/current/uninstall.sh
+sudo <core folder>/current/uninstall.sh
 ```
 
 This removes the core completely: its modules and **all their data**, the users, the containers,
@@ -274,8 +293,10 @@ container on the host still uses.
 
 Gateways installed with the old installer (one folder, usually `/opt/mgw`, with `ctrl.sh` and
 `.settings` in it) **move to the new installer by themselves** with their next daily update. Their
-modules, data and settings are kept, and the core stays in its folder (`/opt/mgw`). There is no way
-back to the old installer.
+modules, data and settings are kept, and the core stays in its folder: `/opt/mgw` becomes the
+core folder, with no core id folder below it (see [Your core's folder](#your-cores-folder)). So
+the commands in this README are, for example, `sudo /opt/mgw/current/ctrl.sh status`. There is no
+way back to the old installer.
 
 **Before that, make sure the gateway runs Debian 13 with Docker and the Compose plugin 2.9.0 or
 newer** (see [Requirements](#requirements)). When you upgrade a gateway to Debian 13, check
