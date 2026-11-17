@@ -205,6 +205,15 @@ with every update. Alphas and betas are published as pre-releases without a desc
 `update.sh` never picks an alpha. A release `vX.Y.Z` is a regular release, its description the
 message of the tagged commit: tag a commit whose message is the release note.
 
+**Release descriptions and the old installer:** as long as installations of the old installer
+(v0.33.0-beta2 and older) exist, a regular release's description must be one line without a
+backslash, so the tagged commit's message must be too. The old `update.sh` reads GitHub's release
+list with `echo "$releases" | jq`; `dash`'s `echo` turns the `\n` of a multi-line description (and
+other backslash escapes) into raw characters, `jq` fails, and every old gateway's daily update stops
+without changing anything and without a status, so nothing reports it. v0.40.0 hit this; its
+description was set to `.` afterwards. The web editor leaves line breaks behind; use
+`gh release edit <tag> --notes "<one line>"`.
+
 ## Breaking changes from the old installer
 
 What changes for users, scripts and monitoring that worked with the old installer (up to

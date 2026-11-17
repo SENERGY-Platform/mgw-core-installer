@@ -8,6 +8,13 @@ name: Release
 # pre-releases without a description, a release vX.Y.Z as a regular release whose description is
 # the message of the tagged commit. To test this workflow, push to a fork and tag there: gateways
 # only ask this repository for releases (docs/testing.md).
+#
+# WARNING: as long as installations of the old installer (v0.33.0-beta2 and older) exist, the
+# tagged commit's message must be ONE line without a backslash. The old update.sh reads the release
+# list with `echo "$releases" | jq` under dash, whose echo turns the \n of a multi-line
+# description (and other backslash escapes) into raw characters: jq fails and every old gateway's
+# daily update stops, silently, without a status. If it happened: set the description to one line
+# (e.g. "."), with gh release edit --notes; the web editor leaves line breaks behind.
 
 on:
   push:
