@@ -6,15 +6,16 @@ name: Release
 #
 # Tags follow SemVer: vX.Y.Z, vX.Y.Z-beta.N, vX.Y.Z-alpha.N; alphas and betas are published as
 # pre-releases without a description, a release vX.Y.Z as a regular release whose description is
-# the message of the tagged commit. To test this workflow, push to a fork and tag there: gateways
+# the subject line of the tagged commit. To test this workflow, push to a fork and tag there: gateways
 # only ask this repository for releases (docs/testing.md).
 #
 # WARNING: as long as installations of the old installer (v0.33.0-beta2 and older) exist, the
-# tagged commit's message must be ONE line without a backslash. The old update.sh reads the release
-# list with `echo "$releases" | jq` under dash, whose echo turns the \n of a multi-line
-# description (and other backslash escapes) into raw characters: jq fails and every old gateway's
-# daily update stops, silently, without a status. If it happened: set the description to one line
-# (e.g. "."), with gh release edit --notes; the web editor leaves line breaks behind.
+# description must be ONE line without a backslash. The workflow takes only the subject and fails
+# on a backslash. The old update.sh reads the release list with `echo "$releases" | jq` under dash,
+# whose echo turns the \n of a multi-line description (and other backslash escapes) into raw
+# characters: jq fails and every old gateway's daily update stops, silently, without a status. If it
+# happened: set the description to one line (e.g. "."), with gh release edit --notes; the web editor
+# leaves line breaks behind.
 
 on:
   push:
@@ -48,10 +49,14 @@ jobs:
           .github/check_volumes.sh
       - name: Build the archive
         run: .github/build_release.sh "$GITHUB_REF_NAME" dist
-      # a regular release: the message of the tagged commit (GITHUB_SHA) becomes its description
+      # a regular release: the subject of the tagged commit (GITHUB_SHA) becomes its description,
+      # without a trailing newline (see WARNING above)
       - name: Release notes
         if: ${{ !contains(github.ref_name, '-') }}
-        run: git log -1 --format=%B "$GITHUB_SHA" > release-notes.md
+        run: |
+          subject=$(git log -1 --format=%s "$GITHUB_SHA")
+          case "$subject" in *\\*) echo "the subject of the tagged commit contains a backslash"; exit 1;; esac
+          printf '%s' "$subject" > release-notes.md
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
